@@ -785,18 +785,19 @@ function populateGuildFilter(rows){
 }
 
 function renderStats(baseRows) {
-  // baseRows: já filtrado por guild + hideT + sq, mas SEM filtro de status (sf).
-  // Assim o topo sempre mostra o resumo do evento completo,
-  // mas o valor estimado respeita os filtros ativos de categoria/guild/busca.
+  // baseRows: filtrado por guild + hideT + sq, SEM filtro de status.
+  // O valor estimado muda conforme sf: "all" = tudo, "pending" = só pending.
 
   const c = {looted:0, deposited:0, pending:0, lost:0};
-  let totalPendingSilver = 0;
+  let totalSilver = 0;
 
   baseRows.forEach(r => {
     if(c[r.status] !== undefined) c[r.status]++;
-    // Valor = apenas itens pending visíveis nos filtros ativos
-    if (r.status === 'pending') {
-      totalPendingSilver += (PRICE_MAP[r.item_id] || 0) * r.quantity;
+    // Se filtro = pending → soma só pending. Se = all → soma tudo.
+    if (sf === 'pending') {
+      if (r.status === 'pending') totalSilver += (PRICE_MAP[r.item_id] || 0) * r.quantity;
+    } else {
+      totalSilver += (PRICE_MAP[r.item_id] || 0) * r.quantity;
     }
   });
 
@@ -820,9 +821,9 @@ function renderStats(baseRows) {
       <div class="stt-sub">not deposited</div>
     </div>
     <div class="stt">
-      <div class="stt-label">💰 Pend. Value</div>
-      <div class="stt-val cv-amber">${fmtSilver(totalPendingSilver)}</div>
-      <div class="stt-sub">estimated silver</div>
+      <div class="stt-label">💰 ${sf==='pending'?'Pend. Value':'Est. Value'}</div>
+      <div class="stt-val cv-amber">${fmtSilver(totalSilver)}</div>
+      <div class="stt-sub">${sf==='pending'?'only pending':'all looted'}</div>
     </div>
     <div class="stt">
       <div class="stt-label">🔴 Lost</div>
@@ -874,11 +875,11 @@ function groupByPlayer(rows){
     m[k].c[r.status]=(m[k].c[r.status]||0)+1;
   });
 
-  // pendingSilver: sempre calculado de allRows com filtros base ativos (sem filtro de status).
-  // Isso garante que tanto na aba "All" quanto na "Pending" o valor exibido é só dos pending.
+  // silverMap: se sf='pending' soma só pending; se sf='all' soma tudo.
+  // Respeita os filtros base ativos (guild, hideT, busca).
   const silverMap = {};
   allRows.forEach(r => {
-    if (r.status !== 'pending') return;
+    if (sf === 'pending' && r.status !== 'pending') return;
     if (sguild && r.looted_by_guild !== sguild) return;
     if (hideT.has(itemType(r))) return;
     if (sq) {
@@ -954,7 +955,7 @@ function renderCards(){
       return `<div class="chip${cc}" data-cid="${chipId}">${img}${qtyHtml}</div>`;
     }).join('');
 
-    // Badge de prata: usa pendingSilver calculado independente do filtro de status
+    // Badge de prata: reflete o filtro ativo (all = tudo, pending = só pending)
     const silverBadge = g.pendingSilver > 0 ? ` · <span class="cr-silver">💰 ${fmtSilver(g.pendingSilver)}</span>` : '';
 
     return `<div class="pcard s-${g.overall}">
