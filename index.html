@@ -6,7 +6,6 @@
 <title>Log Viewer</title>
 
 <link rel="icon" href="logo.png" type="image/png"/>
-
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -299,6 +298,7 @@ select option { background: var(--bg2); }
 .htog.on[data-t="mount"]  { background: rgba(34,197,94,.08);  border-color: rgba(34,197,94,.25);  color: var(--green);  }
 .htog.on[data-t="trash"]  { background: rgba(168,85,247,.1);  border-color: rgba(168,85,247,.3);  color: var(--purple); }
 .htog.on[data-t="other"]  { background: rgba(100,116,139,.1); border-color: rgba(100,116,139,.3); color: var(--slate);  }
+.htog.on[data-t="untradable"] { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.3); color: var(--red); }
 
 /* ── CARDS ───────────────────────────────────────────────────────── */
 #cards-view { padding: 16px 20px; }
@@ -575,6 +575,7 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
       <div class="htog on" data-t="mount">🐴 Mounts</div>
       <div class="htog on" data-t="trash">🗑 Trash</div>
       <div class="htog on" data-t="other">🪨 Others</div>
+      <div class="htog on" data-t="untradable">🚫 PvE / Untradable</div>
     </div>
     <div class="cdiv"></div>
     <select id="f-per">
@@ -607,8 +608,13 @@ const mkey  = (name,enc) => (name||'').toLowerCase().trim()+'@@'+(enc||0);
 
 let currentSessionTime = '';
 
+// NOVA LÓGICA DE CLASSIFICAÇÃO: Isola itens não negociáveis e drops de mobs
 function itemType(r){
   const id=(r.item_id||'').toUpperCase(), nm=(r.item_name||'').toLowerCase();
+  const from=(r.looted_from_name||'');
+  
+  if(id.includes('NONTRADABLE') || id.includes('SILVERBAG') || from.startsWith('@')) return 'untradable';
+  
   if(/_TRASH/.test(id)||nm==='trash') return 'trash';
   if(/_POTION/.test(id)||/\bpotion\b/.test(nm)) return 'potion';
   if(/^T\d_MOUNT_/.test(id)||/^T\d_FARM_/.test(id)) return 'mount';
@@ -762,7 +768,9 @@ const TIPDATA = {};
 let _chipCounter = 0;
 let allRows=[],filtered=[],ourGuild='';
 let pg=1,perPg=40,sf='all',sq='',sguild='';
-const hideT=new Set(['food','potion','mount','trash','other']);
+
+// FILTRO UNTRADABLE JÁ COMEÇA ATIVADO PARA OCULTÁ-LOS
+const hideT=new Set(['food','potion','mount','trash','other','untradable']);
 const lootFiles=[], chestFiles=[];
 
 function renderFilePills(listId, files, onRemove){
@@ -882,7 +890,7 @@ document.getElementById('btn-go').addEventListener('click',()=>{
   if(ourGuild) chip.classList.add('show');
 
   applyFilters();
-  window.scrollTo(0, 0); // Joga o usuário para o topo da página
+  window.scrollTo(0, 0); 
 });
 
 document.getElementById('btn-reload').addEventListener('click',()=>{
@@ -895,7 +903,7 @@ document.getElementById('btn-reload').addEventListener('click',()=>{
   lootFiles.length=0; chestFiles.length=0;
   ['fl-loot','fl-chest'].forEach(id=>document.getElementById(id).innerHTML='');
   allRows=[]; document.getElementById('btn-go').disabled=true;
-  window.scrollTo(0, 0); // Joga o usuário para o topo da página
+  window.scrollTo(0, 0); 
 });
 
 function populateGuildFilter(rows){
