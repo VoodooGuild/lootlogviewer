@@ -1,5 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/api/grid", "destination": "/api/grid.js" }
-  ]
-}
