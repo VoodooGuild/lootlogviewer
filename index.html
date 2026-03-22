@@ -630,7 +630,6 @@ function detectGuild(rows){
 
 function enrichRows(lootRows, ourGuild, chestRows){
   const pool = {};
-  
   chestRows.forEach(c => {
     const key = c._key;
     pool[key] = (pool[key] || 0) + c.quantity;
@@ -655,8 +654,9 @@ function enrichRows(lootRows, ourGuild, chestRows){
   });
 }
 
-function getPlayerAvatar(name) {
-  return `https://api.dicebear.com/8.x/adventurer/svg?seed=${encodeURIComponent(name)}&backgroundColor=1a1a20`;
+// FORMAT param adicionado para podermos solicitar SVG no site e PNG no Discord
+function getPlayerAvatar(name, format='svg') {
+  return `https://api.dicebear.com/8.x/adventurer/${format}?seed=${encodeURIComponent(name)}&backgroundColor=1a1a20`;
 }
 
 const TIPDATA = {};
@@ -972,7 +972,6 @@ document.querySelectorAll('.htog').forEach(t=>{
   });
 });
 
-// ── CORREÇÃO DE BUG: TOOLTIP ───────────────────────────────────────
 let tipActive = false;
 
 document.addEventListener('mouseover', e => {
@@ -982,7 +981,6 @@ document.addEventListener('mouseover', e => {
   const GT = document.getElementById('global-tip');
   if (!GT) return;
 
-  // Previne recarregar a tela se já estivermos com o mouse no mesmo item
   if (tipActive && GT.dataset.currentCid === chip.dataset.cid) return;
 
   const d = TIPDATA[chip.dataset.cid];
@@ -1008,8 +1006,6 @@ document.addEventListener('mouseover', e => {
 document.addEventListener('mouseout', e => {
   const chip = e.target.closest('[data-cid]');
   if (!chip) return;
-  
-  // A TRAVA MÁGICA: Verifica se o mouse só moveu DENTRO da caixinha (ex: para cima da imagem) e impede que o tooltip suma (flicker)
   if (e.relatedTarget && chip.contains(e.relatedTarget)) return;
   
   const GT = document.getElementById('global-tip');
@@ -1113,7 +1109,6 @@ async function fetchGridImage(items){
   }
 }
 
-// CORREÇÃO: Paleta exata de Tiers pro Ping no Discord (T1 a T8)
 const tierEmoji = t => ['','⬛','🟫','🟩','🟦','🟥','🟧','🟨','⬜'][t]||'⬜';
 
 function buildPayload(playerName, pendingItems, guild, imgBlob){
@@ -1127,11 +1122,16 @@ function buildPayload(playerName, pendingItems, guild, imgBlob){
   }).join('\n');
 
   const killboardUrl = `https://killboard-1.com/eu/player/${encodeURIComponent(playerName)}`;
+  
+  // SOLICITA O AVATAR NO FORMATO PNG EXCLUSIVAMENTE PARA O DISCORD
+  const avatarPngUrl = getPlayerAvatar(playerName, 'png');
+
   const embed = {
     color: 0xf59e0b,
     author: { name:'⚠️ Pending Deposit — Squirtle Squad' },
     title:  playerName,
     url:    killboardUrl,
+    thumbnail: { url: avatarPngUrl }, // AVATAR POSICIONADO NO CANTO SUPERIOR DIREITO
     description: [
       `**${groupedList.length} item${groupedList.length!==1?'s':''} not deposited yet**`,
       ``,
@@ -1155,7 +1155,6 @@ function buildPayload(playerName, pendingItems, guild, imgBlob){
     form.append('files[0]', imgBlob, 'items.png');
     return { useForm:true, form };
   } else {
-    embed.thumbnail = { url: albionImgUrl(pendingItems[0].item_id) };
     return { useForm:false, payload:{ content:mention, username:'Loot Logger', embeds:[embed] } };
   }
 }
