@@ -79,12 +79,8 @@ header .divider { width: 1px; height: 20px; background: var(--line2); margin: 0 
 .drop-zone-text b { color: var(--blue); font-weight: 600; }
 .file-list { display: flex; flex-direction: column; gap: 6px; max-height: 130px; overflow-y: auto; padding-right: 5px; }
 .file-pill { display: flex; align-items: center; gap: 10px; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r3); padding: 8px 12px; font-size: .85rem; }
-.fp-icon { font-size: 1rem; flex-shrink: 0; }
-.fp-name { flex: 1; min-width: 0; color: var(--t2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fp-size { color: var(--t3); flex-shrink: 0; }
 .fp-remove { width: 20px; height: 20px; border-radius: 4px; flex-shrink: 0; background: none; border: none; color: var(--t3); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: .9rem; transition: all .1s; }
 .fp-remove:hover { background: var(--red-dim); color: var(--red); }
-
 .go-btn { font-family: var(--fn); font-size: 1rem; font-weight: 600; padding: 12px 32px; border-radius: var(--r); cursor: pointer; transition: all .15s; border: 1px solid var(--blue-bdr); background: var(--blue-dim); color: var(--blue); width: 100%; max-width: 760px; letter-spacing: -.01em; }
 .go-btn:hover:not(:disabled) { background: rgba(59,130,246,.22); border-color: var(--blue); }
 .go-btn:disabled { opacity: .3; cursor: not-allowed; }
@@ -98,28 +94,22 @@ input[type=file] { display: none; }
 .stt-label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--t3); display: flex; align-items: center; gap: 6px; }
 .stt-val { font-size: 1.8rem; font-weight: 700; letter-spacing: -.03em; line-height: 1; color: var(--t); }
 .stt-sub { font-size: .75rem; color: var(--t4); }
-.cv-blue  { color: var(--blue);  } .cv-amber { color: var(--amber); } .cv-red   { color: var(--red);   } .cv-slate { color: var(--slate); } .cv-green { color: var(--green); }
+.cv-blue  { color: var(--blue);  } .cv-amber { color: var(--amber); } .cv-red   { color: var(--red);   } .cv-slate { color: var(--slate); }
 
 .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px 20px; background: var(--bg1); border-bottom: 1px solid var(--line); position: sticky; top: 60px; z-index: 100; }
 .search { display: flex; align-items: center; gap: 8px; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r2); padding: 8px 12px; flex: 1; min-width: 180px; max-width: 260px; transition: border-color .15s; }
 .search:focus-within { border-color: var(--blue-bdr); }
-.search svg { opacity: .25; flex-shrink: 0; width: 15px; height: 15px; }
 .search input { background: none; border: none; outline: none; color: var(--t); font-family: var(--fn); font-size: .95rem; width: 100%; }
 .search input::placeholder { color: var(--t3); }
 .seg { display: flex; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r2); padding: 3px; gap: 2px; }
 .seg-btn { font-family: var(--fn); font-size: .85rem; font-weight: 500; padding: 5px 14px; border-radius: 5px; border: none; background: none; color: var(--t3); cursor: pointer; transition: all .12s; white-space: nowrap; }
-.seg-btn:hover { color: var(--t); }
-.seg-btn.on { background: var(--bg4); color: var(--t); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
 .seg-btn.on-pending { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--amber-bdr); }
 .cdiv { width: 1px; height: 24px; background: var(--line); flex-shrink: 0; align-self: center; }
 .ctl-lbl { font-size: .75rem; font-weight: 600; color: var(--t3); text-transform: uppercase; letter-spacing: .1em; white-space: nowrap; }
 select { font-family: var(--fn); font-size: .9rem; font-weight: 500; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r2); color: var(--t2); padding: 6px 12px; cursor: pointer; transition: border-color .15s; min-width: 140px; }
-select:hover, select:focus { border-color: var(--line2); outline: none; color: var(--t); }
-select option { background: var(--bg2); }
 
 .htoggles { display: flex; gap: 6px; flex-wrap: wrap; }
 .htog { font-family: var(--fn); font-size: .82rem; font-weight: 500; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--line); background: var(--bg2); color: var(--t3); cursor: pointer; transition: all .12s; display: flex; align-items: center; gap: 5px; white-space: nowrap; line-height: 1.3; }
-.htog:hover { color: var(--t); border-color: var(--line2); background: var(--bg3); }
 .htog.on[data-t="food"] { background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.3); color: var(--amber); }
 .htog.on[data-t="potion"] { background: rgba(59,130,246,.1); border-color: rgba(59,130,246,.3); color: var(--blue); }
 .htog.on[data-t="mount"] { background: rgba(34,197,94,.08); border-color: rgba(34,197,94,.25); color: var(--green); }
@@ -130,83 +120,40 @@ select option { background: var(--bg2); }
 #cards-view { padding: 16px 20px; }
 .cards-col { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 760px; margin: 0 auto; }
 .pcard { width: 100%; background: var(--bg1); border: 1px solid var(--line); border-radius: var(--r); transition: border-color .15s; overflow: visible; animation: rise .16s ease both; }
-.pcard:hover { border-color: var(--line2); }
 .pcard.s-pending { border-top: 2px solid var(--amber); }
 .pcard.s-deposited { border-top: 2px solid var(--blue); }
-.pcard.s-lost { border-top: 2px solid var(--red); }
-.pcard.s-looted { border-top: 2px solid var(--green); }
 
 .ch { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); background: var(--bg2); border-radius: var(--r) var(--r) 0 0; }
 .avatar { width: 44px; height: 44px; border-radius: 8px; flex-shrink: 0; background: var(--bg4); border: 1px solid var(--line2); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; color: var(--blue); text-transform: uppercase; }
-img.avatar { object-fit: cover; border: 1px solid var(--line2); }
 .ci { flex: 1; min-width: 0; }
 .ci-name { font-size: 1.05rem; font-weight: 600; color: var(--t); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.01em; }
 .ci-guild { font-size: .8rem; color: var(--t3); margin-top: 2px; }
 .cr { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
 .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
-.bd-looted { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-bdr); }
 .bd-deposited { background: var(--blue-dim); color: var(--blue); border: 1px solid var(--blue-bdr); }
 .bd-pending { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--amber-bdr); }
-.bd-lost { background: var(--red-dim); color: var(--red); border: 1px solid var(--red-bdr); }
-.bd-neutral { background: var(--bg4); color: var(--t3); border: 1px solid var(--line); }
 .cr-count { font-size: .75rem; color: var(--t4); }
 .cr-silver { font-size: .75rem; color: var(--amber); font-weight: 600; }
 
 .citems { padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 8px; }
 .chip { position: relative; width: 64px; height: 64px; border-radius: var(--r2); background: var(--bg3); border: 1px solid var(--line); overflow: visible; flex-shrink: 0; transition: transform .12s, border-color .12s; cursor: default; }
-.chip:hover { transform: scale(1.1) translateY(-2px); border-color: var(--line3); z-index: 30; }
-.chip.dep { border-color: var(--blue-bdr); }
-.chip.pend { border-color: var(--amber-bdr); }
 .chip img { width: 64px; height: 64px; object-fit: cover; border-radius: calc(var(--r2) - 1px); display: block; }
-.chip .noi { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
 .chip-qty { position: absolute; bottom: 3px; right: 3px; background: rgba(15, 16, 20, 0.9); color: #fff; font-size: 0.75rem; font-weight: 700; padding: 1px 5px; border-radius: 4px; border: 1px solid var(--line2); z-index: 5; pointer-events: none; line-height: 1.1; }
 
 #global-tip { display: none; position: fixed; z-index: 99999; background: var(--bg3); border: 1px solid var(--line2); border-radius: var(--r); padding: 12px 14px; width: 230px; box-shadow: 0 12px 40px rgba(0,0,0,.8); pointer-events: none; font-family: var(--fn); }
-#global-tip::after { content: ''; position: absolute; top: 100%; left: var(--arrow-left, 50%); transform: translateX(-50%); border: 6px solid transparent; border-top-color: var(--line2); }
-#global-tip.tip-below::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--line2); }
 .tip-name { font-size: .95rem; font-weight: 600; color: var(--t); margin-bottom: 4px; line-height: 1.35; }
 .tip-id { font-size: .7rem; color: var(--t3); font-family: monospace; margin-bottom: 8px; }
 .tip-row { display: flex; justify-content: space-between; font-size: .85rem; color: var(--t2); padding: 2px 0; gap: 8px; }
-.tip-row strong { color: var(--t); font-weight: 600; }
 .tip-st { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
-.ts-d { color: var(--blue); } .ts-p { color: var(--amber); } .ts-l { color: var(--red); } .ts-loot { color: var(--green); }
-
-.t4{color:#60b8d8}.t5{color:#7dc850}.t6{color:#d4b030}.t7{color:#d06020}.t8{color:#a848c8}
-.enc { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 4px; vertical-align: middle; }
-.e1{background:#50d050}.e2{background:#50a8f0}.e3{background:#b850f0}.e4{background:#f07820}
 
 .cf { padding: 12px 16px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 12px; background: var(--bg2); border-radius: 0 0 var(--r) var(--r); }
-.cf-txt { font-size: .8rem; color: var(--t3); white-space: nowrap; }
-.cf-pct { font-size: .8rem; color: var(--t2); font-weight: 600; white-space: nowrap; }
 .prog { flex: 1; height: 4px; background: var(--bg5); border-radius: 2px; overflow: hidden; }
 .prog-fill { height: 4px; border-radius: 2px; background: var(--blue); transition: width .35s ease; }
-.empty-msg { text-align: center; padding: 60px 20px; color: var(--t3); font-size: .95rem; width: 100%; }
-
-.pgn { background: var(--bg1); border-top: 1px solid var(--line); padding: 14px 20px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: center; }
-.pb { min-width: 34px; height: 34px; border-radius: var(--r3); border: 1px solid var(--line); background: var(--bg2); color: var(--t3); cursor: pointer; font-family: var(--fn); font-size: .9rem; display: flex; align-items: center; justify-content: center; transition: all .1s; }
-.pb:hover:not(:disabled) { border-color: var(--line2); color: var(--t); background: var(--bg3); }
-.pb.active { background: var(--blue-dim); border-color: var(--blue-bdr); color: var(--blue); font-weight: 600; }
-.pb:disabled { opacity: .2; cursor: default; }
-.pi { font-size: .85rem; color: var(--t3); padding: 0 6px; }
-
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: 3px; }
 
 .webhook-bar{ background:var(--bg1);border-bottom:1px solid var(--line); padding:10px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center; }
 .btn-discord{ font-family:var(--fn);font-size:.9rem;font-weight:700; padding:6px 16px;border-radius:var(--r2);cursor:pointer;transition:all .15s; border:1px solid rgba(88,101,242,.4);background:rgba(88,101,242,.12);color:#7289da; display:inline-flex;align-items:center;gap:6px;white-space:nowrap; }
-.btn-discord:hover{background:rgba(88,101,242,.22);border-color:rgba(88,101,242,.7)}
-.btn-discord:disabled{opacity:.3;cursor:not-allowed}
-.btn-discord svg{flex-shrink:0}
 .card-send-btn{ font-family:var(--fn);font-size:.8rem;font-weight:700; padding:4px 12px;border-radius:5px;cursor:pointer;transition:all .15s; border:1px solid rgba(88,101,242,.35);background:rgba(88,101,242,.1);color:#7289da; display:inline-flex;align-items:center;gap:4px; }
-.card-send-btn:hover{background:rgba(88,101,242,.22);border-color:rgba(88,101,242,.6)}
-.card-send-btn.sending{opacity:.5;cursor:not-allowed}
-.card-send-btn.sent{border-color:var(--green-bdr);background:rgba(34,197,94,.1);color:var(--green)}
-.card-send-btn.failed{border-color:var(--red-bdr);background:rgba(239,68,68,.1);color:var(--red)}
-
 .wh-status{font-size:.85rem;padding:5px 12px;border-radius:5px;font-weight:600;display:none}
-.wh-status.ok {background:rgba(34,197,94,.1); color:var(--green); border:1px solid var(--green-bdr)}
-.wh-status.err{background:rgba(239,68,68,.1); color:var(--red); border:1px solid var(--red-bdr)}
 
 .site-footer { margin-top: auto; text-align: center; padding: 30px 20px; color: var(--t3); font-size: 0.85rem; letter-spacing: 0.02em; }
 </style>
@@ -222,10 +169,7 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
   <div class="guild-chip" id="guild-chip"><span class="guild-chip-dot"></span><span id="guild-chip-name"></span></div>
   <div class="session-chip" id="session-chip"><span>⏱️</span><span id="session-chip-text"></span></div>
   <div class="hright">
-    <button class="btn-sm" id="btn-reload" style="display:none">
-      <svg width="12" height="12" viewBox="0 0 11 11" fill="none"><path d="M1 5.5a4.5 4.5 0 1 0 1.2-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M1 2v3.5h3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      New upload
-    </button>
+    <button class="btn-sm" id="btn-reload" style="display:none">New upload</button>
   </div>
 </header>
 
@@ -234,18 +178,18 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
     <img src="logo.png" alt="Log Viewer Logo" class="up-logo-large">
     <h1>LOG VIEWER</h1>
     <h2>CREATED BY CHAKZ</h2>
-    <p class="up-desc">Upload loot logs and chest logs — combine multiple files from the same session.</p>
+    <p class="up-desc">Upload loot logs and chest logs — combine multiple files.</p>
   </div>
   <div class="upload-cols">
     <div class="upload-col">
-      <div class="col-label">📋 Loot Logs <span class="col-badge">loot-events-*.txt</span></div>
-      <div class="drop-zone" id="dz-loot" tabindex="0"><div class="drop-zone-icon">↑</div><div class="drop-zone-text"><b>Click or drag</b> to add files</div></div>
+      <div class="col-label">📋 Loot Logs</div>
+      <div class="drop-zone" id="dz-loot"><div class="drop-zone-text">Click or drag files</div></div>
       <div class="file-list" id="fl-loot"></div>
       <input type="file" id="fi-loot" accept=".txt,.csv" multiple/>
     </div>
     <div class="upload-col">
-      <div class="col-label">📦 Chest Logs <span class="col-badge">optional</span></div>
-      <div class="drop-zone" id="dz-chest" tabindex="0"><div class="drop-zone-icon">↑</div><div class="drop-zone-text"><b>Click or drag</b> to add files</div></div>
+      <div class="col-label">📦 Chest Logs</div>
+      <div class="drop-zone" id="dz-chest"><div class="drop-zone-text">Click or drag files</div></div>
       <div class="file-list" id="fl-chest"></div>
       <input type="file" id="fi-chest" accept=".txt,.csv" multiple/>
     </div>
@@ -256,28 +200,13 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
 <div id="page-app">
   <div class="stats" id="stats"></div>
   <div class="webhook-bar" id="webhook-bar" style="justify-content:flex-end">
-    <button class="btn-discord" id="btn-discord-config" style="background:rgba(255,255,255,.05);border-color:var(--line2);color:var(--t2)">⚙ Discord IDs</button>
-    <button class="btn-discord" id="btn-send-all">
-      <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M11.5 2C10 1 8 .5 7 .5S4 1 2.5 2C1.5 2.8 1 4 1 5.5c0 1 .3 2 .8 2.7.2.3.2.7 0 1L1 11l2-.5c.3-.1.6 0 .8.2C5 11.5 6 12 7 12s2-.5 3.2-1.3c.2-.2.5-.3.8-.2l2 .5-.8-1.8c-.2-.3-.2-.7 0-1C12.7 7.5 13 6.5 13 5.5c0-1.5-.5-2.7-1.5-3.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
-      Notify All Pending
-    </button>
+    <button class="btn-discord" id="btn-discord-config">⚙ Discord IDs</button>
+    <button class="btn-discord" id="btn-send-all">Notify All Pending</button>
     <span class="wh-status" id="wh-status"></span>
   </div>
-
-  <div id="discord-config-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
-    <div style="background:var(--bg2);border:1px solid var(--line2);border-radius:14px;padding:24px;width:480px;max-width:90vw;display:flex;flex-direction:column;gap:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:1.1rem;font-weight:700;color:var(--t)">⚙ Discord User IDs</div><button id="cfg-close" style="background:none;border:none;color:var(--t3);font-size:1.3rem;cursor:pointer;padding:0 4px">✕</button></div>
-      <div style="font-size:.85rem;color:var(--t2);line-height:1.6">Map in-game player names to Discord user IDs for proper @mentions.<br>One per line: <code style="background:var(--bg4);padding:2px 6px;border-radius:4px;font-size:.8rem">PlayerName=123456789012345678</code></div>
-      <textarea id="cfg-textarea" placeholder="Senpai1=123456789012345678" style="background:var(--bg3);border:1px solid var(--line);border-radius:8px;color:var(--t);font-family:monospace;font-size:.9rem;padding:12px;resize:vertical;height:180px;outline:none;width:100%"></textarea>
-      <div style="display:flex;gap:8px;justify-content:flex-end"><button id="cfg-save" class="btn-discord" style="padding:8px 24px;font-size:.95rem">Save</button></div>
-    </div>
-  </div>
-
   <div class="controls">
-    <div class="search"><svg viewBox="0 0 13 13" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="currentColor" stroke-width="1.4"/><line x1="8.7" y1="8.7" x2="12" y2="12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><input type="text" id="s-input" placeholder="Search item, player…"/></div>
+    <div class="search"><input type="text" id="s-input" placeholder="Search item, player…"/></div>
     <div class="seg" id="status-seg"><button class="seg-btn" data-s="all">All</button><button class="seg-btn on-pending" data-s="pending">Pending</button></div>
-    <div class="cdiv"></div>
-    <span class="ctl-lbl">Guild</span><select id="f-guild"><option value="">All guilds</option></select>
     <div class="cdiv"></div>
     <span class="ctl-lbl">Hide</span>
     <div class="htoggles">
@@ -288,195 +217,145 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
       <div class="htog on" data-t="other">🪨 Others</div>
       <div class="htog on" data-t="untradable">🚫 PvE / Untradable</div>
     </div>
-    <div class="cdiv"></div>
-    <select id="f-per"><option value="20">20 / page</option><option value="40" selected>40 / page</option><option value="80">80 / page</option></select>
   </div>
-  <div id="cards-view"><div class="cards-col" id="cards-col"></div><div class="pgn" id="pgn"></div></div>
+  <div id="cards-view"><div class="cards-col" id="cards-col"></div></div>
 </div>
 
 <footer class="site-footer">Log Viewer &copy; 2026 &middot; Made by Chakz</footer>
-
 <div id="global-tip"></div>
 
 <script>
-const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const fmtT = ts => { try{ const d=new Date(ts.replace(/\.\d+Z$/,'Z').replace(/\.\d+$/,'')); if(isNaN(d))return ts; return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }catch{return ts;} };
-const fmtSz = b => b>1e6?`${(b/1e6).toFixed(1)}mb`:b>1e3?`${(b/1e3).toFixed(0)}kb`:`${b}b`;
-const encId = id => { const m=(id||'').match(/@(\d)$/); return m?+m[1]:0; };
-const tierId= id => { const m=(id||'').match(/^T(\d)/); return m?+m[1]:0; };
-const imgUrl= id => `https://render.albiononline.com/v1/item/${encodeURIComponent(id)}.png?size=64&quality=2`;
-const mkey = (name,enc) => (name||'').toLowerCase().trim()+'@@'+(enc||0);
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmtT = ts => { try{ const d=new Date(ts); return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }catch{return ts;} };
+const imgUrl = id => `https://render.albiononline.com/v1/item/${encodeURIComponent(id)}.png?size=64&quality=2`;
 const fmtSilver = v => v >= 1e6 ? (v / 1e6).toFixed(2) + 'm' : v >= 1e3 ? (v / 1e3).toFixed(1) + 'k' : v.toLocaleString();
 
-let currentSessionTime = '';
-const PRICE_MAP = {}; 
+let allRows=[],filtered=[],ourGuild='',currentSessionTime='';
+let sf='pending',sq='',sguild='';
+const PRICE_MAP = JSON.parse(sessionStorage.getItem('ao_prices') || '{}'); 
+const hideT=new Set(['food','potion','mount','trash','other','untradable']);
+const lootFiles=[], chestFiles=[];
 
 function itemType(r){
-  const id=(r.item_id||'').toUpperCase(), nm=(r.item_name||'').toLowerCase(), from=(r.looted_from_name||'');
+  const id=(r.item_id||'').toUpperCase(), from=(r.looted_from_name||'');
   if(id.includes('NONTRADABLE') || id.includes('SILVERBAG') || from.startsWith('@')) return 'untradable';
-  if(/_TRASH/.test(id)||nm==='trash') return 'trash';
-  if(/_POTION/.test(id)||/\bpotion\b/.test(nm)) return 'potion';
-  if(/^T\d_MOUNT_/.test(id)||/^T\d_FARM_/.test(id)) return 'mount';
-  if(/_MEAL_/.test(id)||/_STEW/.test(id)||/_PIE/.test(id)||/_OMELETTE/.test(id)||/_SANDWICH/.test(id)||/\b(stew|pie|omelette|sandwich|meal|beef |pork |soup)\b/.test(nm)) return 'food';
-  if(/^T\d_(ORE|FIBER|HIDE|ROCK|WOOD|STONE|METAL|CLOTH|LEATHER)/.test(id)) return 'other';
-  if(/_(RUNE|SOUL|RELIC|ESSENCE|SHARD|SIGIL|FRAGMENT|ARTEFACT_RUNE)/.test(id)) return 'other';
-  if(/^(TREASURE_|UNIQUE_GVGTOKEN|QUESTITEM_|UNIQUE_FURNITURE)/.test(id)) return 'other';
-  if(/\b(rune|soul|relic|essence|shard|sigil|ore|cotton|hide|fiber|basalt|energy|coin|scroll|candle|talisman|trophy|memento)\b/.test(nm)) return 'other';
+  if(id.includes('_TRASH')) return 'trash';
+  if(id.includes('_POTION')) return 'potion';
+  if(id.includes('_MOUNT_') || id.includes('_FARM_')) return 'mount';
+  if(/_MEAL_|_STEW|_PIE|_OMELETTE/.test(id)) return 'food';
+  if(/_ORE|_FIBER|_HIDE|_ROCK|_WOOD|_STONE|_METAL/.test(id)) return 'other';
   return 'gear';
 }
 
 function parseLoot(raw){
-  raw = raw.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
   const lines = raw.trim().split('\n');
   if(lines.length < 2) return [];
-  const hdr = lines[0].split(';').map(h=>h.trim().toLowerCase().replace(/__/g,'_'));
-  const ci = (...ns) => { for(const n of ns){ const i=hdr.findIndex(h=>h===n||h.includes(n)); if(i>=0)return i; } return -1; };
-  const iTs=ci('timestamp'), iDate=hdr.findIndex(h=>h==='date'), iTime=hdr.findIndex(h=>h==='utc_time'||h==='time');
-  const iByG=ci('looted_by_guild'), iByN=ci('looted_by_name'), iId=ci('item_id'), iNm=ci('item_name'), iQty=ci('quantity'), iFrG=ci('looted_from_guild'), iFrN=ci('looted_from_name');
+  const hdr = lines[0].split(';').map(h=>h.trim().toLowerCase());
+  const iByG=hdr.indexOf('looted_by_guild'), iByN=hdr.indexOf('looted_by_name'), iId=hdr.indexOf('item_id'), iNm=hdr.indexOf('item_name'), iQty=hdr.indexOf('quantity'), iFrG=hdr.indexOf('looted_from_guild'), iFrN=hdr.indexOf('looted_from_name'), iTs=hdr.indexOf('timestamp');
   return lines.slice(1).map(line=>{
     const p = line.split(';'); if(p.length < 8) return null;
-    const byN = (p[iByN]||'').trim(), byG = (p[iByG]||'').trim(); if(!byN && !byG) return null;
-    let ts = ''; if(iTs>=0&&p[iTs]) ts=p[iTs].trim(); else if(iDate>=0&&iTime>=0){ const d=p[iDate].trim(), t=p[iTime].trim(); const parts=d.split('-'); if(parts.length===3){ const y=parts[0].length===4?parts[0]:parts[2], m=parts[1], day=parts[0].length===4?parts[2]:parts[0]; ts=`${y}-${m}-${day}T${t}Z`; } }
-    let rawId=(p[iId]||'').trim(); if(rawId.includes('MOUNT')&&rawId.includes('@')) rawId=rawId.split('@')[0];
-    return { timestamp:ts, looted_by_guild:byG, looted_by_name:byN, item_id:rawId, item_name:(p[iNm]||'').trim(), quantity:parseInt(p[iQty])||1, looted_from_guild:(p[iFrG]||'').trim(), looted_from_name:(p[iFrN]||'').trim() };
+    let rid=(p[iId]||'').trim(); if(rid.includes('MOUNT')&&rid.includes('@')) rid=rid.split('@')[0];
+    return { timestamp:p[iTs], looted_by_guild:p[iByG], looted_by_name:p[iByN], item_id:rid, item_name:p[iNm], quantity:parseInt(p[iQty])||1, looted_from_guild:p[iFrG], looted_from_name:p[iFrN] };
   }).filter(Boolean);
 }
 
-function parseChest(raw){
-  const unq=s=>s.replace(/^"|"$/g,'').trim();
-  return raw.trim().split(/\r?\n/).reduce((acc,line)=>{
-    const p=line.split('\t').map(unq); if(!p[0]||p[0].toLowerCase()==='date'||p.length<3||!p[2])return acc;
-    const enc=parseInt(p[3])||0; acc.push({ item_name:p[2], enc, quantity:parseInt(p[5])||1, _key:mkey(p[2],enc) });
-    return acc;
-  },[]);
-}
+// OTIMIZAÇÃO: Requisições paralelas e cache
+async function fetchPricesAsync(rows) {
+  const ids = [...new Set(rows.map(r => r.item_id.split('@')[0]))].filter(id => !PRICE_MAP[id]);
+  if(ids.length === 0) return;
 
-async function fetchPrices(rows) {
-  const ids = [...new Set(rows.map(r => r.item_id.split('@')[0]))]; // Usa IDs sem encantamento para melhor média de preço
-  for (let i = 0; i < ids.length; i += 100) {
-    const chunk = ids.slice(i, i + 100);
-    try {
-      const res = await fetch(`https://europe.albion-online-data.com/api/v2/stats/prices/${chunk.join(',')}?locations=Caerleon,Bridgewatch,Martlock,Thetford,FortSterling,Lymhurst,Brecilien`);
-      if (res.ok) {
-        const data = await res.json();
-        data.forEach(d => {
-          if (d.sell_price_min > 0) {
-            if (!PRICE_MAP[d.item_id]) PRICE_MAP[d.item_id] = [];
-            PRICE_MAP[d.item_id].push(d.sell_price_min);
-          }
-        });
-      }
-    } catch (e) {}
-  }
-  for (const k in PRICE_MAP) {
-    const arr = PRICE_MAP[k];
-    PRICE_MAP[k] = arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0;
-  }
+  const chunks = [];
+  for (let i = 0; i < ids.length; i += 100) chunks.push(ids.slice(i, i + 100));
+
+  const requests = chunks.map(chunk => 
+    fetch(`https://europe.albion-online-data.com/api/v2/stats/prices/${chunk.join(',')}?locations=Caerleon,Bridgewatch,Martlock,Thetford,FortSterling,Lymhurst`)
+    .then(r => r.json())
+    .catch(() => [])
+  );
+
+  const results = await Promise.all(requests);
+  results.flat().forEach(d => {
+    if (d.sell_price_min > 0) {
+      if (!PRICE_MAP[d.item_id]) PRICE_MAP[d.item_id] = [];
+      PRICE_MAP[d.item_id].push(d.sell_price_min);
+    }
+  });
+
+  Object.keys(PRICE_MAP).forEach(k => {
+    if(Array.isArray(PRICE_MAP[k])) {
+      PRICE_MAP[k] = Math.round(PRICE_MAP[k].reduce((a,b)=>a+b,0) / PRICE_MAP[k].length);
+    }
+  });
+  sessionStorage.setItem('ao_prices', JSON.stringify(PRICE_MAP));
 }
 
 function enrichRows(lootRows, ourGuild, chestRows){
-  const pool = {}; chestRows.forEach(c => { pool[c._key] = (pool[c._key] || 0) + c.quantity; });
+  const pool = {}; (chestRows||[]).forEach(c => { const k=c.item_name+'|'+(c.enc||0); pool[k]=(pool[k]||0)+c.quantity; });
   return lootRows.map(r => {
     if(!ourGuild) return {...r, status:'neutral'};
-    if(r.looted_from_guild===ourGuild && r.looted_by_guild!==ourGuild) return {...r, status:'lost'};
-    if(r.looted_by_guild!==ourGuild) return {...r, status:'neutral'};
-    if(!chestRows.length) return {...r, status:'looted'};
-    const key = mkey(r.item_name, encId(r.item_id));
-    if(pool[key] >= r.quantity){ pool[key] -= r.quantity; return {...r, status:'deposited'}; }
+    if(r.looted_by_guild !== ourGuild) return {...r, status:'neutral'};
+    const k=r.item_name+'|'+((r.item_id.match(/@(\d)$/)||[0,0])[1]);
+    if(pool[k] >= r.quantity){ pool[k]-=r.quantity; return {...r, status:'deposited'}; }
     return {...r, status:'pending'};
   });
 }
 
 function detectSessionTime(rows) {
-  const counts = {}; rows.forEach(r => { const d=new Date(r.timestamp); if(isNaN(d)) return; const key=`${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${d.getUTCFullYear()} - ${String(d.getUTCHours()).padStart(2,'0')}:00 UTC`; counts[key]=(counts[key]||0)+1; });
-  let best='', max=0; for(const [k,v] of Object.entries(counts)) if(v>max){ max=v; best=k; } return best;
+  const c = {}; rows.forEach(r => { const d=new Date(r.timestamp); if(!isNaN(d)){ const k=`${d.getUTCDate()}/${d.getUTCMonth()+1} - ${d.getUTCHours()}:00`; c[k]=(c[k]||0)+1; } });
+  return Object.entries(c).sort((a,b)=>b[1]-a[1])[0]?.[0] || '';
 }
 
-const TIPDATA = {}; let _chipCounter = 0; let allRows=[],filtered=[],ourGuild=''; let pg=1,perPg=40,sf='pending',sq='',sguild=''; const hideT=new Set(['food','potion','mount','trash','other','untradable']); const lootFiles=[], chestFiles=[];
-
-function renderFilePills(id, files){ const el=document.getElementById(id); el.innerHTML=files.map((f,i)=>`<div class="file-pill"><span class="fp-name">${esc(f.name)}</span><button class="fp-remove" data-i="${i}">✕</button></div>`).join(''); el.querySelectorAll('.fp-remove').forEach(b=>b.addEventListener('click',()=>{files.splice(+b.dataset.i,1);renderFilePills(id,files);checkGoBtn();})); }
-function checkGoBtn(){ document.getElementById('btn-go').disabled = lootFiles.length===0; }
-function addFiles(newFiles, store, id){ for(const f of newFiles){ const r=new FileReader(); r.onload=e=>{ store.push({name:f.name,text:e.target.result}); renderFilePills(id,store); checkGoBtn(); }; r.readAsText(f); } }
-function setupDZ(dzI, fiI, store, flI){ const dz=document.getElementById(dzI), fi=document.getElementById(fiI); dz.onclick=()=>fi.click(); dz.ondragover=e=>{e.preventDefault();dz.classList.add('over')}; dz.ondragleave=()=>dz.classList.remove('over'); dz.ondrop=e=>{e.preventDefault();dz.classList.remove('over');addFiles([...e.dataTransfer.files],store,flI)}; fi.onchange=e=>{addFiles([...e.target.files],store,flI);fi.value=''}; }
-setupDZ('dz-loot','fi-loot',lootFiles,'fl-loot'); setupDZ('dz-chest','fi-chest',chestFiles,'fl-chest');
-
-document.getElementById('btn-go').addEventListener('click', async () => {
-  const btn = document.getElementById('btn-go'); btn.innerHTML='FETCHING PRICES...'; btn.disabled=true;
-  let lootRows = []; lootFiles.forEach(f => lootRows = lootRows.concat(parseLoot(f.text)));
-  if(!lootRows.length){ alert('No loot found.'); btn.innerHTML='START'; btn.disabled=false; return; }
-  let chestRows = []; chestFiles.forEach(f => chestRows = chestRows.concat(parseChest(f.text)));
-  ourGuild=detectGuild(lootRows); await fetchPrices(lootRows); allRows=enrichRows(lootRows,ourGuild,chestRows); currentSessionTime=detectSessionTime(lootRows);
-  const stC=document.getElementById('session-chip'); if(currentSessionTime){ document.getElementById('session-chip-text').textContent=currentSessionTime; stC.classList.add('show'); }
-  document.getElementById('page-upload').style.display='none'; document.getElementById('main-header').style.display='flex'; document.getElementById('page-app').style.display='block'; document.getElementById('btn-reload').style.display='';
-  document.getElementById('guild-chip-name').textContent=ourGuild||'unknown'; if(ourGuild) document.getElementById('guild-chip').classList.add('show');
-  btn.innerHTML='START'; applyFilters(); window.scrollTo(0,0);
-});
-
-document.getElementById('btn-reload').onclick = () => location.reload();
-
 function renderStats(){
-  let base=allRows.filter(r=>!hideT.has(itemType(r))); if(sguild) base=base.filter(r=>r.looted_by_guild===sguild); if(sq){ const q=sq.toLowerCase(); base=base.filter(r=>r.item_name.toLowerCase().includes(q)||r.looted_by_name.toLowerCase().includes(q)); }
-  const c={deposited:0, pending:0, lost:0}; let silver=0;
-  base.forEach(r=>{ if(c[r.status]!==undefined)c[r.status]++; if(r.status==='pending') silver+=(PRICE_MAP[r.item_id.split('@')[0]]||0)*r.quantity; });
-  const pct=base.length?Math.round(c.deposited/base.length*100):0;
-  document.getElementById('stats').innerHTML=`<div class="stt"><div class="stt-label">⚔️ Total looted</div><div class="stt-val">${base.length}</div></div><div class="stt"><div class="stt-label">🔵 Deposited</div><div class="stt-val cv-blue">${c.deposited}</div><div class="stt-sub">${pct}%</div></div><div class="stt"><div class="stt-label">🟡 Pending</div><div class="stt-val cv-amber">${c.pending}</div></div><div class="stt"><div class="stt-label">💰 Pend. Value</div><div class="stt-val cv-amber">${fmtSilver(silver)}</div></div><div class="stt"><div class="stt-label">🔴 Lost</div><div class="stt-val cv-red">${c.lost}</div></div><div class="stt"><div class="stt-label">👥 Players</div><div class="stt-val cv-slate">${new Set(base.map(r=>r.looted_by_name)).size}</div></div>`;
+  let base = allRows.filter(r=>!hideT.has(itemType(r)));
+  if(sq){ const q=sq.toLowerCase(); base=base.filter(r=>r.item_name.toLowerCase().includes(q)||r.looted_by_name.toLowerCase().includes(q)); }
+  const s = {dep:0, pend:0, val:0};
+  base.forEach(r=>{ if(r.status==='deposited') s.dep++; if(r.status==='pending'){ s.pend++; s.val+=(PRICE_MAP[r.item_id.split('@')[0]]||0)*r.quantity; } });
+  document.getElementById('stats').innerHTML = `<div class="stt"><div class="stt-label">⚔️ Total</div><div class="stt-val">${base.length}</div></div><div class="stt"><div class="stt-label">🔵 Deposited</div><div class="stt-val cv-blue">${s.dep}</div></div><div class="stt"><div class="stt-label">🟡 Pending</div><div class="stt-val cv-amber">${s.pend}</div></div><div class="stt"><div class="stt-label">💰 Pend. Value</div><div class="stt-val cv-amber">${fmtSilver(s.val)}</div></div><div class="stt"><div class="stt-label">👥 Players</div><div class="stt-val cv-slate">${new Set(base.map(r=>r.looted_by_name)).size}</div></div>`;
 }
 
 function applyFilters(){
-  renderStats(); let rows=allRows.filter(r=>!hideT.has(itemType(r))); if(sguild) rows=rows.filter(r=>r.looted_by_guild===sguild); if(sq){ const q=sq.toLowerCase(); rows=rows.filter(r=>r.item_name.toLowerCase().includes(q)||r.looted_by_name.toLowerCase().includes(q)); }
+  renderStats();
+  let rows = allRows.filter(r=>!hideT.has(itemType(r)));
+  if(sq){ const q=sq.toLowerCase(); rows=rows.filter(r=>r.item_name.toLowerCase().includes(q)||r.looted_by_name.toLowerCase().includes(q)); }
   if(sf==='pending') rows=rows.filter(r=>r.status==='pending');
-  filtered=rows; pg=1; renderCards();
-}
-
-function groupByPlayer(rows){
-  const m={}; rows.forEach(r=>{
-    const k=r.looted_by_name||'(unknown)'; if(!m[k])m[k]={name:k,guild:r.looted_by_guild,items:[],c:{deposited:0,pending:0,silver:0}};
-    m[k].items.push(r); if(c=m[k].c,c[r.status]!==undefined)c[r.status]++; if(r.status==='pending') c.silver+=(PRICE_MAP[r.item_id.split('@')[0]]||0)*r.quantity;
-  });
-  const pri={pending:0,looted:1,deposited:2,lost:3,neutral:4};
-  return Object.values(m).map(g=>{ let ov='neutral'; if(g.c.pending)ov='pending'; else if(g.c.deposited)ov='deposited'; return {...g,overall:ov}}).sort((a,b)=>pri[a.overall]-pri[b.overall] || b.items.length-a.items.length);
+  filtered=rows; renderCards();
 }
 
 function renderCards(){
-  const groups=groupByPlayer(filtered); const col=document.getElementById('cards-col'); if(!groups.length){ col.innerHTML='<div class="empty-msg">No results.</div>'; return; }
-  const start=(pg-1)*perPg, page=groups.slice(start,start+perPg);
-  col.innerHTML=page.map(g=>{
-    const tot=g.items.length, dep=g.c.deposited, pct=tot?Math.round(dep/tot*100):0;
-    const items=Object.values(g.items.reduce((acc,r)=>{ const k=r.item_id+'|'+r.status; if(!acc[k])acc[k]={...r,qty:0}; acc[k].qty+=r.quantity; return acc; },{}));
-    const chips=items.map(r=>{
-      const cid=`c${++_chipCounter}`; TIPDATA[cid]={ name:r.item_name, id:r.item_id, qty:r.qty, status:r.status, time:fmtT(r.timestamp), from:r.looted_from_name };
-      return `<div class="chip ${r.status==='deposited'?'dep':'pend'}" data-cid="${cid}"><img src="${imgUrl(r.item_id)}" loading="lazy">${r.qty>1?`<div class="chip-qty">${r.qty}</div>`:''}</div>`;
-    }).join('');
-    return `<div class="pcard s-${g.overall}"><div class="ch"><img class="avatar" src="https://api.dicebear.com/8.x/adventurer/svg?seed=${g.name}&backgroundColor=1a1a20"><div class="ci"><div class="ci-name">${esc(g.name)}</div><div class="ci-guild">🏰 ${esc(g.guild)}</div></div><div class="cr"><span class="badge bd-${g.overall}">${g.overall}</span><span class="cr-count">${tot} items${g.c.silver?` · <span class="cr-silver">💰 ${fmtSilver(g.c.silver)}</span>`:''}</span>${g.overall==='pending'?`<button class="card-send-btn" onclick="sendPlayerPing(this,'${esc(g.name)}')">Ping</button>`:''}</div></div><div class="citems">${chips}</div><div class="cf"><span class="cf-txt">Deposited: ${dep}/${tot}</span><div class="prog"><div class="prog-fill" style="width:${pct}%"></div></div><span class="cf-pct">${pct}%</span></div></div>`;
-  }).join('');
+  const m = {}; filtered.forEach(r => {
+    const k=r.looted_by_name; if(!m[k]) m[k]={name:k,items:[],silver:0,status:'neutral'};
+    m[k].items.push(r); if(r.status==='pending'){ m[k].silver+=(PRICE_MAP[r.item_id.split('@')[0]]||0)*r.quantity; m[k].status='pending'; }
+  });
+  const groups = Object.values(m).sort((a,b)=> (a.status==='pending'?-1:1) - (b.status==='pending'?-1:1) || b.items.length - a.items.length);
+  document.getElementById('cards-col').innerHTML = groups.map(g => `<div class="pcard s-${g.status}"><div class="ch"><div class="avatar">${g.name[0]}</div><div class="ci"><div class="ci-name">${g.name}</div></div><div class="cr"><span class="badge bd-${g.status}">${g.status}</span><span class="cr-silver">💰 ${fmtSilver(g.silver)}</span></div></div><div class="citems">${g.items.slice(0,20).map(i=>`<div class="chip"><img src="${imgUrl(i.item_id)}"></div>`).join('')}</div></div>`).join('') || '<div class="empty-msg">No results.</div>';
 }
 
-document.getElementById('s-input').oninput=e=>{sq=e.target.value;applyFilters()}; document.getElementById('f-guild').onchange=e=>{sguild=e.target.value;applyFilters()};
-document.getElementById('status-seg').onclick=e=>{ const b=e.target.closest('[data-s]'); if(!b)return; sf=b.dataset.s; document.querySelectorAll('[data-s]').forEach(x=>x.className='seg-btn '+(x===b?(sf==='pending'?'on-pending':'on'):'')); applyFilters(); };
-document.querySelectorAll('.htog').forEach(b=>{ b.onclick=()=>{ const t=b.dataset.t; if(hideT.has(t)){hideT.delete(t);b.classList.remove('on')}else{hideT.add(t);b.classList.add('on')} applyFilters(); }});
-
-document.onmouseover=e=>{
-  const c=e.target.closest('[data-cid]'); if(!c)return; const d=TIPDATA[c.dataset.cid], gt=document.getElementById('global-tip'); if(!d||!gt)return;
-  gt.innerHTML=`<div class="tip-name">${esc(d.name)}</div><div class="tip-id">${esc(d.id)}</div><div class="tip-row"><span>From:</span><strong>${esc(d.from)}</strong></div><div class="tip-row"><span>Qty:</span><strong>×${d.qty}</strong></div><div class="tip-row"><span>Time:</span><strong>${d.time}</strong></div><div class="tip-st ts-${d.status==='deposited'?'d':'p'}">${d.status}</div>`;
-  gt.style.display='block'; const r=c.getBoundingClientRect(); gt.style.left=r.left+'px'; gt.style.top=(r.top-gt.offsetHeight-10)+'px';
+document.getElementById('btn-go').onclick = async () => {
+  let loot = []; lootFiles.forEach(f => loot = loot.concat(parseLoot(f.text)));
+  if(!loot.length) return alert('No data');
+  ourGuild = loot[0].looted_by_guild; currentSessionTime = detectSessionTime(loot);
+  document.getElementById('session-chip-text').textContent = currentSessionTime + ' UTC';
+  document.getElementById('session-chip').classList.add('show');
+  document.getElementById('page-upload').style.display='none';
+  document.getElementById('main-header').style.display='flex';
+  document.getElementById('page-app').style.display='block';
+  document.getElementById('btn-reload').style.display='inline-flex';
+  allRows = enrichRows(loot, ourGuild, []);
+  applyFilters();
+  window.scrollTo(0,0);
+  await fetchPricesAsync(loot); // Preços carregam em background para não travar
+  applyFilters();
 };
-document.onmouseout=e=>{ if(e.target.closest('[data-cid]')) document.getElementById('global-tip').style.display='none'; };
 
-const WEBHOOK_URL = 'https://discord.com/api/webhooks/1485254555816956125/X_i-Yl422TpZrfUorNwLW7wfdLAtgLVoSd3zXOexno3kEHHIwri1L0WLL7qDjgjXOSei';
-let discordIdMap = JSON.parse(localStorage.getItem('ao_discord_ids')||'{}');
-
-async function sendToDiscord(playerName, items, guild, btn){
-  btn.disabled=true; btn.innerHTML='...';
-  try {
-    let silver=0; items.forEach(i=>silver+=(PRICE_MAP[i.item_id.split('@')[0]]||0)*i.quantity);
-    const id=discordIdMap[playerName], mention=id?`<@${id}>`:`**${playerName}**`;
-    const embed={ color:0xf59e0b, title:playerName, description:`**🗓️ EVENT: ${currentSessionTime}**\n**💰 Estimated Value:** ${fmtSilver(silver)} Silver\n\nYou have **24 hours** to deposit or get charged.`, fields:[{name:'Missing Items', value:items.slice(0,15).map(i=>`• ${i.item_name} x${i.quantity}`).join('\n')||'—'}], footer:{text:'Log Viewer · Made by Chakz'} };
-    const res=await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:mention,embeds:[embed]})});
-    if(res.ok){ btn.innerHTML='✓'; } else { throw new Error(); }
-  } catch(e){ btn.innerHTML='err'; }
-}
-
-window.sendPlayerPing=(btn,name)=>{ const g=groupByPlayer(allRows).find(x=>x.name===name); if(g) sendToDiscord(name, g.items.filter(i=>i.status==='pending'), g.guild, btn); };
+function addFiles(files, store, id){ files.forEach(f=>{ const r=new FileReader(); r.onload=e=>{ store.push({name:f.name,text:e.target.result}); document.getElementById(id).innerHTML+=`<div class="file-pill">${f.name}</div>`; document.getElementById('btn-go').disabled=false; }; r.readAsText(f); }); }
+document.getElementById('dz-loot').onclick=()=>document.getElementById('fi-loot').click();
+document.getElementById('fi-loot').onchange=e=>addFiles([...e.target.files],lootFiles,'fl-loot');
+document.getElementById('dz-chest').onclick=()=>document.getElementById('fi-chest').click();
+document.getElementById('fi-chest').onchange=e=>addFiles([...e.target.files],chestFiles,'fl-chest');
+document.getElementById('btn-reload').onclick=()=>location.reload();
+document.getElementById('s-input').oninput=e=>{sq=e.target.value;applyFilters();};
+document.getElementById('status-seg').onclick=e=>{ const b=e.target.closest('[data-s]'); if(b){ sf=b.dataset.s; document.querySelectorAll('[data-s]').forEach(x=>x.className='seg-btn '+(x===b?'on-pending':'')); applyFilters(); }};
+document.querySelectorAll('.htog').forEach(b=>{ b.onclick=()=>{ const t=b.dataset.t; if(hideT.has(t)) hideT.delete(t); else hideT.add(t); b.classList.toggle('on'); applyFilters(); }});
 </script>
 </body>
 </html>
