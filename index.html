@@ -38,10 +38,10 @@
   --purple:    #a855f7;
   --slate:     #64748b;
 
-  --t:         #e4e4e7;
-  --t2:        #a1a1aa;
-  --t3:        #52525b;
-  --t4:        #3f3f46;
+  --t:          #e4e4e7;
+  --t2:         #a1a1aa;
+  --t3:         #52525b;
+  --t4:         #3f3f46;
 
   --r:  10px;
   --r2: 7px;
@@ -556,7 +556,7 @@ function enrichRows(lootRows, ourGuild, chestRows){
     const byUs = r.looted_by_guild === ourGuild;
     const fromUs = r.looted_from_guild === ourGuild;
     if(fromUs && !byUs) return {...r, status:'lost'};
-    if(!byUs)           return {...r, status:'neutral'};
+    if(!byUs)            return {...r, status:'neutral'};
     if(!chestRows.length) return {...r, status:'looted'};
     const key = mkey(r.item_name, encId(r.item_id));
     if(pool[key] >= r.quantity){
@@ -622,7 +622,6 @@ const TIPDATA = {};
 let _chipCounter = 0;
 let allRows=[],filtered=[],ourGuild='';
 
-// FILTRO PENDING ATIVADO POR PADRÃO NO JAVASCRIPT
 let pg=1,perPg=40,sf='pending',sq='',sguild='';
 
 const hideT=new Set(['food','potion','mount','trash','other','untradable']);
@@ -771,8 +770,7 @@ function populateGuildFilter(rows){
 }
 
 function renderStats(){
-  // LÓGICA INTELIGENTE: A barra do topo ignora o fato de estarmos na aba "Pending",
-  // para que você continue vendo o "Total Looted" e o % de "Deposited" do evento como um todo.
+  // Filtramos a base pelos controles (Guilda, Hide e Search) antes de aplicar o filtro de status da lista
   let base = allRows.slice();
   
   if(sguild) base = base.filter(r=>r.looted_by_guild===sguild);
@@ -789,15 +787,15 @@ function renderStats(){
   }
   
   const c = {looted:0, deposited:0, pending:0, lost:0};
-  let totalPendingSilver = 0;
+  let totalVisiblePendingSilver = 0;
   
   base.forEach(r => { 
     if(c[r.status]!==undefined) c[r.status]++; 
     
-    // A Prata mostrada no topo soma APENAS os itens pendentes que estão nos filtros ativos
+    // SOMA FLEXÍVEL: O valor estimado no topo agora é a soma apenas dos itens PENDING visíveis com os filtros atuais
     if (r.status === 'pending') {
       const price = PRICE_MAP[r.item_id] || 0;
-      totalPendingSilver += price * r.quantity;
+      totalVisiblePendingSilver += price * r.quantity;
     }
   });
 
@@ -808,7 +806,7 @@ function renderStats(){
     <div class="stt">
       <div class="stt-label">⚔️ Total looted</div>
       <div class="stt-val">${base.length.toLocaleString()}</div>
-      <div class="stt-sub">${ourGuild||'all guilds'}</div>
+      <div class="stt-sub">${sguild||'all guilds'}</div>
     </div>
     <div class="stt">
       <div class="stt-label">🔵 Deposited</div>
@@ -822,7 +820,7 @@ function renderStats(){
     </div>
     <div class="stt">
       <div class="stt-label">💰 Pend. Value</div>
-      <div class="stt-val cv-amber">${fmtSilver(totalPendingSilver)}</div>
+      <div class="stt-val cv-amber">${fmtSilver(totalVisiblePendingSilver)}</div>
       <div class="stt-sub">estimated silver</div>
     </div>
     <div class="stt">
@@ -847,10 +845,10 @@ function applyFilters(){
     rows=rows.filter(r=>r.item_name.toLowerCase().includes(q)||r.item_id.toLowerCase().includes(q)||r.looted_by_name.toLowerCase().includes(q)||r.looted_from_name.toLowerCase().includes(q)); 
   }
 
-  // Renderiza a barra do topo ANTES de aplicar o filtro 'sf' (Pending/All)
+  // Renderiza as estatísticas do topo ANTES de esconder os itens que não são "pending" da lista inferior
   renderStats();
 
-  // Aplica o filtro de status apenas na lista de cards lá embaixo
+  // Agora aplica o filtro de status (All/Pending) apenas para o que vai pros cards
   if(sf==='pending') rows=rows.filter(r=>r.status==='pending');
 
   rows.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
@@ -866,6 +864,7 @@ function groupByPlayer(rows){
     m[k].items.push(r);
     m[k].c[r.status]=(m[k].c[r.status]||0)+1;
     
+    // O valor de prata do card do player é calculado aqui
     if (r.status === 'pending') {
       const price = PRICE_MAP[r.item_id] || 0;
       m[k].c.silver += price * r.quantity;
@@ -880,7 +879,10 @@ function groupByPlayer(rows){
     else if(g.c.deposited>0)ov='deposited';
     else if(g.c.lost>0)     ov='lost';
     return {...g,overall:ov};
-  }).sort((a,b)=>{ const d=pri[a.overall]-pri[b.overall]; return d||b.items.length-a.items.length; });
+  }).sort((a,b)=>{ 
+    const d=pri[a.overall]-pri[b.overall]; 
+    return d || b.c.silver - a.c.silver; // Prioriza quem deve mais prata
+  });
 }
 
 function renderCards(){
@@ -1140,7 +1142,7 @@ function buildPayload(playerName, pendingItems, guild, imgBlob, avatarBlob){
   groupedList.forEach(g => {
     totalSilver += (PRICE_MAP[g.item_id] || 0) * g.quantity;
   });
-  const silverStr = totalSilver > 0 ? `~${fmtSilver(totalSilver)} Silver` : 'Unknown';
+  const silverStr = totalSilver > 0 ? `~${fmtSilver(totalSilver)} Silver` : '0 Silver';
 
   const lines = groupedList.map(g=>{
     const t = parseInt((g.item_id||'').match(/^T(\d)/)?.[1]||0);
