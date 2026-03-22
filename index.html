@@ -103,23 +103,40 @@ header .divider { width: 1px; height: 20px; background: var(--line2); margin: 0 
 #page-upload {
   display: flex; flex-direction: column; align-items: center;
   justify-content: center; flex: 1;
-  padding: 40px 20px; gap: 36px;
+  padding: 60px 20px; gap: 40px;
 }
-.up-hero { text-align: center; }
-.up-logo {
-  width: 80px; 
-  height: 80px; 
-  margin: 0 auto 16px auto; 
-  display: block; 
-  border-radius: 12px; 
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  object-fit: cover;
+.up-hero { text-align: center; margin-bottom: 10px; }
+.up-logo-large {
+  width: 260px;
+  max-width: 80vw;
+  height: auto;
+  margin: 0 auto 24px auto;
+  display: block;
+  filter: drop-shadow(0 10px 30px rgba(0,0,0,0.6));
 }
 .up-hero h1 {
-  font-size: 2rem; font-weight: 700; letter-spacing: -.04em;
-  color: var(--t); line-height: 1.2; margin-bottom: 12px;
+  font-size: 3rem; 
+  font-weight: 800; 
+  letter-spacing: 0.05em;
+  color: var(--t); 
+  line-height: 1.1; 
+  margin-bottom: 8px;
+  text-transform: uppercase;
 }
-.up-hero p { font-size: 1rem; color: var(--t3); max-width: 420px; margin: 0 auto; }
+.up-hero h2 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--t3);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+.up-hero p.up-desc { 
+  font-size: 1.05rem; 
+  color: var(--t2); 
+  max-width: 480px; 
+  margin: 0 auto; 
+}
 
 .upload-cols {
   display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
@@ -440,7 +457,7 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
 </head>
 <body>
 
-<header>
+<header id="main-header" style="display: none;">
   <div class="logo">
     <div class="logo-sq">
       <img src="logo.png" alt="Logo">
@@ -462,9 +479,10 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
 
 <div id="page-upload">
   <div class="up-hero">
-    <img src="logo.png" alt="Log Viewer Logo" class="up-logo">
-    <h1>Log Viewer</h1>
-    <p>Upload loot logs and chest logs — combine multiple files from the same session.</p>
+    <img src="logo.png" alt="Log Viewer Logo" class="up-logo-large">
+    <h1>LOG VIEWER</h1>
+    <h2>CREATED BY CHAKZ</h2>
+    <p class="up-desc">Upload loot logs and chest logs — combine multiple files from the same session.</p>
   </div>
   <div class="upload-cols">
     <div class="upload-col">
@@ -804,6 +822,7 @@ document.getElementById('btn-go').addEventListener('click',()=>{
   populateGuildFilter(allRows);
 
   document.getElementById('page-upload').style.display='none';
+  document.getElementById('main-header').style.display='flex'; // MOSTRA O HEADER
   document.getElementById('page-app').style.display='block';
   document.getElementById('btn-reload').style.display='';
   const chip=document.getElementById('guild-chip');
@@ -814,7 +833,8 @@ document.getElementById('btn-go').addEventListener('click',()=>{
 });
 
 document.getElementById('btn-reload').addEventListener('click',()=>{
-  document.getElementById('page-upload').style.display='';
+  document.getElementById('page-upload').style.display='flex';
+  document.getElementById('main-header').style.display='none'; // ESCONDE O HEADER
   document.getElementById('page-app').style.display='none';
   document.getElementById('btn-reload').style.display='none';
   document.getElementById('guild-chip').classList.remove('show');
