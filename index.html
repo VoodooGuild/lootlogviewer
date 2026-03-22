@@ -654,9 +654,10 @@ function enrichRows(lootRows, ourGuild, chestRows){
   });
 }
 
-// FORMAT param adicionado para podermos solicitar SVG no site e PNG no Discord
+// CORREÇÃO: Adicionando size=128 e ext=.png para forçar o Discord a carregar a imagem sem timeout
 function getPlayerAvatar(name, format='svg') {
-  return `https://api.dicebear.com/8.x/adventurer/${format}?seed=${encodeURIComponent(name)}&backgroundColor=1a1a20`;
+  const formatParams = format === 'png' ? '&size=128&ext=.png' : '';
+  return `https://api.dicebear.com/8.x/adventurer/${format}?seed=${encodeURIComponent(name)}&backgroundColor=1a1a20${formatParams}`;
 }
 
 const TIPDATA = {};
@@ -1123,7 +1124,6 @@ function buildPayload(playerName, pendingItems, guild, imgBlob){
 
   const killboardUrl = `https://killboard-1.com/eu/player/${encodeURIComponent(playerName)}`;
   
-  // SOLICITA O AVATAR NO FORMATO PNG EXCLUSIVAMENTE PARA O DISCORD
   const avatarPngUrl = getPlayerAvatar(playerName, 'png');
 
   const embed = {
@@ -1131,7 +1131,7 @@ function buildPayload(playerName, pendingItems, guild, imgBlob){
     author: { name:'⚠️ Pending Deposit — Squirtle Squad' },
     title:  playerName,
     url:    killboardUrl,
-    thumbnail: { url: avatarPngUrl }, // AVATAR POSICIONADO NO CANTO SUPERIOR DIREITO
+    thumbnail: { url: avatarPngUrl },
     description: [
       `**${groupedList.length} item${groupedList.length!==1?'s':''} not deposited yet**`,
       ``,
