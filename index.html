@@ -663,4 +663,548 @@ function enrichRows(lootRows, ourGuild, chestRows){
 }
 
 function getPlayerAvatar(name) {
-  return `https://api.dicebear.
+  return `https://api.dicebear.com/8.x/adventurer/svg?seed=${encodeURIComponent(name)}&backgroundColor=1a1a20`;
+}
+
+const TIPDATA = {};
+let _chipCounter = 0;
+let allRows=[],filtered=[],ourGuild='';
+let pg=1,perPg=40,sf='all',sq='',sguild='';
+const hideT=new Set(['food','potion','mount','trash','other']);
+const lootFiles=[], chestFiles=[];
+
+function renderFilePills(listId, files, onRemove){
+  const el=document.getElementById(listId);
+  el.innerHTML=files.map((f,i)=>`
+    <div class="file-pill">
+      <span class="fp-icon">📄</span>
+      <span class="fp-name">${esc(f.name)}</span>
+      <span class="fp-size">${fmtSz(f.size)}</span>
+      <button class="fp-remove" data-i="${i}">✕</button>
+    </div>`).join('');
+  el.querySelectorAll('.fp-remove').forEach(b=>b.addEventListener('click',()=>{
+    files.splice(+b.dataset.i,1);
+    renderFilePills(listId,files,onRemove);
+    checkGoBtn();
+  }));
+}
+
+function checkGoBtn(){ document.getElementById('btn-go').disabled = lootFiles.length===0; }
+
+function addFiles(newFiles, store, listId){
+  for(const f of newFiles){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      store.push({name:f.name,size:f.size,text:e.target.result});
+      renderFilePills(listId,store,()=>{});
+      checkGoBtn();
+    };
+    reader.readAsText(f);
+  }
+}
+
+function setupDZ(dzId, fiId, store, listId){
+  const dz=document.getElementById(dzId), fi=document.getElementById(fiId);
+  dz.addEventListener('click',()=>fi.click());
+  dz.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' ')fi.click(); });
+  ['dragover','dragenter'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('over');}));
+  ['dragleave','dragend'].forEach(ev=>dz.addEventListener(ev,()=>dz.classList.remove('over')));
+  dz.addEventListener('drop',e=>{
+    e.preventDefault();dz.classList.remove('over');
+    if(e.dataTransfer.files.length)addFiles([...e.dataTransfer.files],store,listId);
+  });
+  fi.addEventListener('change',e=>{
+    if(e.target.files.length)addFiles([...e.target.files],store,listId);
+    fi.value='';
+  });
+}
+
+setupDZ('dz-loot','fi-loot',lootFiles,'fl-loot');
+setupDZ('dz-chest','fi-chest',chestFiles,'fl-chest');
+
+document.getElementById('btn-go').addEventListener('click',()=>{
+  let tempRows = [];
+  lootFiles.forEach(f=>{
+    tempRows = tempRows.concat(parseLoot(f.text));
+  });
+
+  // Ordenação Estrita para garantir 100% de consistência a cada upload
+  tempRows.sort((a,b) => {
+    const tA = new Date(a.timestamp).getTime() || 0;
+    const tB = new Date(b.timestamp).getTime() || 0;
+    if (tA !== tB) return tA - tB;
+    return (a.item_id || '').localeCompare(b.item_id || ''); 
+  });
+
+  const seen = [];
+  let lootRows = [];
+  const baseId = id => (id || '').replace(/@\d$/,'');
+  
+  tempRows.forEach(r => {
+    const rTime = new Date(r.timestamp).getTime() || 0;
+    const bId = baseId(r.item_id);
+    
+    // Fuzzy Match: 60 segundos de tolerância
+    const isDuplicate = seen.some(s => 
+      s.looted_by === r.looted_by_name &&
+      s.item === bId &&
+      s.looted_from === r.looted_from_name &&
+      s.qty === r.quantity &&
+      Math.abs(s.time - rTime) < 60000 
+    );
+
+    if(!isDuplicate) {
+      seen.push({
+        looted_by: r.looted_by_name,
+        item: bId,
+        looted_from: r.looted_from_name,
+        qty: r.quantity,
+        time: rTime
+      });
+      lootRows.push(r);
+    }
+  });
+
+  if(!lootRows.length){ alert('Could not parse any loot rows. Check file formats.'); return; }
+
+  let chestRows=[];
+  chestFiles.forEach(f=>{ chestRows=chestRows.concat(parseChest(f.text)); });
+
+  ourGuild=detectGuild(lootRows);
+  allRows=enrichRows(lootRows,ourGuild,chestRows);
+  populateGuildFilter(allRows);
+
+  document.getElementById('page-upload').style.display='none';
+  document.getElementById('page-app').style.display='block';
+  document.getElementById('btn-reload').style.display='';
+  const chip=document.getElementById('guild-chip');
+  document.getElementById('guild-chip-name').textContent=ourGuild||'unknown';
+  if(ourGuild) chip.classList.add('show');
+
+  applyFilters();
+});
+
+document.getElementById('btn-reload').addEventListener('click',()=>{
+  document.getElementById('page-upload').style.display='';
+  document.getElementById('page-app').style.display='none';
+  document.getElementById('btn-reload').style.display='none';
+  document.getElementById('guild-chip').classList.remove('show');
+  lootFiles.length=0; chestFiles.length=0;
+  ['fl-loot','fl-chest'].forEach(id=>document.getElementById(id).innerHTML='');
+  allRows=[]; document.getElementById('btn-go').disabled=true;
+});
+
+function populateGuildFilter(rows){
+  const guilds=[...new Set(rows.map(r=>r.looted_by_guild).filter(Boolean))].sort();
+  const sel=document.getElementById('f-guild');
+  sel.innerHTML='<option value="">All guilds</option>'+guilds.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');
+  if(guilds.includes(ourGuild)){ sel.value=ourGuild; sguild=ourGuild; }
+  else { sel.value=''; sguild=''; }
+}
+
+function renderStats(){
+  const base=ourGuild?allRows.filter(r=>r.looted_by_guild===ourGuild):allRows;
+  const c={looted:0,deposited:0,pending:0,lost:0};
+  base.forEach(r=>{ if(c[r.status]!==undefined)c[r.status]++; });
+  c.pending=filtered.filter(r=>r.status==='pending').length;
+  const players=new Set(filtered.map(r=>r.looted_by_name).filter(Boolean)).size;
+  const pct=base.length>0?Math.round(c.deposited/base.length*100):0;
+  document.getElementById('stats').innerHTML=`
+    <div class="stt">
+      <div class="stt-label">⚔️ Total looted</div>
+      <div class="stt-val">${base.length.toLocaleString()}</div>
+      <div class="stt-sub">${ourGuild||'all guilds'}</div>
+    </div>
+    <div class="stt">
+      <div class="stt-label">🔵 Deposited</div>
+      <div class="stt-val cv-blue">${c.deposited.toLocaleString()}</div>
+      <div class="stt-sub">${pct}% of total</div>
+    </div>
+    <div class="stt">
+      <div class="stt-label">🟡 Pending</div>
+      <div class="stt-val cv-amber">${c.pending.toLocaleString()}</div>
+      <div class="stt-sub">not deposited</div>
+    </div>
+    <div class="stt">
+      <div class="stt-label">🔴 Lost</div>
+      <div class="stt-val cv-red">${c.lost.toLocaleString()}</div>
+      <div class="stt-sub">taken from us</div>
+    </div>
+    <div class="stt">
+      <div class="stt-label">👥 Players</div>
+      <div class="stt-val cv-slate">${players.toLocaleString()}</div>
+      <div class="stt-sub">in view</div>
+    </div>`;
+}
+
+function applyFilters(){
+  let rows=allRows.slice();
+  if(sguild)         rows=rows.filter(r=>r.looted_by_guild===sguild);
+  if(hideT.size)     rows=rows.filter(r=>!hideT.has(itemType(r)));
+  if(sf==='pending') rows=rows.filter(r=>r.status==='pending');
+  if(sq){ const q=sq.toLowerCase(); rows=rows.filter(r=>r.item_name.toLowerCase().includes(q)||r.item_id.toLowerCase().includes(q)||r.looted_by_name.toLowerCase().includes(q)||r.looted_from_name.toLowerCase().includes(q)); }
+  rows.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+  filtered=rows; pg=1;
+  renderCards(); renderStats();
+}
+
+function groupByPlayer(rows){
+  const m={};
+  rows.forEach(r=>{
+    const k=r.looted_by_name||'(unknown)';
+    if(!m[k])m[k]={name:k,guild:r.looted_by_guild,items:[],c:{looted:0,deposited:0,pending:0,lost:0,neutral:0}};
+    m[k].items.push(r);
+    m[k].c[r.status]=(m[k].c[r.status]||0)+1;
+  });
+  const pri={pending:0,looted:1,deposited:2,lost:3,neutral:4};
+  return Object.values(m).map(g=>{
+    let ov='neutral';
+    if(g.c.pending>0)       ov='pending';
+    else if(g.c.looted>0)   ov='looted';
+    else if(g.c.deposited>0)ov='deposited';
+    else if(g.c.lost>0)     ov='lost';
+    return {...g,overall:ov};
+  }).sort((a,b)=>{ const d=pri[a.overall]-pri[b.overall]; return d||b.items.length-a.items.length; });
+}
+
+function renderCards(){
+  Object.keys(TIPDATA).forEach(k=>delete TIPDATA[k]); _chipCounter=0;
+  const groups=groupByPlayer(filtered);
+  const col=document.getElementById('cards-col');
+  if(!groups.length){
+    col.innerHTML='<div class="empty-msg">No results for the current filters.</div>';
+    document.getElementById('pgn').innerHTML=''; return;
+  }
+  const start=(pg-1)*perPg, page=groups.slice(start,start+perPg);
+  const bdM={looted:'bd-looted',deposited:'bd-deposited',pending:'bd-pending',lost:'bd-lost',neutral:'bd-neutral'};
+  const bdL={looted:'Looted',deposited:'Deposited',pending:'Pending',lost:'Lost',neutral:'—'};
+  const bdC={looted:'var(--green)',deposited:'var(--blue)',pending:'var(--amber)',lost:'var(--red)',neutral:'var(--t3)'};
+
+  col.innerHTML=page.map(g=>{
+    const dep=g.c.deposited||0,tot=g.items.length;
+    const pct=tot>0?Math.round(dep/tot*100):0;
+    const init=(g.name||'?').charAt(0).toUpperCase();
+
+    const avatarUrl = getPlayerAvatar(g.name);
+    const avatarHtml = `<img class="avatar" src="${avatarUrl}" alt="${init}" onerror="this.outerHTML='<div class=\\'avatar\\'>${init}</div>'"/>`;
+
+    const groupedItems = Object.values(g.items.reduce((acc, r) => {
+      const key = r.item_id + '|' + r.status;
+      if (!acc[key]) acc[key] = { ...r, displayQty: 0 };
+      acc[key].displayQty += r.quantity;
+      return acc;
+    }, {}));
+
+    const chips = groupedItems.map((r) => {
+      const st = r.status, enc = encId(r.item_id), tier = tierId(r.item_id);
+      const isTrash = r.item_id.toUpperCase().includes('TRASH');
+      const cc = st==='deposited'?' dep':st==='pending'?' pend':'';
+      const img = isTrash
+        ? `<div class="noi">🗑</div>`
+        : `<img src="${imgUrl(r.item_id)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noi',textContent:'?'}))"/>`;
+      
+      const qtyHtml = r.displayQty > 1 ? `<div class="chip-qty">${r.displayQty}</div>` : '';
+      const chipId = `c${++_chipCounter}`;
+
+      TIPDATA[chipId] = {
+        name: r.item_name, id: r.item_id, tier, enc,
+        qty: r.displayQty, time: fmtT(r.timestamp),
+        from: (st==='looted'||st==='deposited'||st==='pending') ? ('From: '+(r.looted_from_name||'?')+(r.looted_from_guild?' ('+r.looted_from_guild+')':'')) : st==='lost' ? ('To: '+(r.looted_by_name||'?')) : (r.looted_from_name||'?'),
+        st, sc:{deposited:'ts-d',pending:'ts-p',lost:'ts-l',looted:'ts-loot'}[st]||'',
+        stxt:{looted:'Waiting for deposit',deposited:'Deposited in chest',pending:'Not deposited yet',lost:'Lost to enemy',neutral:'—'}[st]||'—'
+      };
+      
+      return `<div class="chip${cc}" data-cid="${chipId}">${img}${qtyHtml}</div>`;
+    }).join('');
+
+    return `<div class="pcard s-${g.overall}">
+      <div class="ch">
+        ${avatarHtml}
+        <div class="ci">
+          <div class="ci-name">${esc(g.name)}</div>
+          ${g.guild?`<div class="ci-guild">🏰 ${esc(g.guild)}</div>`:''}
+        </div>
+        <div class="cr">
+          <span class="badge ${bdM[g.overall]}"><span style="color:${bdC[g.overall]};font-size:.6rem">●</span> ${bdL[g.overall]}</span>
+          <span class="cr-count">${tot} item${tot!==1?'s':''}${dep?` · ${dep} dep.`:''}</span>
+          ${g.overall==='pending'?`<button class="card-send-btn" data-player="${esc(g.name)}" onclick="sendPlayerPing(this,'${esc(g.name)}')">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M11.5 2C10 1 8 .5 7 .5S4 1 2.5 2C1.5 2.8 1 4 1 5.5c0 1 .3 2 .8 2.7.2.3.2.7 0 1L1 11l2-.5c.3-.1.6 0 .8.2C5 11.5 6 12 7 12s2-.5 3.2-1.3c.2-.2.5-.3.8-.2l2 .5-.8-1.8c-.2-.3-.2-.7 0-1C12.7 7.5 13 6.5 13 5.5c0-1.5-.5-2.7-1.5-3.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+            Ping
+          </button>`:''}
+        </div>
+      </div>
+      <div class="citems">${chips}</div>
+      <div class="cf">
+        <span class="cf-txt">Deposited: ${dep}/${tot}</span>
+        <div class="prog"><div class="prog-fill" style="width:${pct}%"></div></div>
+        <span class="cf-pct">${pct}%</span>
+      </div>
+    </div>`;
+  }).join('');
+  renderPgn(groups.length);
+}
+
+function renderPgn(total){
+  const tp=Math.ceil(total/perPg),el=document.getElementById('pgn');
+  if(tp<=1){el.innerHTML=`<span class="pi">${total} player${total!==1?'s':''}</span>`;return;}
+  const pages=[],R=2;
+  for(let i=1;i<=tp;i++)if(i===1||i===tp||Math.abs(i-pg)<=R)pages.push(i);
+  let h=`<button class="pb" data-a="p" ${pg===1?'disabled':''}>‹</button>`;
+  let prev=0;
+  for(const p of pages){if(prev&&p-prev>1)h+=`<span class="pi">…</span>`;h+=`<button class="pb ${p===pg?'active':''}" data-p="${p}">${p}</button>`;prev=p;}
+  h+=`<button class="pb" data-a="n" ${pg===tp?'disabled':''}>›</button>`;
+  h+=`<span class="pi">${total} player${total!==1?'s':''}</span>`;
+  el.innerHTML=h;
+  el.querySelectorAll('[data-p]').forEach(b=>b.addEventListener('click',()=>{pg=+b.dataset.p;renderCards();}));
+  el.querySelector('[data-a="p"]')?.addEventListener('click',()=>{if(pg>1){pg--;renderCards();}});
+  el.querySelector('[data-a="n"]')?.addEventListener('click',()=>{if(pg<tp){pg++;renderCards();}});
+}
+
+document.getElementById('s-input').addEventListener('input',e=>{sq=e.target.value;applyFilters();});
+document.getElementById('f-guild').addEventListener('change',e=>{sguild=e.target.value;applyFilters();});
+document.getElementById('f-per').addEventListener('change',e=>{perPg=+e.target.value;pg=1;renderCards();});
+document.getElementById('status-seg').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-s]');if(!btn)return;
+  sf=btn.dataset.s;
+  document.querySelectorAll('[data-s]').forEach(b=>{
+    b.className='seg-btn';
+    if(b.dataset.s===sf)b.classList.add(sf==='pending'?'on-pending':'on');
+  });
+  applyFilters();
+});
+document.querySelectorAll('.htog').forEach(t=>{
+  t.addEventListener('click',()=>{
+    const type=t.dataset.t;
+    if(hideT.has(type)){hideT.delete(type);t.classList.remove('on');}
+    else{hideT.add(type);t.classList.add('on');}
+    applyFilters();
+  });
+});
+
+const GT = document.getElementById('global-tip');
+let tipActive = false;
+
+document.addEventListener('mouseover', e => {
+  const chip = e.target.closest('[data-cid]');
+  if (!chip) return;
+  const d = TIPDATA[chip.dataset.cid];
+  if (!d) return;
+  const tc = ['','','','','t4','t5','t6','t7','t8'][d.tier]||'';
+  const encDot = d.enc ? `<span class="enc e${d.enc}"></span>` : '';
+  GT.innerHTML =
+    `<div class="tip-name ${tc}">${esc(d.name)}${encDot}</div>`
+   +`<div class="tip-id">${esc(d.id)}</div>`
+   +`<div class="tip-row"><span style="flex:1">${esc(d.from)}</span></div>`
+   +`<div class="tip-row"><span>Qty</span><strong>×${d.qty}</strong></div>`
+   +`<div class="tip-row"><span>Time</span><strong>${d.time||'—'}</strong></div>`
+   +`<div class="tip-st ${d.sc}">${d.stxt}</div>`;
+  GT.style.display = 'block';
+  tipActive = true;
+  positionTip(chip);
+});
+document.addEventListener('mouseout', e => {
+  if (!e.target.closest('[data-cid]')) return;
+  GT.style.display = 'none';
+  tipActive = false;
+});
+document.addEventListener('scroll', () => { if(tipActive){GT.style.display='none';tipActive=false;} }, true);
+
+function positionTip(chip) {
+  const cr = chip.getBoundingClientRect();
+  const TW = 230, TH = GT.offsetHeight || 160, M = 12;
+  const W = window.innerWidth, H = window.innerHeight;
+  let left = cr.left + cr.width/2 - TW/2;
+  left = Math.max(8, Math.min(left, W - TW - 8));
+  const above = cr.top >= TH + M + 20;
+  const below = !above && (H - cr.bottom >= TH + M + 20);
+  let top = above ? cr.top - TH - M : below ? cr.bottom + M : Math.max(8, cr.top - TH - M);
+  GT.style.left = left + 'px';
+  GT.style.top  = top  + 'px';
+  GT.classList.toggle('tip-below', below && !above);
+  const arrowL = Math.max(12, Math.min((cr.left + cr.width/2) - left, TW - 12));
+  GT.style.setProperty('--arrow-left', arrowL + 'px');
+}
+
+const WEBHOOK_URL = 'https://discord.com/api/webhooks/1485254555816956125/X_i-Yl422TpZrfUorNwLW7wfdLAtgLVoSd3zXOexno3kEHHIwri1L0WLL7qDjgjXOSei';
+const WORKER_URL = '/api/grid';
+
+const whStatus   = document.getElementById('wh-status');
+const btnSendAll = document.getElementById('btn-send-all');
+const btnConfig  = document.getElementById('btn-discord-config');
+const cfgModal   = document.getElementById('discord-config-modal');
+const cfgClose   = document.getElementById('cfg-close');
+const cfgSave    = document.getElementById('cfg-save');
+const cfgArea    = document.getElementById('cfg-textarea');
+
+let discordIdMap = JSON.parse(localStorage.getItem('ao_discord_ids')||'{}');
+
+function setStatus(msg, ok){
+  whStatus.textContent   = msg;
+  whStatus.className     = 'wh-status '+(ok?'ok':'err');
+  whStatus.style.display = 'inline-block';
+  setTimeout(()=>{ whStatus.style.display='none'; }, 6000);
+}
+
+btnConfig.addEventListener('click',()=>{
+  cfgArea.value = Object.entries(discordIdMap).map(([k,v])=>`${k}=${v}`).join('\n');
+  cfgModal.style.display='flex';
+});
+cfgClose.addEventListener('click',()=>{ cfgModal.style.display='none'; });
+cfgModal.addEventListener('click',e=>{ if(e.target===cfgModal) cfgModal.style.display='none'; });
+cfgSave.addEventListener('click',()=>{
+  discordIdMap={};
+  cfgArea.value.split('\n').forEach(line=>{
+    const [name,...rest]=line.trim().split('=');
+    const id=rest.join('=').trim();
+    if(name&&id) discordIdMap[name.trim()]=id;
+  });
+  localStorage.setItem('ao_discord_ids', JSON.stringify(discordIdMap));
+  cfgModal.style.display='none';
+  setStatus(`Saved ${Object.keys(discordIdMap).length} Discord IDs`, true);
+});
+
+function dedupItems(items){
+  const map = {};
+  items.forEach(r=>{
+    const base = r.item_id.replace(/@\d$/,'');
+    if(!map[base]) map[base] = {...r, quantity: 0};
+    map[base].quantity += r.quantity;
+  });
+  return Object.values(map);
+}
+
+function albionImgUrl(itemId){
+  return `https://render.albiononline.com/v1/item/${encodeURIComponent(itemId)}.png?size=64&quality=2`;
+}
+
+async function fetchGridImage(items){
+  if(!WORKER_URL) return null;
+  try{
+    const ids = items.map(r=>`${r.item_id}:${r.quantity||1}`).join(',');
+    const resp = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: ids })
+    });
+    if(!resp.ok) return null;
+    return await resp.blob();
+  } catch(e){
+    console.warn('Worker fetch failed:', e);
+    return null;
+  }
+}
+
+const tierEmoji = t => ['','','','','🟦','🟩','🟨','🟧','🟥'][t]||'⬜';
+
+function buildPayload(playerName, pendingItems, guild, imgBlob){
+  const id      = discordIdMap[playerName];
+  const mention = id ? `<@${id}>` : `📋 **${playerName}**`;
+  
+  const groupedList = dedupItems(pendingItems);
+  const lines = groupedList.map(g=>{
+    const t = parseInt((g.item_id||'').match(/^T(\d)/)?.[1]||0);
+    return `${tierEmoji(t)} ${g.item_name}${g.quantity>1?` ×${g.quantity}`:''}`;
+  }).join('\n');
+
+  const killboardUrl = `https://killboard-1.com/eu/player/${encodeURIComponent(playerName)}`;
+  const embed = {
+    color: 0xf59e0b,
+    author: { name:'⚠️ Pending Deposit — Squirtle Squad' },
+    title:  playerName,
+    url:    killboardUrl,
+    description: [
+      `**${groupedList.length} item${groupedList.length!==1?'s':''} not deposited yet**`,
+      ``,
+      `You have **24 hours** to deposit or get charged.`,
+      `📌 Open a thread and explain why this loot is missing.`,
+      ``,
+      `🔗 [View Killboard](${killboardUrl})`,
+    ].join('\n'),
+    fields:[
+      { name:'Guild', value:guild||'—', inline:true },
+      { name:`Missing Items (${groupedList.length})`, value:lines.slice(0,1020)||'—', inline:false },
+    ],
+    footer:    { text:'Loot Logger · Guild Tool' },
+    timestamp: new Date().toISOString(),
+  };
+
+  if(imgBlob){
+    embed.image = { url:'attachment://items.png' };
+    const form  = new FormData();
+    form.append('payload_json', JSON.stringify({ content:mention, username:'Loot Logger', embeds:[embed] }));
+    form.append('files[0]', imgBlob, 'items.png');
+    return { useForm:true, form };
+  } else {
+    embed.thumbnail = { url: albionImgUrl(pendingItems[0].item_id) };
+    return { useForm:false, payload:{ content:mention, username:'Loot Logger', embeds:[embed] } };
+  }
+}
+
+async function postOne(msgData){
+  let resp;
+  if(msgData.useForm){
+    resp = await fetch(WEBHOOK_URL, { method:'POST', body: msgData.form });
+  } else {
+    resp = await fetch(WEBHOOK_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(msgData.payload)
+    });
+  }
+  if(!resp.ok){
+    const txt = await resp.text();
+    console.error('Discord error:', txt);
+    throw new Error(`Discord ${resp.status}: ${txt.slice(0,120)}`);
+  }
+}
+
+async function sendToDiscord(playerName, pendingItems, guild, btnEl){
+  if(!pendingItems.length){ setStatus('No pending items for '+playerName, false); return; }
+  if(btnEl){ btnEl.classList.add('sending'); btnEl.disabled=true; }
+  try{
+    const dedupedItems = dedupItems(pendingItems);
+    const imgBlob = await fetchGridImage(dedupedItems);
+    const msgData = buildPayload(playerName, dedupedItems, guild, imgBlob);
+    await postOne(msgData);
+    setStatus(`✓ Sent for ${playerName}${imgBlob?' 🖼️':' (text only)'}`, true);
+    if(btnEl){ btnEl.classList.remove('sending'); btnEl.classList.add('sent'); btnEl.innerHTML='✓ Sent'; btnEl.disabled=false; }
+  } catch(e){
+    console.error(e);
+    setStatus('Failed: '+e.message.slice(0,80), false);
+    if(btnEl){ btnEl.classList.remove('sending'); btnEl.classList.add('failed'); btnEl.innerHTML='✗ Error'; btnEl.disabled=false; }
+  }
+}
+
+window.sendPlayerPing = async function(btnEl, playerName){
+  const group = groupByPlayer(filtered).find(g=>g.name===playerName);
+  if(!group) return;
+  await sendToDiscord(playerName, group.items.filter(r=>r.status==='pending'), group.guild, btnEl);
+};
+
+btnSendAll.addEventListener('click', async()=>{
+  const groups = groupByPlayer(filtered).filter(g=>g.c.pending>0);
+  if(!groups.length){ setStatus('No pending players.', false); return; }
+  btnSendAll.disabled=true;
+  const origHTML = btnSendAll.innerHTML;
+  btnSendAll.innerHTML='Sending…';
+  let ok=0, fail=0;
+  for(const g of groups){
+    const pending = g.items.filter(r=>r.status==='pending');
+    if(!pending.length) continue;
+    try{
+      const imgBlob = await fetchGridImage(dedupItems(pending));
+      const msgData = buildPayload(g.name, pending, g.guild, imgBlob);
+      await postOne(msgData);
+      ok++;
+    } catch(e){ fail++; console.error(e); }
+    await new Promise(r=>setTimeout(r,1400));
+  }
+  btnSendAll.disabled=false;
+  btnSendAll.innerHTML=origHTML;
+  setStatus(`Done: ${ok} sent${fail?`, ${fail} failed`:''}`, fail===0);
+});
+
+</script>
+<div id="global-tip"></div>
+</body>
+</html>
