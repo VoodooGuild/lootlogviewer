@@ -869,29 +869,27 @@ function groupByPlayer(rows){
   const m={};
   rows.forEach(r=>{
     const k=r.looted_by_name||'(unknown)';
-    if(!m[k]) m[k]={name:k,guild:r.looted_by_guild,items:[],c:{looted:0,deposited:0,pending:0,lost:0,neutral:0,silver:0}};
+    if(!m[k]) m[k]={name:k,guild:r.looted_by_guild,items:[],c:{looted:0,deposited:0,pending:0,lost:0,neutral:0}};
     m[k].items.push(r);
     m[k].c[r.status]=(m[k].c[r.status]||0)+1;
   });
-  
-  // Calcula silver pendente buscando SEMPRE em allRows para não depender do filtro sf.
-  // Isso garante que mesmo na aba "All", o badge mostra só o valor dos itens pending.
-  const pendingByPlayer = {};
+
+  // pendingSilver: sempre calculado de allRows com filtros base ativos (sem filtro de status).
+  // Isso garante que tanto na aba "All" quanto na "Pending" o valor exibido é só dos pending.
+  const silverMap = {};
   allRows.forEach(r => {
     if (r.status !== 'pending') return;
-    // Respeita os mesmos filtros ativos (guild, hideT, busca) mas ignora o filtro de status
     if (sguild && r.looted_by_guild !== sguild) return;
     if (hideT.has(itemType(r))) return;
     if (sq) {
       const q = sq.toLowerCase();
-      const match = r.item_name.toLowerCase().includes(q) ||
-                    r.item_id.toLowerCase().includes(q) ||
-                    r.looted_by_name.toLowerCase().includes(q) ||
-                    r.looted_from_name.toLowerCase().includes(q);
-      if (!match) return;
+      if (!r.item_name.toLowerCase().includes(q) &&
+          !r.item_id.toLowerCase().includes(q) &&
+          !r.looted_by_name.toLowerCase().includes(q) &&
+          !r.looted_from_name.toLowerCase().includes(q)) return;
     }
     const k = r.looted_by_name || '(unknown)';
-    pendingByPlayer[k] = (pendingByPlayer[k] || 0) + (PRICE_MAP[r.item_id] || 0) * r.quantity;
+    silverMap[k] = (silverMap[k] || 0) + (PRICE_MAP[r.item_id] || 0) * r.quantity;
   });
 
   const pri={pending:0,looted:1,deposited:2,lost:3,neutral:4};
@@ -901,9 +899,10 @@ function groupByPlayer(rows){
     else if(g.c.looted>0)   ov='looted';
     else if(g.c.deposited>0)ov='deposited';
     else if(g.c.lost>0)     ov='lost';
-    return {...g, overall:ov, pendingSilver: pendingByPlayer[g.name] || 0};
+    return {...g, overall:ov, pendingSilver: silverMap[g.name] || 0};
   }).sort((a,b)=>{ const d=pri[a.overall]-pri[b.overall]; return d||b.items.length-a.items.length; });
 }
+
 
 function renderCards(){
   Object.keys(TIPDATA).forEach(k=>delete TIPDATA[k]); _chipCounter=0;
