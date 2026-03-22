@@ -91,7 +91,6 @@ header .divider { width: 1px; height: 20px; background: var(--line2); margin: 0 
 .guild-chip.show { display: flex; }
 .guild-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
 
-/* Estilo do novo selo de horário da sessão */
 .session-chip {
   font-size: .75rem; color: var(--amber); background: var(--amber-dim);
   border: 1px solid var(--amber-bdr); border-radius: 6px;
@@ -178,7 +177,11 @@ header .divider { width: 1px; height: 20px; background: var(--line2); margin: 0 
 .drop-zone-text { font-size: .9rem; color: var(--t3); }
 .drop-zone-text b { color: var(--blue); font-weight: 600; }
 
-.file-list { display: flex; flex-direction: column; gap: 6px; }
+/* FIX DE UX: Limitar tamanho e habilitar scroll na lista de arquivos */
+.file-list { 
+  display: flex; flex-direction: column; gap: 6px; 
+  max-height: 250px; overflow-y: auto; padding-right: 5px;
+}
 .file-pill {
   display: flex; align-items: center; gap: 10px;
   background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r3);
@@ -520,7 +523,7 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
       <input type="file" id="fi-chest" accept=".txt,.csv" multiple/>
     </div>
   </div>
-  <button class="go-btn" id="btn-go" disabled>Load &amp; cross-reference</button>
+  <button class="go-btn" id="btn-go" disabled>START</button>
 </div>
 
 <div id="page-app">
@@ -603,7 +606,6 @@ const tCls  = t  => ['','','','','t4','t5','t6','t7','t8'][t]||'';
 const imgUrl= id => `https://render.albiononline.com/v1/item/${encodeURIComponent(id)}.png?size=64&quality=2`;
 const mkey  = (name,enc) => (name||'').toLowerCase().trim()+'@@'+(enc||0);
 
-// NOVO: Variável global para armazenar a data do evento detectado
 let currentSessionTime = '';
 
 function itemType(r){
@@ -691,7 +693,6 @@ function detectGuild(rows){
   return Object.entries(f).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
 }
 
-// NOVO: Função matemática para encontrar a data/hora mais comum nos logs
 function detectSessionTime(rows) {
   if(!rows || !rows.length) return '';
   const counts = {};
@@ -864,7 +865,6 @@ document.getElementById('btn-go').addEventListener('click',()=>{
   allRows=enrichRows(lootRows,ourGuild,chestRows);
   populateGuildFilter(allRows);
   
-  // Calcula e Exibe a data da Sessão ZvZ
   currentSessionTime = detectSessionTime(lootRows);
   const stChip = document.getElementById('session-chip');
   if (currentSessionTime) {
@@ -1236,7 +1236,6 @@ function buildPayload(playerName, pendingItems, guild, imgBlob, avatarBlob){
   const killboardUrl = `https://killboard-1.com/eu/player/${encodeURIComponent(playerName)}`;
   
   const descLines = [];
-  // Adiciona a Data do Evento se ela for detectada
   if (currentSessionTime) {
     descLines.push(`**🗓️ EVENT: ${currentSessionTime}**`);
     descLines.push(``);
