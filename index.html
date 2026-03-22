@@ -48,7 +48,6 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-/* AUMENTADO: Fonte base aumentada para dar o efeito de zoom de 125% */
 html { font-size: 16px; }
 body {
   background: var(--bg);
@@ -62,7 +61,7 @@ body {
 /* ── HEADER ─────────────────────────────────────────────────────── */
 header {
   position: sticky; top: 0; z-index: 200;
-  height: 60px; /* AUMENTADO */
+  height: 60px;
   background: rgba(9,9,11,.8);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
@@ -108,7 +107,6 @@ header .divider { width: 1px; height: 20px; background: var(--line2); margin: 0 
 }
 .up-hero p { font-size: 1rem; color: var(--t3); max-width: 420px; margin: 0 auto; }
 
-/* AUMENTADO: A largura máxima dos containers foi de 640px para 760px */
 .upload-cols {
   display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
   width: 100%; max-width: 760px;
@@ -261,7 +259,6 @@ select option { background: var(--bg2); }
 
 /* ── CARDS ───────────────────────────────────────────────────────── */
 #cards-view { padding: 16px 20px; }
-/* AUMENTADO: Largura de visualização ampliada */
 .cards-col { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 760px; margin: 0 auto; }
 
 .pcard {
@@ -281,7 +278,6 @@ select option { background: var(--bg2); }
   padding: 14px 16px; border-bottom: 1px solid var(--line);
   background: var(--bg2); border-radius: var(--r) var(--r) 0 0;
 }
-/* AUMENTADO: Avatares maiores */
 .avatar {
   width: 44px; height: 44px; border-radius: 8px; flex-shrink: 0;
   background: var(--bg4); border: 1px solid var(--line2);
@@ -307,7 +303,6 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
 .cr-count { font-size: .75rem; color: var(--t4); }
 
 .citems { padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 8px; }
-/* AUMENTADO: Itens de 50px para 64px (Padrão Albion) */
 .chip {
   position: relative; width: 64px; height: 64px; border-radius: var(--r2);
   background: var(--bg3); border: 1px solid var(--line); overflow: visible;
@@ -620,7 +615,6 @@ function parseChest(raw){
     const p=line.split('\t').map(unq);
     if(!p[0]||p[0].toLowerCase()==='date'||p.length<3||!p[2])return acc;
     const enc=parseInt(p[3])||0;
-    // O nome do jogador continua sendo lido, mas a chave agora será global
     acc.push({ item_name: p[2], enc, quantity: parseInt(p[5])||1, _key: mkey(p[2],enc) });
     return acc;
   },[]);
@@ -632,11 +626,9 @@ function detectGuild(rows){
   return Object.entries(f).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
 }
 
-// LÓGICA DO BAÚ GLOBAL (Resolve o problema dos Trades)
 function enrichRows(lootRows, ourGuild, chestRows){
   const pool = {};
   
-  // 1. Cria um baú único para a guilda inteira
   chestRows.forEach(c => {
     const key = c._key;
     pool[key] = (pool[key] || 0) + c.quantity;
@@ -652,10 +644,9 @@ function enrichRows(lootRows, ourGuild, chestRows){
     if(!byUs)           return {...r, status:'neutral'};
     if(!hasChest)       return {...r, status:'looted'};
     
-    // 2. Tenta "pescar" o item no baú global da guilda
     const key = mkey(r.item_name, encId(r.item_id));
     if(pool[key] >= r.quantity){
-      pool[key] -= r.quantity; // Consome do baú global
+      pool[key] -= r.quantity;
       return {...r, status:'deposited'};
     }
     return {...r, status:'pending'};
@@ -728,7 +719,6 @@ document.getElementById('btn-go').addEventListener('click',()=>{
     tempRows = tempRows.concat(parseLoot(f.text));
   });
 
-  // Ordenação Estrita para garantir 100% de consistência a cada upload
   tempRows.sort((a,b) => {
     const tA = new Date(a.timestamp).getTime() || 0;
     const tB = new Date(b.timestamp).getTime() || 0;
@@ -744,7 +734,6 @@ document.getElementById('btn-go').addEventListener('click',()=>{
     const rTime = new Date(r.timestamp).getTime() || 0;
     const bId = baseId(r.item_id);
     
-    // Fuzzy Match: 60 segundos de tolerância
     const isDuplicate = seen.some(s => 
       s.looted_by === r.looted_by_name &&
       s.item === bId &&
@@ -1094,7 +1083,8 @@ async function fetchGridImage(items){
   }
 }
 
-const tierEmoji = t => ['','','','','🟦','🟩','🟨','🟧','🟥'][t]||'⬜';
+// CORREÇÃO: Paleta de cores exata dos Tiers (T1 ao T8)
+const tierEmoji = t => ['','⬛','🟫','🟩','🟦','🟥','🟧','🟨','⬜'][t]||'⬜';
 
 function buildPayload(playerName, pendingItems, guild, imgBlob){
   const id      = discordIdMap[playerName];
