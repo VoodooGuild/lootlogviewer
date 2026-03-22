@@ -125,7 +125,6 @@ header .divider { width: 1px; height: 18px; background: var(--line2); margin: 0 
   padding: 1px 6px; font-size: .68rem; color: var(--t3); font-weight: 400; text-transform: none; letter-spacing: 0;
 }
 
-/* drop zone */
 .drop-zone {
   border: 1px dashed var(--line2); border-radius: var(--r);
   background: var(--bg1); padding: 20px;
@@ -140,7 +139,6 @@ header .divider { width: 1px; height: 18px; background: var(--line2); margin: 0 
 .drop-zone-text { font-size: .82rem; color: var(--t3); }
 .drop-zone-text b { color: var(--blue); font-weight: 600; }
 
-/* file pills list */
 .file-list { display: flex; flex-direction: column; gap: 4px; }
 .file-pill {
   display: flex; align-items: center; gap: 8px;
@@ -166,7 +164,6 @@ header .divider { width: 1px; height: 18px; background: var(--line2); margin: 0 
 }
 .go-btn:hover:not(:disabled) { background: rgba(59,130,246,.22); border-color: var(--blue); }
 .go-btn:disabled { opacity: .3; cursor: not-allowed; }
-
 input[type=file] { display: none; }
 
 /* ── APP ─────────────────────────────────────────────────────────── */
@@ -219,7 +216,6 @@ input[type=file] { display: none; }
 }
 .search input::placeholder { color: var(--t3); }
 
-/* segmented control */
 .seg {
   display: flex; background: var(--bg2); border: 1px solid var(--line);
   border-radius: var(--r2); padding: 2px; gap: 1px;
@@ -248,7 +244,6 @@ select {
 select:hover, select:focus { border-color: var(--line2); outline: none; color: var(--t); }
 select option { background: var(--bg2); }
 
-/* hide-type toggles */
 .htoggles { display: flex; gap: 4px; flex-wrap: wrap; }
 .htog {
   font-family: var(--fn); font-size: .75rem; font-weight: 500;
@@ -308,7 +303,6 @@ select option { background: var(--bg2); }
 .bd-neutral   { background: var(--bg4);        color: var(--t3);     border: 1px solid var(--line);       }
 .cr-count { font-size: .68rem; color: var(--t4); }
 
-/* chips */
 .citems { padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 5px; }
 .chip {
   position: relative; width: 50px; height: 50px; border-radius: var(--r2);
@@ -318,20 +312,17 @@ select option { background: var(--bg2); }
 .chip:hover { transform: scale(1.1) translateY(-2px); border-color: var(--line3); z-index: 30; }
 .chip.dep  { border-color: var(--blue-bdr); }
 .chip.pend { border-color: var(--amber-bdr); }
-.chip.dep::after {
-  content: '✓'; position: absolute; bottom: -4px; right: -4px;
-  width: 14px; height: 14px; background: var(--blue); color: #fff;
-  border-radius: 50%; font-size: 7px; font-weight: 800; line-height: 14px;
-  text-align: center; z-index: 2; border: 1.5px solid var(--bg);
-}
-.chip.pend::after {
-  content: '!'; position: absolute; bottom: -4px; right: -4px;
-  width: 14px; height: 14px; background: var(--amber); color: #000;
-  border-radius: 50%; font-size: 8px; font-weight: 800; line-height: 14px;
-  text-align: center; z-index: 2; border: 1.5px solid var(--bg);
-}
 .chip img { width: 50px; height: 50px; object-fit: cover; border-radius: calc(var(--r2) - 1px); display: block; }
 .chip .noi { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+
+/* Novo badge de quantidade agrupado na UI do site */
+.chip-qty {
+  position: absolute; bottom: 2px; right: 2px;
+  background: rgba(15, 16, 20, 0.85); color: #fff;
+  font-size: 0.65rem; font-weight: 700; padding: 1px 4px;
+  border-radius: 4px; border: 1px solid var(--line2);
+  z-index: 5; pointer-events: none; line-height: 1.1;
+}
 
 /* tooltip */
 #global-tip {
@@ -393,6 +384,7 @@ select option { background: var(--bg2); }
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: 2px; }
+
 /* ── DISCORD ──────────────────────────────────────────────────────── */
 .webhook-bar{
   background:var(--bg1);border-bottom:1px solid var(--line);
@@ -408,10 +400,9 @@ select option { background: var(--bg2); }
 .webhook-bar input[type=text]::placeholder{color:var(--t3)}
 .wh-label{font-size:.7rem;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;white-space:nowrap}
 .wh-status{font-size:.75rem;padding:4px 10px;border-radius:5px;font-weight:600;display:none}
-.wh-status.ok {background:var(--green-bg); color:var(--green); border:1px solid var(--green-bdr)}
-.wh-status.err{background:var(--red-bg);   color:var(--red);   border:1px solid var(--red-bdr)}
+.wh-status.ok {background:rgba(34,197,94,.1); color:var(--green); border:1px solid var(--green-bdr)}
+.wh-status.err{background:rgba(239,68,68,.1); color:var(--red); border:1px solid var(--red-bdr)}
 
-/* send-all button */
 .btn-discord{
   font-family:var(--fn);font-size:.8rem;font-weight:700;
   padding:5px 14px;border-radius:var(--r2);cursor:pointer;transition:all .15s;
@@ -422,7 +413,6 @@ select option { background: var(--bg2); }
 .btn-discord:disabled{opacity:.3;cursor:not-allowed}
 .btn-discord svg{flex-shrink:0}
 
-/* per-card send button */
 .card-send-btn{
   font-family:var(--fn);font-size:.7rem;font-weight:700;
   padding:3px 10px;border-radius:5px;cursor:pointer;transition:all .15s;
@@ -431,17 +421,14 @@ select option { background: var(--bg2); }
 }
 .card-send-btn:hover{background:rgba(88,101,242,.22);border-color:rgba(88,101,242,.6)}
 .card-send-btn.sending{opacity:.5;cursor:not-allowed}
-.card-send-btn.sent{border-color:var(--green-bdr);background:var(--green-bg);color:var(--green)}
-.card-send-btn.failed{border-color:var(--red-bdr);background:var(--red-bg);color:var(--red)}
+.card-send-btn.sent{border-color:var(--green-bdr);background:rgba(34,197,94,.1);color:var(--green)}
+.card-send-btn.failed{border-color:var(--red-bdr);background:rgba(239,68,68,.1);color:var(--red)}
 
-/* canvas offscreen */
 #snap-canvas{position:fixed;left:-9999px;top:-9999px;pointer-events:none}
-
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header>
   <div class="logo">
     <div class="logo-sq">
@@ -465,20 +452,14 @@ select option { background: var(--bg2); }
   </div>
 </header>
 
-<!-- UPLOAD PAGE -->
 <div id="page-upload">
   <div class="up-hero">
     <h1>Guild Loot Tracker</h1>
     <p>Upload loot logs and chest logs — combine multiple files from the same session.</p>
   </div>
-
   <div class="upload-cols">
-    <!-- Loot logs -->
     <div class="upload-col">
-      <div class="col-label">
-        📋 Loot Logs
-        <span class="col-badge">loot-events-*.txt</span>
-      </div>
+      <div class="col-label">📋 Loot Logs <span class="col-badge">loot-events-*.txt</span></div>
       <div class="drop-zone" id="dz-loot" tabindex="0">
         <div class="drop-zone-icon">↑</div>
         <div class="drop-zone-text"><b>Click or drag</b> to add files</div>
@@ -486,13 +467,8 @@ select option { background: var(--bg2); }
       <div class="file-list" id="fl-loot"></div>
       <input type="file" id="fi-loot" accept=".txt,.csv" multiple/>
     </div>
-
-    <!-- Chest logs -->
     <div class="upload-col">
-      <div class="col-label">
-        📦 Chest Logs
-        <span class="col-badge">optional</span>
-      </div>
+      <div class="col-label">📦 Chest Logs <span class="col-badge">optional</span></div>
       <div class="drop-zone" id="dz-chest" tabindex="0">
         <div class="drop-zone-icon">↑</div>
         <div class="drop-zone-text"><b>Click or drag</b> to add files</div>
@@ -501,14 +477,11 @@ select option { background: var(--bg2); }
       <input type="file" id="fi-chest" accept=".txt,.csv" multiple/>
     </div>
   </div>
-
   <button class="go-btn" id="btn-go" disabled>Load &amp; cross-reference</button>
 </div>
 
-<!-- APP PAGE -->
 <div id="page-app">
   <div class="stats" id="stats"></div>
-  <!-- Discord webhook bar -->
   <div class="webhook-bar" id="webhook-bar" style="justify-content:flex-end">
     <button class="btn-discord" id="btn-discord-config" style="background:rgba(255,255,255,.05);border-color:var(--line2);color:var(--t2)">
       ⚙ Discord IDs
@@ -520,7 +493,6 @@ select option { background: var(--bg2); }
     <span class="wh-status" id="wh-status"></span>
   </div>
 
-  <!-- Discord ID config modal -->
   <div id="discord-config-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
     <div style="background:var(--bg2);border:1px solid var(--line2);border-radius:14px;padding:24px;width:420px;max-width:90vw;display:flex;flex-direction:column;gap:14px">
       <div style="display:flex;justify-content:space-between;align-items:center">
@@ -529,16 +501,15 @@ select option { background: var(--bg2); }
       </div>
       <div style="font-size:.78rem;color:var(--t2);line-height:1.6">
         Map in-game player names to Discord user IDs for proper @mentions.<br>
-        One per line: <code style="background:var(--bg4);padding:1px 5px;border-radius:3px;font-size:.75rem">PlayerName=123456789012345678</code><br>
-        <span style="color:var(--t3);font-size:.72rem">To find a Discord user ID: enable Developer Mode in Discord settings, then right-click a user → Copy User ID.</span>
+        One per line: <code style="background:var(--bg4);padding:1px 5px;border-radius:3px;font-size:.75rem">PlayerName=123456789012345678</code>
       </div>
-      <textarea id="cfg-textarea" placeholder="Senpai1=123456789012345678&#10;KOKYACHE32=987654321098765432&#10;Kaaya=111222333444555666"
-        style="background:var(--bg3);border:1px solid var(--line);border-radius:8px;color:var(--t);font-family:monospace;font-size:.8rem;padding:10px;resize:vertical;height:160px;outline:none;width:100%"></textarea>
+      <textarea id="cfg-textarea" placeholder="Senpai1=123456789012345678" style="background:var(--bg3);border:1px solid var(--line);border-radius:8px;color:var(--t);font-family:monospace;font-size:.8rem;padding:10px;resize:vertical;height:160px;outline:none;width:100%"></textarea>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button id="cfg-save" class="btn-discord" style="padding:7px 20px;font-size:.85rem">Save</button>
       </div>
     </div>
   </div>
+
   <div class="controls">
     <div class="search">
       <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="currentColor" stroke-width="1.4"/><line x1="8.7" y1="8.7" x2="12" y2="12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
@@ -574,7 +545,6 @@ select option { background: var(--bg2); }
 </div>
 
 <script>
-// ── UTILS ──────────────────────────────────────────────────────────
 const esc   = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const fmtT  = ts => { try{ const d=new Date(ts.replace(/\.\d+Z$/,'Z').replace(/\.\d+$/,'')); if(isNaN(d))return ts; return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }catch{return ts;} };
 const fmtSz = b  => b>1e6?`${(b/1e6).toFixed(1)}mb`:b>1e3?`${(b/1e3).toFixed(0)}kb`:`${b}b`;
@@ -584,19 +554,12 @@ const tCls  = t  => ['','','','','t4','t5','t6','t7','t8'][t]||'';
 const imgUrl= id => `https://render.albiononline.com/v1/item/${encodeURIComponent(id)}.png?size=64&quality=2`;
 const mkey  = (name,enc) => (name||'').toLowerCase().trim()+'@@'+(enc||0);
 
-// ── ITEM TYPE ───────────────────────────────────────────────────────
 function itemType(r){
   const id=(r.item_id||'').toUpperCase(), nm=(r.item_name||'').toLowerCase();
-  // Trash
   if(/_TRASH/.test(id)||nm==='trash') return 'trash';
-  // Potions
   if(/_POTION/.test(id)||/\bpotion\b/.test(nm)) return 'potion';
-  // Mounts
   if(/^T\d_MOUNT_/.test(id)||/^T\d_FARM_/.test(id)) return 'mount';
-  // Food
-  if(/_MEAL_/.test(id)||/_STEW/.test(id)||/_PIE/.test(id)||/_OMELETTE/.test(id)||/_SANDWICH/.test(id)||
-     /\b(stew|pie|omelette|sandwich|meal|beef |pork |soup)\b/.test(nm)) return 'food';
-  // Others: raw resources, runes, souls, relics, essences, treasures, tokens, etc.
+  if(/_MEAL_/.test(id)||/_STEW/.test(id)||/_PIE/.test(id)||/_OMELETTE/.test(id)||/_SANDWICH/.test(id)||/\b(stew|pie|omelette|sandwich|meal|beef |pork |soup)\b/.test(nm)) return 'food';
   if(/^T\d_(ORE|FIBER|HIDE|ROCK|WOOD|STONE|METAL|CLOTH|LEATHER)/.test(id)) return 'other';
   if(/_(RUNE|SOUL|RELIC|ESSENCE|SHARD|SIGIL|FRAGMENT|ARTEFACT_RUNE)/.test(id)) return 'other';
   if(/^(TREASURE_|UNIQUE_GVGTOKEN|QUESTITEM_|UNIQUE_FURNITURE)/.test(id)) return 'other';
@@ -605,10 +568,6 @@ function itemType(r){
   return 'gear';
 }
 
-// ── PARSE LOOT LOG ─────────────────────────────────────────────────
-// Handles two formats:
-// FORMAT A: timestamp_utc ; alliance ; guild ; name ; item_id ; item_name ; qty ; ...
-// FORMAT B: date ; utc_time ; alliance ; guild ; name ; item_id ; item_name ; qty ; ...
 function parseLoot(raw){
   raw = raw.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
   const lines = raw.trim().split('\n');
@@ -616,12 +575,11 @@ function parseLoot(raw){
   const hdr = lines[0].split(';').map(h=>h.trim().toLowerCase().replace(/__/g,'_'));
   const ci  = (...ns) => { for(const n of ns){ const i=hdr.findIndex(h=>h===n||h.includes(n)); if(i>=0)return i; } return -1; };
 
-  // Detect format B (separate date + utc_time columns)
   const hasDate    = hdr.findIndex(h=>h==='date')>=0;
   const hasUtcTime = hdr.findIndex(h=>h==='utc_time'||h==='time')>=0;
   const iDate = hasDate ? hdr.findIndex(h=>h==='date') : -1;
   const iTime = hasUtcTime ? hdr.findIndex(h=>h==='utc_time'||h==='time') : -1;
-  const iTs   = ci('timestamp');  // format A
+  const iTs   = ci('timestamp');
 
   const iByG  = ci('looted_by_guild');
   const iByN  = ci('looted_by_name');
@@ -638,24 +596,19 @@ function parseLoot(raw){
     const byG = (p[iByG]||'').trim();
     if(!byN && !byG) return null;
 
-    // Build timestamp: format A has single column, format B has date+time
     let ts = '';
-    if(iTs >= 0 && p[iTs]) {
-      ts = p[iTs].trim();
-    } else if(iDate >= 0 && iTime >= 0) {
-      // "21-03-2026" + "18:36:02" → ISO
-      const d = (p[iDate]||'').trim(); // DD-MM-YYYY
-      const t = (p[iTime]||'').trim(); // HH:MM:SS
+    if(iTs >= 0 && p[iTs]) ts = p[iTs].trim();
+    else if(iDate >= 0 && iTime >= 0) {
+      const d = (p[iDate]||'').trim();
+      const t = (p[iTime]||'').trim();
       const parts = d.split('-');
       if(parts.length === 3) {
-        // Could be DD-MM-YYYY or YYYY-MM-DD
         const y = parts[0].length===4 ? parts[0] : parts[2];
         const m = parts[0].length===4 ? parts[1] : parts[1];
         const day = parts[0].length===4 ? parts[2] : parts[0];
         ts = `${y}-${m}-${day}T${t}Z`;
       }
     }
-
     return {
       timestamp:         ts,
       looted_by_guild:   byG,
@@ -669,8 +622,6 @@ function parseLoot(raw){
   }).filter(Boolean);
 }
 
-
-// ── PARSE CHEST LOG ────────────────────────────────────────────────
 function parseChest(raw){
   const unq=s=>s.replace(/^"|"$/g,'').trim();
   return raw.trim().split(/\r?\n/).reduce((acc,line)=>{
@@ -682,14 +633,12 @@ function parseChest(raw){
   },[]);
 }
 
-// ── DETECT GUILD ───────────────────────────────────────────────────
 function detectGuild(rows){
   const f={};
   rows.forEach(r=>{ if(r.looted_by_guild)f[r.looted_by_guild]=(f[r.looted_by_guild]||0)+1; });
   return Object.entries(f).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
 }
 
-// ── ENRICH ─────────────────────────────────────────────────────────
 function enrichRows(lootRows,ourGuild,chestRows){
   const pool={};
   chestRows.forEach(c=>{ pool[c._key]=(pool[c._key]||0)+c.quantity; });
@@ -706,17 +655,13 @@ function enrichRows(lootRows,ourGuild,chestRows){
   });
 }
 
-// ── STATE ──────────────────────────────────────────────────────────
-const TIPDATA = {}; // chip tooltip data by id
+const TIPDATA = {};
 let _chipCounter = 0;
 let allRows=[],filtered=[],ourGuild='';
 let pg=1,perPg=40,sf='all',sq='',sguild='';
 const hideT=new Set(['food','potion','mount','trash','other']);
-
-// multi-file stores: { name, size, text }
 const lootFiles=[], chestFiles=[];
 
-// ── FILE PILL RENDERING ────────────────────────────────────────────
 function renderFilePills(listId, files, onRemove){
   const el=document.getElementById(listId);
   el.innerHTML=files.map((f,i)=>`
@@ -733,9 +678,7 @@ function renderFilePills(listId, files, onRemove){
   }));
 }
 
-function checkGoBtn(){
-  document.getElementById('btn-go').disabled = lootFiles.length===0;
-}
+function checkGoBtn(){ document.getElementById('btn-go').disabled = lootFiles.length===0; }
 
 function addFiles(newFiles, store, listId){
   for(const f of newFiles){
@@ -768,12 +711,9 @@ function setupDZ(dzId, fiId, store, listId){
 setupDZ('dz-loot','fi-loot',lootFiles,'fl-loot');
 setupDZ('dz-chest','fi-chest',chestFiles,'fl-chest');
 
-// ── GO ─────────────────────────────────────────────────────────────
 document.getElementById('btn-go').addEventListener('click',()=>{
-  // Merge all loot rows (dedup by timestamp+item_id+player)
   const seen=new Set();
   let lootRows=[];
-  // Strip enchant suffix for dedup - different clients sometimes record different @N
   const baseId=id=>id.replace(/@\d$/,'');
   lootFiles.forEach(f=>{
     parseLoot(f.text).forEach(r=>{
@@ -783,7 +723,6 @@ document.getElementById('btn-go').addEventListener('click',()=>{
   });
   if(!lootRows.length){ alert('Could not parse any loot rows. Check file formats.'); return; }
 
-  // Merge chest rows
   let chestRows=[];
   chestFiles.forEach(f=>{ chestRows=chestRows.concat(parseChest(f.text)); });
 
@@ -791,7 +730,6 @@ document.getElementById('btn-go').addEventListener('click',()=>{
   allRows=enrichRows(lootRows,ourGuild,chestRows);
   populateGuildFilter(allRows);
 
-  // Show app
   document.getElementById('page-upload').style.display='none';
   document.getElementById('page-app').style.display='block';
   document.getElementById('btn-reload').style.display='';
@@ -812,7 +750,6 @@ document.getElementById('btn-reload').addEventListener('click',()=>{
   allRows=[]; document.getElementById('btn-go').disabled=true;
 });
 
-// ── GUILD FILTER ───────────────────────────────────────────────────
 function populateGuildFilter(rows){
   const guilds=[...new Set(rows.map(r=>r.looted_by_guild).filter(Boolean))].sort();
   const sel=document.getElementById('f-guild');
@@ -821,7 +758,6 @@ function populateGuildFilter(rows){
   else { sel.value=''; sguild=''; }
 }
 
-// ── STATS ──────────────────────────────────────────────────────────
 function renderStats(){
   const base=ourGuild?allRows.filter(r=>r.looted_by_guild===ourGuild):allRows;
   const c={looted:0,deposited:0,pending:0,lost:0};
@@ -857,7 +793,6 @@ function renderStats(){
     </div>`;
 }
 
-// ── FILTER ─────────────────────────────────────────────────────────
 function applyFilters(){
   let rows=allRows.slice();
   if(sguild)         rows=rows.filter(r=>r.looted_by_guild===sguild);
@@ -869,7 +804,6 @@ function applyFilters(){
   renderCards(); renderStats();
 }
 
-// ── GROUP ──────────────────────────────────────────────────────────
 function groupByPlayer(rows){
   const m={};
   rows.forEach(r=>{
@@ -889,9 +823,8 @@ function groupByPlayer(rows){
   }).sort((a,b)=>{ const d=pri[a.overall]-pri[b.overall]; return d||b.items.length-a.items.length; });
 }
 
-// ── RENDER CARDS ───────────────────────────────────────────────────
 function renderCards(){
-  Object.keys(TIPDATA).forEach(k=>delete TIPDATA[k]); _chipCounter=0; // clear stale tooltip data
+  Object.keys(TIPDATA).forEach(k=>delete TIPDATA[k]); _chipCounter=0;
   const groups=groupByPlayer(filtered);
   const col=document.getElementById('cards-col');
   if(!groups.length){
@@ -901,7 +834,6 @@ function renderCards(){
   const start=(pg-1)*perPg, page=groups.slice(start,start+perPg);
   const bdM={looted:'bd-looted',deposited:'bd-deposited',pending:'bd-pending',lost:'bd-lost',neutral:'bd-neutral'};
   const bdL={looted:'Looted',deposited:'Deposited',pending:'Pending',lost:'Lost',neutral:'—'};
-  const bdI={looted:'●',deposited:'●',pending:'●',lost:'●',neutral:'·'};
   const bdC={looted:'var(--green)',deposited:'var(--blue)',pending:'var(--amber)',lost:'var(--red)',neutral:'var(--t3)'};
 
   col.innerHTML=page.map(g=>{
@@ -909,27 +841,34 @@ function renderCards(){
     const pct=tot>0?Math.round(dep/tot*100):0;
     const init=(g.name||'?').charAt(0).toUpperCase();
 
-    const chips=g.items.map((r,ci)=>{
-      const st=r.status, enc=encId(r.item_id), tier=tierId(r.item_id);
-      const isTrash=r.item_id.toUpperCase().includes('TRASH');
-      const cc=st==='deposited'?' dep':st==='pending'?' pend':'';
-      const img=isTrash
-        ?`<div class="noi">🗑</div>`
-        :`<img src="${imgUrl(r.item_id)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noi',textContent:'?'}))"/>`;
-      const chipId=`c${++_chipCounter}`;
-      TIPDATA[chipId]={
-        name:    r.item_name,
-        id:      r.item_id,
-        tier,enc,
-        qty:     r.quantity,
-        time:    fmtT(r.timestamp),
-        from:    (st==='looted'||st==='deposited'||st==='pending')
-                   ? ('From: '+(r.looted_from_name||'?')+(r.looted_from_guild?' ('+r.looted_from_guild+')':''))
-                   : st==='lost' ? ('To: '+(r.looted_by_name||'?')) : (r.looted_from_name||'?'),
+    // Lógica de agrupamento visual no site
+    const groupedItems = Object.values(g.items.reduce((acc, r) => {
+      const key = r.item_id + '|' + r.status;
+      if (!acc[key]) acc[key] = { ...r, displayQty: 0 };
+      acc[key].displayQty += r.quantity;
+      return acc;
+    }, {}));
+
+    const chips = groupedItems.map((r) => {
+      const st = r.status, enc = encId(r.item_id), tier = tierId(r.item_id);
+      const isTrash = r.item_id.toUpperCase().includes('TRASH');
+      const cc = st==='deposited'?' dep':st==='pending'?' pend':'';
+      const img = isTrash
+        ? `<div class="noi">🗑</div>`
+        : `<img src="${imgUrl(r.item_id)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noi',textContent:'?'}))"/>`;
+      
+      const qtyHtml = r.displayQty > 1 ? `<div class="chip-qty">${r.displayQty}</div>` : '';
+      const chipId = `c${++_chipCounter}`;
+
+      TIPDATA[chipId] = {
+        name: r.item_name, id: r.item_id, tier, enc,
+        qty: r.displayQty, time: fmtT(r.timestamp),
+        from: (st==='looted'||st==='deposited'||st==='pending') ? ('From: '+(r.looted_from_name||'?')+(r.looted_from_guild?' ('+r.looted_from_guild+')':'')) : st==='lost' ? ('To: '+(r.looted_by_name||'?')) : (r.looted_from_name||'?'),
         st, sc:{deposited:'ts-d',pending:'ts-p',lost:'ts-l',looted:'ts-loot'}[st]||'',
         stxt:{looted:'Waiting for deposit',deposited:'Deposited in chest',pending:'Not deposited yet',lost:'Lost to enemy',neutral:'—'}[st]||'—'
       };
-      return `<div class="chip${cc}" data-cid="${chipId}">${img}</div>`;
+      
+      return `<div class="chip${cc}" data-cid="${chipId}">${img}${qtyHtml}</div>`;
     }).join('');
 
     return `<div class="pcard s-${g.overall}">
@@ -956,12 +895,9 @@ function renderCards(){
       </div>
     </div>`;
   }).join('');
-
-
   renderPgn(groups.length);
 }
 
-// ── PAGINATION ──────────────────────────────────────────────────────
 function renderPgn(total){
   const tp=Math.ceil(total/perPg),el=document.getElementById('pgn');
   if(tp<=1){el.innerHTML=`<span class="pi">${total} player${total!==1?'s':''}</span>`;return;}
@@ -978,7 +914,6 @@ function renderPgn(total){
   el.querySelector('[data-a="n"]')?.addEventListener('click',()=>{if(pg<tp){pg++;renderCards();}});
 }
 
-// ── CONTROLS EVENTS ─────────────────────────────────────────────────
 document.getElementById('s-input').addEventListener('input',e=>{sq=e.target.value;applyFilters();});
 document.getElementById('f-guild').addEventListener('change',e=>{sguild=e.target.value;applyFilters();});
 document.getElementById('f-per').addEventListener('change',e=>{perPg=+e.target.value;pg=1;renderCards();});
@@ -1000,7 +935,6 @@ document.querySelectorAll('.htog').forEach(t=>{
   });
 });
 
-// ── GLOBAL TOOLTIP ──────────────────────────────────────────────
 const GT = document.getElementById('global-tip');
 let tipActive = false;
 
@@ -1045,8 +979,8 @@ function positionTip(chip) {
   GT.style.setProperty('--arrow-left', arrowL + 'px');
 }
 
-// ── DISCORD WEBHOOK ──────────────────────────────────────────────────────────
 const WEBHOOK_URL = 'https://discord.com/api/webhooks/1485254555816956125/X_i-Yl422TpZrfUorNwLW7wfdLAtgLVoSd3zXOexno3kEHHIwri1L0WLL7qDjgjXOSei';
+const WORKER_URL = '/api/grid';
 
 const whStatus   = document.getElementById('wh-status');
 const btnSendAll = document.getElementById('btn-send-all');
@@ -1083,13 +1017,6 @@ cfgSave.addEventListener('click',()=>{
   setStatus(`Saved ${Object.keys(discordIdMap).length} Discord IDs`, true);
 });
 
-// ── BUILD PAYLOAD ─────────────────────────────────────────────────────────────
-// Image grid generated by Cloudflare Worker (server-side, no CORS).
-// Set WORKER_URL to your deployed worker URL.
-// If empty, falls back to thumbnail of first item.
-const WORKER_URL = 'https://logviewer-sigma.vercel.app/api/grid';
-
-// Group items by base item_id, sum quantities
 function dedupItems(items){
   const map = {};
   items.forEach(r=>{
@@ -1108,14 +1035,11 @@ async function fetchGridImage(items){
   if(!WORKER_URL) return null;
   try{
     const ids = items.map(r=>`${r.item_id}:${r.quantity||1}`).join(',');
-    
-    // Requisição POST envia os dados no "body", ignorando o limite de tamanho da URL
     const resp = await fetch(WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ items: ids })
     });
-    
     if(!resp.ok) return null;
     return await resp.blob();
   } catch(e){
@@ -1129,17 +1053,11 @@ const tierEmoji = t => ['','','','','🟦','🟩','🟨','🟧','🟥'][t]||'⬜
 function buildPayload(playerName, pendingItems, guild, imgBlob){
   const id      = discordIdMap[playerName];
   const mention = id ? `<@${id}>` : `📋 **${playerName}**`;
-  // Group by base item_id (strip @N enchant) and sum quantities
-  const grouped = {};
-  pendingItems.forEach(r=>{
-    const base = r.item_id.replace(/@\d$/,'');
-    if(!grouped[base]) grouped[base]={name:r.item_name,id:r.item_id,qty:0};
-    grouped[base].qty += r.quantity;
-  });
-  const groupedList = Object.values(grouped);
+  
+  const groupedList = dedupItems(pendingItems);
   const lines = groupedList.map(g=>{
-    const t = parseInt((g.id||'').match(/^T(\d)/)?.[1]||0);
-    return `${tierEmoji(t)} ${g.name}${g.qty>1?` ×${g.qty}`:''}`;
+    const t = parseInt((g.item_id||'').match(/^T(\d)/)?.[1]||0);
+    return `${tierEmoji(t)} ${g.item_name}${g.quantity>1?` ×${g.quantity}`:''}`;
   }).join('\n');
 
   const killboardUrl = `https://killboard-1.com/eu/player/${encodeURIComponent(playerName)}`;
@@ -1165,21 +1083,17 @@ function buildPayload(playerName, pendingItems, guild, imgBlob){
   };
 
   if(imgBlob){
-    // Grid image from worker — attach as file
     embed.image = { url:'attachment://items.png' };
     const form  = new FormData();
     form.append('payload_json', JSON.stringify({ content:mention, username:'Loot Logger', embeds:[embed] }));
     form.append('files[0]', imgBlob, 'items.png');
     return { useForm:true, form };
   } else {
-    // Fallback: thumbnail of first item (Discord fetches server-side, works fine)
     embed.thumbnail = { url: albionImgUrl(pendingItems[0].item_id) };
     return { useForm:false, payload:{ content:mention, username:'Loot Logger', embeds:[embed] } };
   }
 }
 
-
-// ── SEND ──────────────────────────────────────────────────────────────────────
 async function postOne(msgData){
   let resp;
   if(msgData.useForm){
@@ -1215,7 +1129,6 @@ async function sendToDiscord(playerName, pendingItems, guild, btnEl){
   }
 }
 
-
 window.sendPlayerPing = async function(btnEl, playerName){
   const group = groupByPlayer(filtered).find(g=>g.name===playerName);
   if(!group) return;
@@ -1233,7 +1146,7 @@ btnSendAll.addEventListener('click', async()=>{
     const pending = g.items.filter(r=>r.status==='pending');
     if(!pending.length) continue;
     try{
-      const imgBlob = await fetchGridImage(pending);
+      const imgBlob = await fetchGridImage(dedupItems(pending));
       const msgData = buildPayload(g.name, pending, g.guild, imgBlob);
       await postOne(msgData);
       ok++;
