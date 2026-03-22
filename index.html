@@ -155,7 +155,6 @@ input[type=file] { display: none; }
 
 #page-app { display: none; flex: 1; }
 
-/* AJUSTE PARA CABER 6 COLUNAS AGORA */
 .stats { display: grid; grid-template-columns: repeat(6, 1fr); border-bottom: 1px solid var(--line); background: var(--bg1); }
 @media(max-width:900px){ .stats { grid-template-columns: repeat(3,1fr); } }
 .stt { padding: 16px 20px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
@@ -376,10 +375,12 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
       <svg viewBox="0 0 13 13" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="currentColor" stroke-width="1.4"/><line x1="8.7" y1="8.7" x2="12" y2="12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
       <input type="text" id="s-input" placeholder="Search item, player…"/>
     </div>
+    
     <div class="seg" id="status-seg">
-      <button class="seg-btn on" data-s="all">All</button>
-      <button class="seg-btn" data-s="pending">Pending</button>
+      <button class="seg-btn" data-s="all">All</button>
+      <button class="seg-btn on-pending" data-s="pending">Pending</button>
     </div>
+    
     <div class="cdiv"></div>
     <span class="ctl-lbl">Guild</span>
     <select id="f-guild"><option value="">All guilds</option></select>
@@ -422,7 +423,6 @@ const tCls  = t  => ['','','','','t4','t5','t6','t7','t8'][t]||'';
 const imgUrl= id => `https://render.albiononline.com/v1/item/${encodeURIComponent(id)}.png?size=64&quality=2`;
 const mkey  = (name,enc) => (name||'').toLowerCase().trim()+'@@'+(enc||0);
 
-// FUNÇÃO PARA FORMATAR SILVER DE FORMA ELEGANTE (ex: 1.5m, 450k)
 const fmtSilver = v => {
   if (v >= 1e6) return (v / 1e6).toFixed(2) + 'm';
   if (v >= 1e3) return (v / 1e3).toFixed(1) + 'k';
@@ -430,7 +430,7 @@ const fmtSilver = v => {
 };
 
 let currentSessionTime = '';
-const PRICE_MAP = {}; // Dicionário global para salvar os preços puxados da API
+const PRICE_MAP = {}; 
 
 function itemType(r){
   const id=(r.item_id||'').toUpperCase(), nm=(r.item_name||'').toLowerCase();
@@ -567,18 +567,15 @@ function enrichRows(lootRows, ourGuild, chestRows){
   });
 }
 
-// NOVA FUNÇÃO: Puxa os preços médios do Albion Data Project (Servidor EU)
 async function fetchPrices(rows) {
   const uniqueIds = [...new Set(rows.map(r => r.item_id))];
   const chunks = [];
-  // Divide a lista de IDs de 100 em 100 para a API não bloquear
   for (let i = 0; i < uniqueIds.length; i += 100) {
     chunks.push(uniqueIds.slice(i, i + 100));
   }
 
   for (const chunk of chunks) {
     try {
-      // Bate no servidor EU do Albion Data Project nas cidades principais
       const res = await fetch(`https://europe.albion-online-data.com/api/v2/stats/prices/${chunk.join(',')}?locations=Caerleon,Bridgewatch,Martlock,Thetford,FortSterling,Lymhurst,Brecilien`);
       if (!res.ok) continue;
       const data = await res.json();
@@ -594,7 +591,6 @@ async function fetchPrices(rows) {
     }
   }
 
-  // Tira a média dos mercados para cada item
   for (const k in PRICE_MAP) {
     const arr = PRICE_MAP[k];
     if (arr.length > 0) {
@@ -625,7 +621,10 @@ async function fetchAvatarImage(playerName){
 const TIPDATA = {};
 let _chipCounter = 0;
 let allRows=[],filtered=[],ourGuild='';
-let pg=1,perPg=40,sf='all',sq='',sguild='';
+
+// FILTRO PENDING ATIVADO POR PADRÃO NO JAVASCRIPT
+let pg=1,perPg=40,sf='pending',sq='',sguild='';
+
 const hideT=new Set(['food','potion','mount','trash','other','untradable']);
 const lootFiles=[], chestFiles=[];
 
@@ -680,7 +679,7 @@ setupDZ('dz-chest','fi-chest',chestFiles,'fl-chest');
 
 document.getElementById('btn-go').addEventListener('click', async () => {
   const btnGo = document.getElementById('btn-go');
-  btnGo.innerHTML = 'FETCHING PRICES...'; // Dá um aviso pro usuário de que vai demorar 1-2s pra puxar a grana
+  btnGo.innerHTML = 'FETCHING PRICES...';
   btnGo.disabled = true;
 
   let tempRows = [];
@@ -726,7 +725,6 @@ document.getElementById('btn-go').addEventListener('click', async () => {
   allRows=enrichRows(lootRows,ourGuild,chestRows);
   populateGuildFilter(allRows);
   
-  // Puxa os preços reais do servidor depois de enriquecer as linhas
   await fetchPrices(allRows);
 
   currentSessionTime = detectSessionTime(lootRows);
@@ -746,7 +744,7 @@ document.getElementById('btn-go').addEventListener('click', async () => {
   document.getElementById('guild-chip-name').textContent=ourGuild||'unknown';
   if(ourGuild) chip.classList.add('show');
 
-  btnGo.innerHTML = 'START'; // Volta o botão pro normal pra próxima vez
+  btnGo.innerHTML = 'START';
   applyFilters();
   window.scrollTo(0, 0); 
 });
@@ -773,22 +771,39 @@ function populateGuildFilter(rows){
 }
 
 function renderStats(){
-  const base=ourGuild?allRows.filter(r=>r.looted_by_guild===ourGuild):allRows;
-  const c={looted:0,deposited:0,pending:0,lost:0};
-  base.forEach(r=>{ if(c[r.status]!==undefined)c[r.status]++; });
-  c.pending=filtered.filter(r=>r.status==='pending').length;
-  const players=new Set(filtered.map(r=>r.looted_by_name).filter(Boolean)).size;
-  const pct=base.length>0?Math.round(c.deposited/base.length*100):0;
+  // LÓGICA INTELIGENTE: A barra do topo ignora o fato de estarmos na aba "Pending",
+  // para que você continue vendo o "Total Looted" e o % de "Deposited" do evento como um todo.
+  let base = allRows.slice();
   
-  // Calcula o Valor Pendente Total da Guilda
+  if(sguild) base = base.filter(r=>r.looted_by_guild===sguild);
+  if(hideT.size) base = base.filter(r=>!hideT.has(itemType(r)));
+  
+  if(sq){ 
+    const q = sq.toLowerCase(); 
+    base = base.filter(r=>
+      r.item_name.toLowerCase().includes(q) || 
+      r.item_id.toLowerCase().includes(q) || 
+      r.looted_by_name.toLowerCase().includes(q) || 
+      r.looted_from_name.toLowerCase().includes(q)
+    ); 
+  }
+  
+  const c = {looted:0, deposited:0, pending:0, lost:0};
   let totalPendingSilver = 0;
-  filtered.forEach(r => {
+  
+  base.forEach(r => { 
+    if(c[r.status]!==undefined) c[r.status]++; 
+    
+    // A Prata mostrada no topo soma APENAS os itens pendentes que estão nos filtros ativos
     if (r.status === 'pending') {
       const price = PRICE_MAP[r.item_id] || 0;
       totalPendingSilver += price * r.quantity;
     }
   });
 
+  const players = new Set(base.map(r=>r.looted_by_name).filter(Boolean)).size;
+  const pct = base.length > 0 ? Math.round(c.deposited / base.length * 100) : 0;
+  
   document.getElementById('stats').innerHTML=`
     <div class="stt">
       <div class="stt-label">⚔️ Total looted</div>
@@ -826,11 +841,21 @@ function applyFilters(){
   let rows=allRows.slice();
   if(sguild)         rows=rows.filter(r=>r.looted_by_guild===sguild);
   if(hideT.size)     rows=rows.filter(r=>!hideT.has(itemType(r)));
+  
+  if(sq){ 
+    const q=sq.toLowerCase(); 
+    rows=rows.filter(r=>r.item_name.toLowerCase().includes(q)||r.item_id.toLowerCase().includes(q)||r.looted_by_name.toLowerCase().includes(q)||r.looted_from_name.toLowerCase().includes(q)); 
+  }
+
+  // Renderiza a barra do topo ANTES de aplicar o filtro 'sf' (Pending/All)
+  renderStats();
+
+  // Aplica o filtro de status apenas na lista de cards lá embaixo
   if(sf==='pending') rows=rows.filter(r=>r.status==='pending');
-  if(sq){ const q=sq.toLowerCase(); rows=rows.filter(r=>r.item_name.toLowerCase().includes(q)||r.item_id.toLowerCase().includes(q)||r.looted_by_name.toLowerCase().includes(q)||r.looted_from_name.toLowerCase().includes(q)); }
+
   rows.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
   filtered=rows; pg=1;
-  renderCards(); renderStats();
+  renderCards(); 
 }
 
 function groupByPlayer(rows){
@@ -841,7 +866,6 @@ function groupByPlayer(rows){
     m[k].items.push(r);
     m[k].c[r.status]=(m[k].c[r.status]||0)+1;
     
-    // Calcula o silver pendente pra esse player em específico
     if (r.status === 'pending') {
       const price = PRICE_MAP[r.item_id] || 0;
       m[k].c.silver += price * r.quantity;
@@ -1112,7 +1136,6 @@ function buildPayload(playerName, pendingItems, guild, imgBlob, avatarBlob){
   
   const groupedList = dedupItems(pendingItems);
   
-  // Re-calcula a prata pendente exata para postar no Discord
   let totalSilver = 0;
   groupedList.forEach(g => {
     totalSilver += (PRICE_MAP[g.item_id] || 0) * g.quantity;
@@ -1132,7 +1155,7 @@ function buildPayload(playerName, pendingItems, guild, imgBlob, avatarBlob){
     descLines.push(``);
   }
   descLines.push(`**${groupedList.length} item${groupedList.length!==1?'s':''} not deposited yet**`);
-  descLines.push(`**💰 Estimated Value:** ${silverStr}`); // INCLUSÃO DA PRATA COBRADA NO DISCORD
+  descLines.push(`**💰 Estimated Value:** ${silverStr}`); 
   descLines.push(``);
   descLines.push(`You have **24 hours** to deposit or get charged.`);
   descLines.push(`📌 Open a thread and explain why this loot is missing.`);
