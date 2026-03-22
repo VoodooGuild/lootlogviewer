@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Loot Logger · Albion Online</title>
+<title>Log Viewer</title>
+
+<link rel="icon" href="https://render.albiononline.com/v1/item/T4_BAG.png" type="image/png"/>
+
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -55,6 +58,8 @@ body {
   font-family: var(--fn);
   line-height: 1.55;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -72,7 +77,7 @@ header {
 .logo-sq {
   width: 28px; height: 28px; border-radius: 6px;
   background: var(--blue); display: flex; align-items: center;
-  justify-content: center; flex-shrink: 0;
+  justify-content: center; flex-shrink: 0; overflow: hidden;
 }
 .logo-sq svg { display: block; width: 16px; height: 16px; }
 .logo-name { font-size: .95rem; font-weight: 600; color: var(--t); letter-spacing: -.01em; }
@@ -97,7 +102,7 @@ header .divider { width: 1px; height: 20px; background: var(--line2); margin: 0 
 /* ── UPLOAD PAGE ─────────────────────────────────────────────────── */
 #page-upload {
   display: flex; flex-direction: column; align-items: center;
-  justify-content: center; min-height: calc(100vh - 60px);
+  justify-content: center; flex: 1;
   padding: 40px 20px; gap: 36px;
 }
 .up-hero { text-align: center; }
@@ -165,7 +170,7 @@ header .divider { width: 1px; height: 20px; background: var(--line2); margin: 0 
 input[type=file] { display: none; }
 
 /* ── APP ─────────────────────────────────────────────────────────── */
-#page-app { display: none; }
+#page-app { display: none; flex: 1; }
 
 /* ── STATS ───────────────────────────────────────────────────────── */
 .stats {
@@ -349,7 +354,7 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
 .enc { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 4px; vertical-align: middle; }
 .e1{background:#50d050}.e2{background:#50a8f0}.e3{background:#b850f0}.e4{background:#f07820}
 
-/* footer */
+/* footer info e progress */
 .cf {
   padding: 12px 16px; border-top: 1px solid var(--line);
   display: flex; align-items: center; gap: 12px;
@@ -412,6 +417,16 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
 .wh-status{font-size:.85rem;padding:5px 12px;border-radius:5px;font-weight:600;display:none}
 .wh-status.ok {background:rgba(34,197,94,.1); color:var(--green); border:1px solid var(--green-bdr)}
 .wh-status.err{background:rgba(239,68,68,.1); color:var(--red); border:1px solid var(--red-bdr)}
+
+/* ── GLOBAL FOOTER ────────────────────────────────────────────────── */
+.site-footer {
+  margin-top: auto;
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--t3);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
 </style>
 </head>
 <body>
@@ -424,7 +439,7 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
         <circle cx="7" cy="7" r="2" fill="white" opacity=".85"/>
       </svg>
     </div>
-    <span class="logo-name">Loot Logger <span>/ AO</span></span>
+    <span class="logo-name">Log Viewer <span>/ AO</span></span>
   </div>
   <div class="divider"></div>
   <div class="guild-chip" id="guild-chip">
@@ -441,7 +456,7 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
 
 <div id="page-upload">
   <div class="up-hero">
-    <h1>Guild Loot Tracker</h1>
+    <h1>Log Viewer</h1>
     <p>Upload loot logs and chest logs — combine multiple files from the same session.</p>
   </div>
   <div class="upload-cols">
@@ -530,6 +545,10 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
     <div class="pgn" id="pgn"></div>
   </div>
 </div>
+
+<footer class="site-footer">
+  Log Viewer &copy; 2026 &middot; Made by Chakz
+</footer>
 
 <div id="global-tip"></div>
 
@@ -654,11 +673,11 @@ function enrichRows(lootRows, ourGuild, chestRows){
   });
 }
 
-function getPlayerAvatar(name) {
-  return `https://api.dicebear.com/8.x/adventurer/svg?seed=${encodeURIComponent(name)}&backgroundColor=1a1a20`;
+function getPlayerAvatar(name, format='svg') {
+  const formatParams = format === 'png' ? '&size=128&ext=.png' : '';
+  return `https://api.dicebear.com/8.x/adventurer/${format}?seed=${encodeURIComponent(name)}&backgroundColor=1a1a20${formatParams}`;
 }
 
-// NOVO: Função que baixa o avatar PNG no navegador para mandarmos como arquivo
 async function fetchAvatarImage(playerName){
   try{
     const url = `https://api.dicebear.com/8.x/adventurer/png?seed=${encodeURIComponent(playerName)}&backgroundColor=1a1a20&size=128`;
@@ -1123,7 +1142,6 @@ async function fetchGridImage(items){
 
 const tierEmoji = t => ['','⬛','🟫','🟩','🟦','🟥','🟧','🟨','⬜'][t]||'⬜';
 
-// ── NOVA FUNÇÃO NO PAYLOAD: ADICIONANDO avatarBlob ─────────────────
 function buildPayload(playerName, pendingItems, guild, imgBlob, avatarBlob){
   const id      = discordIdMap[playerName];
   const mention = id ? `<@${id}>` : `📋 **${playerName}**`;
@@ -1153,15 +1171,14 @@ function buildPayload(playerName, pendingItems, guild, imgBlob, avatarBlob){
       { name:'Guild', value:guild||'—', inline:true },
       { name:`Missing Items (${groupedList.length})`, value:lines.slice(0,1020)||'—', inline:false },
     ],
-    footer:    { text:'Loot Logger · Guild Tool' },
+    // ASSINATURA NO DISCORD COM DIREITOS AUTORAIS
+    footer:    { text:'Log Viewer · Made by Chakz, 2026' },
     timestamp: new Date().toISOString(),
   };
 
-  // Se conseguirmos baixar o avatar, informamos ao Discord que ele vai junto como anexo
   if (avatarBlob) {
     embed.thumbnail = { url: 'attachment://avatar.png' };
   } else {
-    // Fallback: Se a internet falhar, mostra o primeiro item do loot no lugar
     embed.thumbnail = { url: albionImgUrl(pendingItems[0].item_id) }; 
   }
 
@@ -1169,10 +1186,10 @@ function buildPayload(playerName, pendingItems, guild, imgBlob, avatarBlob){
     embed.image = { url: 'attachment://items.png' };
   }
 
-  // Se tivermos a imagem da grade OU o avatar, temos que enviar via FormData (Multipart)
   if (imgBlob || avatarBlob) {
     const form  = new FormData();
-    form.append('payload_json', JSON.stringify({ content:mention, username:'Loot Logger', embeds:[embed] }));
+    // ASSINATURA DO BOT COM NOVO NOME
+    form.append('payload_json', JSON.stringify({ content:mention, username:'Log Viewer', embeds:[embed] }));
     
     let fileIndex = 0;
     if (imgBlob) {
@@ -1184,8 +1201,7 @@ function buildPayload(playerName, pendingItems, guild, imgBlob, avatarBlob){
     }
     return { useForm:true, form };
   } else {
-    // Se não tiver nenhuma imagem para subir, manda só o JSON padrão
-    return { useForm:false, payload:{ content:mention, username:'Loot Logger', embeds:[embed] } };
+    return { useForm:false, payload:{ content:mention, username:'Log Viewer', embeds:[embed] } };
   }
 }
 
@@ -1213,7 +1229,7 @@ async function sendToDiscord(playerName, pendingItems, guild, btnEl){
   try{
     const dedupedItems = dedupItems(pendingItems);
     const imgBlob = await fetchGridImage(dedupedItems);
-    const avatarBlob = await fetchAvatarImage(playerName); // Baixa o Avatar pro bot
+    const avatarBlob = await fetchAvatarImage(playerName);
     const msgData = buildPayload(playerName, dedupedItems, guild, imgBlob, avatarBlob);
     await postOne(msgData);
     setStatus(`✓ Sent for ${playerName}${imgBlob?' 🖼️':' (text only)'}`, true);
@@ -1244,7 +1260,7 @@ btnSendAll.addEventListener('click', async()=>{
     try{
       const dedupedPending = dedupItems(pending);
       const imgBlob = await fetchGridImage(dedupedPending);
-      const avatarBlob = await fetchAvatarImage(g.name); // Baixa o Avatar pro bot
+      const avatarBlob = await fetchAvatarImage(g.name); 
       const msgData = buildPayload(g.name, pending, g.guild, imgBlob, avatarBlob);
       await postOne(msgData);
       ok++;
