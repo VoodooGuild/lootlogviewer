@@ -26,24 +26,22 @@ export default async function handler(req, res) {
     const W    = PAD * 2 + cols * (SIZE + GAP) - GAP;
     const H    = PAD * 2 + rows * (SIZE + GAP) - GAP;
 
-    // Pre-resolve ALL async buffers before building composites
-    const fetched  = await Promise.all(items.map(item => fetchItem(item.id)));
-    const resized  = await Promise.all(fetched.map((buf, i) =>
-      buf ? sharp(buf).resize(SIZE, SIZE, { fit: 'cover' }).png().toBuffer() : null
+    // Fetch and resize all images in parallel
+    const fetched = await Promise.all(items.map(item => fetchItem(item.id)));
+    const resized = await Promise.all(fetched.map(buf =>
+      buf
+        ? sharp(buf).resize(SIZE, SIZE, { fit: 'cover' }).png().toBuffer()
+        : sharp({ create: { width: SIZE, height: SIZE, channels: 4,
+                            background: { r: 26, g: 30, b: 40, alpha: 1 } } })
+            .png().toBuffer()
     ));
-    const badges   = await Promise.all(items.map(item => makeQtyBadge(item.qty)));
-    const tileBg   = await sharp({
-      create: { width: SIZE, height: SIZE, channels: 4,
-                background: { r: 26, g: 30, b: 40, alpha: 1 } }
-    }).png().toBuffer();
 
-    const borderSvg = Buffer.from(
-      `<svg width="${SIZE}" height="${SIZE}" xmlns="http://www.w3.org/2000/svg">
-        <rect x="1" y="1" width="${SIZE-2}" height="${SIZE-2}" rx="5"
-          fill="none" stroke="#f59e0b" stroke-width="2"/>
-      </svg>`);
+    // Build qty number buffers for items with qty > 1
+    const qtyBufs = await Promise.all(items.map(item =>
+      item.qty > 1 ? makeNumber(item.qty) : Promise.resolve(null)
+    ));
 
-    // Now build composites synchronously — no Promises in array
+    // Build composites — all resolved, no Promises
     const composites = [];
     for (let i = 0; i < items.length; i++) {
       const col = i % cols;
@@ -51,10 +49,11 @@ export default async function handler(req, res) {
       const x   = PAD + col * (SIZE + GAP);
       const y   = PAD + row * (SIZE + GAP);
 
-      composites.push({ input: tileBg,    left: x, top: y });
-      if (resized[i]) composites.push({ input: resized[i], left: x, top: y });
-      composites.push({ input: borderSvg, left: x, top: y });
-      composites.push({ input: badges[i], left: x + 3, top: y + SIZE - 11 });
+      composites.push({ input: resized[i], left: x, top: y });
+
+      if (qtyBufs[i]) {
+        composites.push({ input: qtyBufs[i], left: x + 2, top: y + SIZE - 10 });
+      }
     }
 
     const png = await sharp({
@@ -71,40 +70,39 @@ export default async function handler(req, res) {
   }
 }
 
-// ── PIXEL ART DIGIT BADGES ────────────────────────────────────────────────────
-// 3×5 bitmap font for 0–9, no external fonts required
+// Pixel-art numbers — 3x5 bitmap, white on dark bg
 const DIGITS = {
-  0:[1,1,1, 1,0,1, 1,0,1, 1,0,1, 1,1,1],
-  1:[0,1,0, 1,1,0, 0,1,0, 0,1,0, 1,1,1],
-  2:[1,1,1, 0,0,1, 1,1,1, 1,0,0, 1,1,1],
-  3:[1,1,1, 0,0,1, 0,1,1, 0,0,1, 1,1,1],
-  4:[1,0,1, 1,0,1, 1,1,1, 0,0,1, 0,0,1],
-  5:[1,1,1, 1,0,0, 1,1,1, 0,0,1, 1,1,1],
-  6:[1,1,1, 1,0,0, 1,1,1, 1,0,1, 1,1,1],
-  7:[1,1,1, 0,0,1, 0,1,0, 0,1,0, 0,1,0],
-  8:[1,1,1, 1,0,1, 1,1,1, 1,0,1, 1,1,1],
-  9:[1,1,1, 1,0,1, 1,1,1, 0,0,1, 1,1,1],
+  0:[1,1,1,1,0,1,1,0,1,1,0,1,1,1,1],
+  1:[0,1,0,1,1,0,0,1,0,0,1,0,1,1,1],
+  2:[1,1,1,0,0,1,1,1,1,1,0,0,1,1,1],
+  3:[1,1,1,0,0,1,0,1,1,0,0,1,1,1,1],
+  4:[1,0,1,1,0,1,1,1,1,0,0,1,0,0,1],
+  5:[1,1,1,1,0,0,1,1,1,0,0,1,1,1,1],
+  6:[1,1,1,1,0,0,1,1,1,1,0,1,1,1,1],
+  7:[1,1,1,0,0,1,0,1,0,0,1,0,0,1,0],
+  8:[1,1,1,1,0,1,1,1,1,1,0,1,1,1,1],
+  9:[1,1,1,1,0,1,1,1,1,0,0,1,1,1,1],
 };
 
-async function makeQtyBadge(qty) {
+async function makeNumber(qty) {
   const digits = String(qty).split('').map(Number);
-  const DW = 3, DH = 5, GAP2 = 1, PAD2 = 2;
-  const W = PAD2 * 2 + digits.length * DW + (digits.length - 1) * GAP2;
-  const H = PAD2 * 2 + DH;
+  const DW = 3, DH = 5, DGAP = 1, P = 1;
+  const W  = P * 2 + digits.length * DW + (digits.length - 1) * DGAP;
+  const H  = P * 2 + DH;
 
   const buf = Buffer.alloc(W * H * 4);
-  // Dark semi-transparent background
+  // Semi-transparent black background
   for (let i = 0; i < W * H; i++) {
-    buf[i*4]=0; buf[i*4+1]=0; buf[i*4+2]=0; buf[i*4+3]=180;
+    buf[i*4]=0; buf[i*4+1]=0; buf[i*4+2]=0; buf[i*4+3]=160;
   }
-  // Draw each digit
+  // White pixels for each digit
   for (let di = 0; di < digits.length; di++) {
     const pix = DIGITS[digits[di]] || DIGITS[0];
-    const ox  = PAD2 + di * (DW + GAP2);
+    const ox  = P + di * (DW + DGAP);
     for (let r = 0; r < DH; r++) {
       for (let c = 0; c < DW; c++) {
         if (pix[r * DW + c]) {
-          const idx = ((PAD2 + r) * W + (ox + c)) * 4;
+          const idx = ((P + r) * W + ox + c) * 4;
           buf[idx]=255; buf[idx+1]=255; buf[idx+2]=255; buf[idx+3]=255;
         }
       }
@@ -113,23 +111,20 @@ async function makeQtyBadge(qty) {
   return sharp(buf, { raw: { width: W, height: H, channels: 4 } }).png().toBuffer();
 }
 
-// ── FETCH ITEM IMAGE ──────────────────────────────────────────────────────────
 async function fetchItem(itemId) {
   const controller = new AbortController();
-  const timeout    = setTimeout(() => controller.abort(), 10000);
+  const tid = setTimeout(() => controller.abort(), 10000);
   try {
     const resp = await fetch(
       `https://render.albiononline.com/v1/item/${encodeURIComponent(itemId)}.png?size=64&quality=2`,
-      {
-        signal:  controller.signal,
-        headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://albiononline.com/' }
-      }
+      { signal: controller.signal,
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://albiononline.com/' } }
     );
-    clearTimeout(timeout);
+    clearTimeout(tid);
     if (!resp.ok) return null;
     return Buffer.from(await resp.arrayBuffer());
   } catch (e) {
-    clearTimeout(timeout);
+    clearTimeout(tid);
     return null;
   }
 }
