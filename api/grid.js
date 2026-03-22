@@ -2,23 +2,34 @@ import sharp from 'sharp';
 
 export const config = { runtime: 'nodejs', maxDuration: 60 };
 
-const SIZE = 60;
-const GAP  = 4;
+const SIZE = 64; // Ajustado para 64 para manter a proporção original do Albion
+const GAP  = 6;
 const PAD  = 10;
 const COLS = 10;
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Cache-Control', 'public, max-age=3600');
+
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const rawItems = (req.query.items || '').split(',').map(s => s.trim()).filter(Boolean);
+  // Lê os itens tanto de POST (body) quanto de GET (query)
+  let itemsStr = '';
+  if (req.method === 'POST') {
+    itemsStr = req.body?.items || '';
+  } else {
+    itemsStr = req.query.items || '';
+  }
+
+  const rawItems = itemsStr.split(',').map(s => s.trim()).filter(Boolean);
   const items = rawItems.map(s => {
     const [id, qty] = s.split(':');
     return { id: id.trim(), qty: parseInt(qty) || 1 };
   });
 
-  if (!items.length) return res.status(400).send('Missing ?items=');
+  if (!items.length) return res.status(400).send('Missing items');
 
   try {
     const cols = Math.min(COLS, items.length);
@@ -26,22 +37,17 @@ export default async function handler(req, res) {
     const W    = PAD * 2 + cols * (SIZE + GAP) - GAP;
     const H    = PAD * 2 + rows * (SIZE + GAP) - GAP;
 
-    // Fetch and resize all images in parallel
+    // Baixa e redimensiona as imagens
     const fetched = await Promise.all(items.map(item => fetchItem(item.id)));
     const resized = await Promise.all(fetched.map(buf =>
       buf
         ? sharp(buf).resize(SIZE, SIZE, { fit: 'cover' }).png().toBuffer()
-        : sharp({ create: { width: SIZE, height: SIZE, channels: 4,
-                            background: { r: 26, g: 30, b: 40, alpha: 1 } } })
-            .png().toBuffer()
+        : sharp({ create: { width: SIZE, height: SIZE, channels: 4, background: { r: 43, g: 45, b: 49, alpha: 1 } } }).png().toBuffer()
     ));
 
-    // Build qty number buffers for items with qty > 1
-    const qtyBufs = await Promise.all(items.map(item =>
-      item.qty > 1 ? makeNumber(item.qty) : Promise.resolve(null)
-    ));
+    // Gera os badges em SVG (agora para TODOS os itens, incluindo qty 1)
+    const badgeBufs = await Promise.all(items.map(item => makeBadge(item.qty)));
 
-    // Build composites — all resolved, no Promises
     const composites = [];
     for (let i = 0; i < items.length; i++) {
       const col = i % cols;
@@ -51,14 +57,15 @@ export default async function handler(req, res) {
 
       composites.push({ input: resized[i], left: x, top: y });
 
-      if (qtyBufs[i]) {
-        composites.push({ input: qtyBufs[i], left: x + 2, top: y + SIZE - 10 });
+      if (badgeBufs[i]) {
+        // Posiciona no canto inferior direito
+        composites.push({ input: badgeBufs[i], left: x + SIZE - 22, top: y + SIZE - 22 });
       }
     }
 
+    // Fundo da imagem usando a cor escura do Discord
     const png = await sharp({
-      create: { width: W, height: H, channels: 4,
-                background: { r: 0x13, g: 0x16, b: 0x1e, alpha: 1 } }
+      create: { width: W, height: H, channels: 4, background: { r: 43, g: 45, b: 49, alpha: 1 } }
     }).composite(composites).png({ compressionLevel: 6 }).toBuffer();
 
     res.setHeader('Content-Type', 'image/png');
@@ -70,45 +77,20 @@ export default async function handler(req, res) {
   }
 }
 
-// Pixel-art numbers — 3x5 bitmap, white on dark bg
-const DIGITS = {
-  0:[1,1,1,1,0,1,1,0,1,1,0,1,1,1,1],
-  1:[0,1,0,1,1,0,0,1,0,0,1,0,1,1,1],
-  2:[1,1,1,0,0,1,1,1,1,1,0,0,1,1,1],
-  3:[1,1,1,0,0,1,0,1,1,0,0,1,1,1,1],
-  4:[1,0,1,1,0,1,1,1,1,0,0,1,0,0,1],
-  5:[1,1,1,1,0,0,1,1,1,0,0,1,1,1,1],
-  6:[1,1,1,1,0,0,1,1,1,1,0,1,1,1,1],
-  7:[1,1,1,0,0,1,0,1,0,0,1,0,0,1,0],
-  8:[1,1,1,1,0,1,1,1,1,1,0,1,1,1,1],
-  9:[1,1,1,1,0,1,1,1,1,0,0,1,1,1,1],
-};
+async function makeBadge(qty) {
+  const text = String(qty);
+  const isSingle = text.length === 1;
+  // Se for mais de um dígito, o badge alarga levemente como uma pílula
+  const w = isSingle ? 22 : 16 + (text.length * 7);
+  const h = 22;
 
-async function makeNumber(qty) {
-  const digits = String(qty).split('').map(Number);
-  const DW = 3, DH = 5, DGAP = 1, P = 1;
-  const W  = P * 2 + digits.length * DW + (digits.length - 1) * DGAP;
-  const H  = P * 2 + DH;
+  // Estilo idêntico ao da print: Fundo quase preto, borda cinza, texto branco
+  const svg = `<svg width="${w}" height="${h}">
+    <rect x="1" y="1" width="${w-2}" height="${h-2}" rx="${h/2}" ry="${h/2}" fill="#1c1c1c" stroke="#888888" stroke-width="1.5"/>
+    <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" font-family="sans-serif" font-size="12px" font-weight="bold" fill="#ffffff">${text}</text>
+  </svg>`;
 
-  const buf = Buffer.alloc(W * H * 4);
-  // Semi-transparent black background
-  for (let i = 0; i < W * H; i++) {
-    buf[i*4]=0; buf[i*4+1]=0; buf[i*4+2]=0; buf[i*4+3]=160;
-  }
-  // White pixels for each digit
-  for (let di = 0; di < digits.length; di++) {
-    const pix = DIGITS[digits[di]] || DIGITS[0];
-    const ox  = P + di * (DW + DGAP);
-    for (let r = 0; r < DH; r++) {
-      for (let c = 0; c < DW; c++) {
-        if (pix[r * DW + c]) {
-          const idx = ((P + r) * W + ox + c) * 4;
-          buf[idx]=255; buf[idx+1]=255; buf[idx+2]=255; buf[idx+3]=255;
-        }
-      }
-    }
-  }
-  return sharp(buf, { raw: { width: W, height: H, channels: 4 } }).png().toBuffer();
+  return Buffer.from(svg);
 }
 
 async function fetchItem(itemId) {
@@ -117,8 +99,7 @@ async function fetchItem(itemId) {
   try {
     const resp = await fetch(
       `https://render.albiononline.com/v1/item/${encodeURIComponent(itemId)}.png?size=64&quality=2`,
-      { signal: controller.signal,
-        headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://albiononline.com/' } }
+      { signal: controller.signal, headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://albiononline.com/' } }
     );
     clearTimeout(tid);
     if (!resp.ok) return null;
