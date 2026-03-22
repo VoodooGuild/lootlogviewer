@@ -112,36 +112,36 @@ header .divider { width: 1px; height: 20px; background: var(--line2); margin: 0 
 #page-upload {
   display: flex; flex-direction: column; align-items: center;
   justify-content: center; flex: 1;
-  padding: 60px 20px; gap: 40px;
+  padding: 30px 20px; gap: 24px;
 }
-.up-hero { text-align: center; margin-bottom: 10px; }
+.up-hero { text-align: center; margin-bottom: 0; }
 .up-logo-large {
-  width: 260px;
-  max-width: 80vw;
+  width: 160px;
+  max-width: 50vw;
   height: auto;
-  margin: 0 auto 24px auto;
+  margin: 0 auto 16px auto;
   display: block;
-  filter: drop-shadow(0 10px 30px rgba(0,0,0,0.6));
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.5));
 }
 .up-hero h1 {
-  font-size: 3rem; 
+  font-size: 2.4rem; 
   font-weight: 800; 
   letter-spacing: 0.05em;
   color: var(--t); 
   line-height: 1.1; 
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   text-transform: uppercase;
 }
 .up-hero h2 {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--t3);
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  margin-bottom: 28px;
+  margin-bottom: 16px;
 }
 .up-hero p.up-desc { 
-  font-size: 1.05rem; 
+  font-size: 0.95rem; 
   color: var(--t2); 
   max-width: 480px; 
   margin: 0 auto; 
@@ -152,7 +152,7 @@ header .divider { width: 1px; height: 20px; background: var(--line2); margin: 0 
   width: 100%; max-width: 760px;
 }
 
-.upload-col { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 260px; }
+.upload-col { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 260px; }
 .col-label {
   font-size: .8rem; font-weight: 600; color: var(--t3);
   text-transform: uppercase; letter-spacing: .1em;
@@ -165,22 +165,21 @@ header .divider { width: 1px; height: 20px; background: var(--line2); margin: 0 
 
 .drop-zone {
   border: 1px dashed var(--line2); border-radius: var(--r);
-  background: var(--bg1); padding: 24px;
+  background: var(--bg1); padding: 20px;
   display: flex; flex-direction: column; align-items: center; gap: 10px;
-  cursor: pointer; transition: all .18s; text-align: center; min-height: 110px;
+  cursor: pointer; transition: all .18s; text-align: center; min-height: 90px;
   justify-content: center;
 }
 .drop-zone:hover, .drop-zone.over {
   border-color: var(--blue-bdr); background: var(--blue-dim);
 }
 .drop-zone-icon { font-size: 1.6rem; line-height: 1; }
-.drop-zone-text { font-size: .9rem; color: var(--t3); }
+.drop-zone-text { font-size: .85rem; color: var(--t3); }
 .drop-zone-text b { color: var(--blue); font-weight: 600; }
 
-/* FIX DE UX: Limitar tamanho e habilitar scroll na lista de arquivos */
 .file-list { 
   display: flex; flex-direction: column; gap: 6px; 
-  max-height: 250px; overflow-y: auto; padding-right: 5px;
+  max-height: 130px; overflow-y: auto; padding-right: 5px;
 }
 .file-pill {
   display: flex; align-items: center; gap: 10px;
@@ -883,6 +882,7 @@ document.getElementById('btn-go').addEventListener('click',()=>{
   if(ourGuild) chip.classList.add('show');
 
   applyFilters();
+  window.scrollTo(0, 0); // Joga o usuário para o topo da página
 });
 
 document.getElementById('btn-reload').addEventListener('click',()=>{
@@ -895,6 +895,7 @@ document.getElementById('btn-reload').addEventListener('click',()=>{
   lootFiles.length=0; chestFiles.length=0;
   ['fl-loot','fl-chest'].forEach(id=>document.getElementById(id).innerHTML='');
   allRows=[]; document.getElementById('btn-go').disabled=true;
+  window.scrollTo(0, 0); // Joga o usuário para o topo da página
 });
 
 function populateGuildFilter(rows){
