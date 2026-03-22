@@ -13,7 +13,13 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const items = (req.query.items || '').split(',').map(s => s.trim()).filter(Boolean);
+  // items format: "ITEM_ID:QTY,ITEM_ID:QTY,..."
+  const rawItems = (req.query.items || '').split(',').map(s => s.trim()).filter(Boolean);
+  const items = rawItems.map(s => {
+    const [id, qty] = s.split(':');
+    return { id: id.trim(), qty: parseInt(qty) || 1 };
+  });
+
   if (!items.length) return res.status(400).send('Missing ?items=');
 
   try {
@@ -22,10 +28,7 @@ export default async function handler(req, res) {
     const W    = PAD * 2 + cols * (SIZE + GAP) - GAP;
     const H    = PAD * 2 + rows * (SIZE + GAP) - GAP;
 
-    // Fetch all item images in parallel
-    const fetched = await Promise.all(items.map(id => fetchItem(id)));
-
-    // Build composites list for sharp
+    const fetched = await Promise.all(items.map(item => fetchItem(item.id)));
     const composites = [];
 
     for (let i = 0; i < items.length; i++) {
@@ -33,63 +36,39 @@ export default async function handler(req, res) {
       const row = Math.floor(i / cols);
       const x   = PAD + col * (SIZE + GAP);
       const y   = PAD + row * (SIZE + GAP);
+      const qty = items[i].qty;
 
       if (fetched[i]) {
-        // Resize item icon to SIZE x SIZE
-        const resized = await sharp(fetched[i])
-          .resize(SIZE, SIZE, { fit: 'cover' })
-          .toBuffer();
-
+        const resized = await sharp(fetched[i]).resize(SIZE, SIZE, { fit: 'cover' }).toBuffer();
         composites.push({ input: resized, left: x, top: y });
       }
 
-      // Amber border overlay (1px, rounded)
-      const border = await sharp({
-        create: {
-          width:    SIZE,
-          height:   SIZE,
-          channels: 4,
-          background: { r: 0, g: 0, b: 0, alpha: 0 }
-        }
-      })
-      .png()
-      .toBuffer();
-
-      // Draw border as SVG overlay
-      const borderSvg = Buffer.from(
+      // Amber border
+      composites.push({ input: Buffer.from(
         `<svg width="${SIZE}" height="${SIZE}">
           <rect x="0.75" y="0.75" width="${SIZE-1.5}" height="${SIZE-1.5}" rx="6"
-            fill="none" stroke="rgba(245,158,11,0.75)" stroke-width="1.5"/>
-        </svg>`
-      );
-      composites.push({ input: borderSvg, left: x, top: y });
+            fill="none" stroke="rgba(245,158,11,0.8)" stroke-width="1.5"/>
+        </svg>`), left: x, top: y });
 
-      // Badge circle with "!"
-      const badgeSvg = Buffer.from(
-        `<svg width="14" height="14">
-          <circle cx="7" cy="7" r="6" fill="#f59e0b"/>
-          <text x="7" y="11" font-size="9" font-weight="bold" text-anchor="middle" fill="#000">!</text>
-        </svg>`
-      );
-      composites.push({ input: badgeSvg, left: x + SIZE - 12, top: y + SIZE - 12 });
+      // Badge: blue ×N for qty>1, amber ! for single
+      const badgeText  = qty > 1 ? `x${qty}` : '!';
+      const badgeW     = qty > 1 ? Math.max(18, badgeText.length * 7 + 6) : 14;
+      const badgeColor = qty > 1 ? '#3b82f6' : '#f59e0b';
+      const textColor  = qty > 1 ? '#fff' : '#000';
+      composites.push({ input: Buffer.from(
+        `<svg width="${badgeW}" height="14">
+          <rect x="0" y="0" width="${badgeW}" height="14" rx="7" fill="${badgeColor}"/>
+          <text x="${badgeW/2}" y="11" font-size="9" font-weight="bold"
+            text-anchor="middle" fill="${textColor}">${badgeText}</text>
+        </svg>`), left: x + SIZE - badgeW, top: y + SIZE - 14 });
     }
 
-    // Compose final image on dark background
     const png = await sharp({
-      create: {
-        width:      W,
-        height:     H,
-        channels:   4,
-        background: { r: 0x13, g: 0x16, b: 0x1e, alpha: 1 }
-      }
-    })
-    .composite(composites)
-    .png({ compressionLevel: 6 })
-    .toBuffer();
+      create: { width: W, height: H, channels: 4, background: { r: 0x13, g: 0x16, b: 0x1e, alpha: 1 } }
+    }).composite(composites).png({ compressionLevel: 6 }).toBuffer();
 
     res.setHeader('Content-Type', 'image/png');
     res.status(200).send(png);
-
   } catch (e) {
     console.error(e);
     res.status(500).send('Error: ' + e.message);
@@ -98,16 +77,11 @@ export default async function handler(req, res) {
 
 async function fetchItem(itemId) {
   try {
-    const url  = `https://render.albiononline.com/v1/item/${encodeURIComponent(itemId)}.png?size=64&quality=2`;
-    const resp = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Referer':    'https://albiononline.com/',
-      }
-    });
+    const resp = await fetch(
+      `https://render.albiononline.com/v1/item/${encodeURIComponent(itemId)}.png?size=64&quality=2`,
+      { headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://albiononline.com/' } }
+    );
     if (!resp.ok) return null;
     return Buffer.from(await resp.arrayBuffer());
-  } catch (e) {
-    return null;
-  }
+  } catch (e) { return null; }
 }
