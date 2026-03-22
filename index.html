@@ -90,6 +90,16 @@ header .divider { width: 1px; height: 20px; background: var(--line2); margin: 0 
 }
 .guild-chip.show { display: flex; }
 .guild-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
+
+/* Estilo do novo selo de horário da sessão */
+.session-chip {
+  font-size: .75rem; color: var(--amber); background: var(--amber-dim);
+  border: 1px solid var(--amber-bdr); border-radius: 6px;
+  padding: 4px 12px; display: none; align-items: center; gap: 6px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.session-chip.show { display: flex; }
+
 .hright { margin-left: auto; }
 .btn-sm {
   font-family: var(--fn); font-size: .85rem; font-weight: 500;
@@ -469,6 +479,12 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
     <span class="guild-chip-dot"></span>
     <span id="guild-chip-name"></span>
   </div>
+  
+  <div class="session-chip" id="session-chip">
+    <span>⏱️</span>
+    <span id="session-chip-text"></span>
+  </div>
+
   <div class="hright">
     <button class="btn-sm" id="btn-reload" style="display:none">
       <svg width="12" height="12" viewBox="0 0 11 11" fill="none"><path d="M1 5.5a4.5 4.5 0 1 0 1.2-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M1 2v3.5h3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -587,6 +603,9 @@ const tCls  = t  => ['','','','','t4','t5','t6','t7','t8'][t]||'';
 const imgUrl= id => `https://render.albiononline.com/v1/item/${encodeURIComponent(id)}.png?size=64&quality=2`;
 const mkey  = (name,enc) => (name||'').toLowerCase().trim()+'@@'+(enc||0);
 
+// NOVO: Variável global para armazenar a data do evento detectado
+let currentSessionTime = '';
+
 function itemType(r){
   const id=(r.item_id||'').toUpperCase(), nm=(r.item_name||'').toLowerCase();
   if(/_TRASH/.test(id)||nm==='trash') return 'trash';
@@ -670,6 +689,30 @@ function detectGuild(rows){
   const f={};
   rows.forEach(r=>{ if(r.looted_by_guild)f[r.looted_by_guild]=(f[r.looted_by_guild]||0)+1; });
   return Object.entries(f).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
+}
+
+// NOVO: Função matemática para encontrar a data/hora mais comum nos logs
+function detectSessionTime(rows) {
+  if(!rows || !rows.length) return '';
+  const counts = {};
+  rows.forEach(r => {
+    const d = new Date(r.timestamp);
+    if(isNaN(d)) return;
+    
+    const hhUTC = String(d.getUTCHours()).padStart(2, '0');
+    const ddUTC = String(d.getUTCDate()).padStart(2, '0');
+    const mmUTC = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const yyyyUTC = d.getUTCFullYear();
+
+    const key = `${ddUTC}/${mmUTC}/${yyyyUTC} - ${hhUTC}:00 UTC`;
+    counts[key] = (counts[key] || 0) + 1;
+  });
+  
+  let best = '', max = 0;
+  for(const [k, v] of Object.entries(counts)){
+    if(v > max){ max = v; best = k; }
+  }
+  return best;
 }
 
 function enrichRows(lootRows, ourGuild, chestRows){
@@ -820,9 +863,19 @@ document.getElementById('btn-go').addEventListener('click',()=>{
   ourGuild=detectGuild(lootRows);
   allRows=enrichRows(lootRows,ourGuild,chestRows);
   populateGuildFilter(allRows);
+  
+  // Calcula e Exibe a data da Sessão ZvZ
+  currentSessionTime = detectSessionTime(lootRows);
+  const stChip = document.getElementById('session-chip');
+  if (currentSessionTime) {
+    document.getElementById('session-chip-text').textContent = currentSessionTime;
+    stChip.classList.add('show');
+  } else {
+    stChip.classList.remove('show');
+  }
 
   document.getElementById('page-upload').style.display='none';
-  document.getElementById('main-header').style.display='flex'; // MOSTRA O HEADER
+  document.getElementById('main-header').style.display='flex';
   document.getElementById('page-app').style.display='block';
   document.getElementById('btn-reload').style.display='';
   const chip=document.getElementById('guild-chip');
@@ -834,10 +887,11 @@ document.getElementById('btn-go').addEventListener('click',()=>{
 
 document.getElementById('btn-reload').addEventListener('click',()=>{
   document.getElementById('page-upload').style.display='flex';
-  document.getElementById('main-header').style.display='none'; // ESCONDE O HEADER
+  document.getElementById('main-header').style.display='none';
   document.getElementById('page-app').style.display='none';
   document.getElementById('btn-reload').style.display='none';
   document.getElementById('guild-chip').classList.remove('show');
+  document.getElementById('session-chip').classList.remove('show');
   lootFiles.length=0; chestFiles.length=0;
   ['fl-loot','fl-chest'].forEach(id=>document.getElementById(id).innerHTML='');
   allRows=[]; document.getElementById('btn-go').disabled=true;
@@ -1181,19 +1235,25 @@ function buildPayload(playerName, pendingItems, guild, imgBlob, avatarBlob){
 
   const killboardUrl = `https://killboard-1.com/eu/player/${encodeURIComponent(playerName)}`;
   
+  const descLines = [];
+  // Adiciona a Data do Evento se ela for detectada
+  if (currentSessionTime) {
+    descLines.push(`**🗓️ EVENT: ${currentSessionTime}**`);
+    descLines.push(``);
+  }
+  descLines.push(`**${groupedList.length} item${groupedList.length!==1?'s':''} not deposited yet**`);
+  descLines.push(``);
+  descLines.push(`You have **24 hours** to deposit or get charged.`);
+  descLines.push(`📌 Open a thread and explain why this loot is missing.`);
+  descLines.push(``);
+  descLines.push(`🔗 [View Killboard](${killboardUrl})`);
+
   const embed = {
     color: 0xf59e0b,
-    author: { name:'⚠️ Pending Deposit — Squirtle Squad' },
+    author: { name:'⚠️ PENDING DEPOSIT — SQUIRTLE SQUAD' },
     title:  playerName,
     url:    killboardUrl,
-    description: [
-      `**${groupedList.length} item${groupedList.length!==1?'s':''} not deposited yet**`,
-      ``,
-      `You have **24 hours** to deposit or get charged.`,
-      `📌 Open a thread and explain why this loot is missing.`,
-      ``,
-      `🔗 [View Killboard](${killboardUrl})`,
-    ].join('\n'),
+    description: descLines.join('\n'),
     fields:[
       { name:'Guild', value:guild||'—', inline:true },
       { name:`Missing Items (${groupedList.length})`, value:lines.slice(0,1020)||'—', inline:false },
