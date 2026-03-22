@@ -654,10 +654,21 @@ function enrichRows(lootRows, ourGuild, chestRows){
   });
 }
 
-// CORREÇÃO: Adicionando size=128 e ext=.png para forçar o Discord a carregar a imagem sem timeout
-function getPlayerAvatar(name, format='svg') {
-  const formatParams = format === 'png' ? '&size=128&ext=.png' : '';
-  return `https://api.dicebear.com/8.x/adventurer/${format}?seed=${encodeURIComponent(name)}&backgroundColor=1a1a20${formatParams}`;
+function getPlayerAvatar(name) {
+  return `https://api.dicebear.com/8.x/adventurer/svg?seed=${encodeURIComponent(name)}&backgroundColor=1a1a20`;
+}
+
+// NOVO: Função que baixa o avatar PNG no navegador para mandarmos como arquivo
+async function fetchAvatarImage(playerName){
+  try{
+    const url = `https://api.dicebear.com/8.x/adventurer/png?seed=${encodeURIComponent(playerName)}&backgroundColor=1a1a20&size=128`;
+    const resp = await fetch(url);
+    if(!resp.ok) return null;
+    return await resp.blob();
+  } catch(e){
+    console.warn('Falha ao baixar avatar:', e);
+    return null;
+  }
 }
 
 const TIPDATA = {};
@@ -1112,7 +1123,8 @@ async function fetchGridImage(items){
 
 const tierEmoji = t => ['','⬛','🟫','🟩','🟦','🟥','🟧','🟨','⬜'][t]||'⬜';
 
-function buildPayload(playerName, pendingItems, guild, imgBlob){
+// ── NOVA FUNÇÃO NO PAYLOAD: ADICIONANDO avatarBlob ─────────────────
+function buildPayload(playerName, pendingItems, guild, imgBlob, avatarBlob){
   const id      = discordIdMap[playerName];
   const mention = id ? `<@${id}>` : `📋 **${playerName}**`;
   
@@ -1124,14 +1136,11 @@ function buildPayload(playerName, pendingItems, guild, imgBlob){
 
   const killboardUrl = `https://killboard-1.com/eu/player/${encodeURIComponent(playerName)}`;
   
-  const avatarPngUrl = getPlayerAvatar(playerName, 'png');
-
   const embed = {
     color: 0xf59e0b,
     author: { name:'⚠️ Pending Deposit — Squirtle Squad' },
     title:  playerName,
     url:    killboardUrl,
-    thumbnail: { url: avatarPngUrl },
     description: [
       `**${groupedList.length} item${groupedList.length!==1?'s':''} not deposited yet**`,
       ``,
@@ -1148,13 +1157,34 @@ function buildPayload(playerName, pendingItems, guild, imgBlob){
     timestamp: new Date().toISOString(),
   };
 
-  if(imgBlob){
-    embed.image = { url:'attachment://items.png' };
+  // Se conseguirmos baixar o avatar, informamos ao Discord que ele vai junto como anexo
+  if (avatarBlob) {
+    embed.thumbnail = { url: 'attachment://avatar.png' };
+  } else {
+    // Fallback: Se a internet falhar, mostra o primeiro item do loot no lugar
+    embed.thumbnail = { url: albionImgUrl(pendingItems[0].item_id) }; 
+  }
+
+  if (imgBlob) {
+    embed.image = { url: 'attachment://items.png' };
+  }
+
+  // Se tivermos a imagem da grade OU o avatar, temos que enviar via FormData (Multipart)
+  if (imgBlob || avatarBlob) {
     const form  = new FormData();
     form.append('payload_json', JSON.stringify({ content:mention, username:'Loot Logger', embeds:[embed] }));
-    form.append('files[0]', imgBlob, 'items.png');
+    
+    let fileIndex = 0;
+    if (imgBlob) {
+      form.append(`files[${fileIndex}]`, imgBlob, 'items.png');
+      fileIndex++;
+    }
+    if (avatarBlob) {
+      form.append(`files[${fileIndex}]`, avatarBlob, 'avatar.png');
+    }
     return { useForm:true, form };
   } else {
+    // Se não tiver nenhuma imagem para subir, manda só o JSON padrão
     return { useForm:false, payload:{ content:mention, username:'Loot Logger', embeds:[embed] } };
   }
 }
@@ -1183,7 +1213,8 @@ async function sendToDiscord(playerName, pendingItems, guild, btnEl){
   try{
     const dedupedItems = dedupItems(pendingItems);
     const imgBlob = await fetchGridImage(dedupedItems);
-    const msgData = buildPayload(playerName, dedupedItems, guild, imgBlob);
+    const avatarBlob = await fetchAvatarImage(playerName); // Baixa o Avatar pro bot
+    const msgData = buildPayload(playerName, dedupedItems, guild, imgBlob, avatarBlob);
     await postOne(msgData);
     setStatus(`✓ Sent for ${playerName}${imgBlob?' 🖼️':' (text only)'}`, true);
     if(btnEl){ btnEl.classList.remove('sending'); btnEl.classList.add('sent'); btnEl.innerHTML='✓ Sent'; btnEl.disabled=false; }
@@ -1211,8 +1242,10 @@ btnSendAll.addEventListener('click', async()=>{
     const pending = g.items.filter(r=>r.status==='pending');
     if(!pending.length) continue;
     try{
-      const imgBlob = await fetchGridImage(dedupItems(pending));
-      const msgData = buildPayload(g.name, pending, g.guild, imgBlob);
+      const dedupedPending = dedupItems(pending);
+      const imgBlob = await fetchGridImage(dedupedPending);
+      const avatarBlob = await fetchAvatarImage(g.name); // Baixa o Avatar pro bot
+      const msgData = buildPayload(g.name, pending, g.guild, imgBlob, avatarBlob);
       await postOne(msgData);
       ok++;
     } catch(e){ fail++; console.error(e); }
