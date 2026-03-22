@@ -1,7 +1,0 @@
-{
-  "name": "loot-logger",
-  "version": "1.0.0",
-  "dependencies": {
-    "sharp": "^0.33.3"
-  }
-}
