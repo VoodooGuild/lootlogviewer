@@ -1107,9 +1107,15 @@ function albionImgUrl(itemId){
 async function fetchGridImage(items){
   if(!WORKER_URL) return null;
   try{
-    // Pass ITEM_ID:QTY format so worker can show quantity badges
-    const ids  = items.map(r=>`${r.item_id}:${r.quantity||1}`).join(',');
-    const resp = await fetch(`${WORKER_URL}?items=${encodeURIComponent(ids)}`);
+    const ids = items.map(r=>`${r.item_id}:${r.quantity||1}`).join(',');
+    
+    // Requisição POST envia os dados no "body", ignorando o limite de tamanho da URL
+    const resp = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: ids })
+    });
+    
     if(!resp.ok) return null;
     return await resp.blob();
   } catch(e){
