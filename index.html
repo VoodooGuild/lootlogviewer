@@ -426,7 +426,6 @@ function itemType(r){
   const from=(r.looted_from_name||'');
   
   if(id.includes('NONTRADABLE') || id.includes('SILVERBAG') || from.startsWith('@')) return 'untradable';
-  
   if(/_TRASH/.test(id)||nm==='trash') return 'trash';
   if(/_POTION/.test(id)||/\bpotion\b/.test(nm)) return 'potion';
   if(/^T\d_MOUNT_/.test(id)||/^T\d_FARM_/.test(id)) return 'mount';
@@ -480,11 +479,18 @@ function parseLoot(raw){
         ts = `${y}-${m}-${day}T${t}Z`;
       }
     }
+    
+    let rawId = (p[iId] || '').trim();
+    // CORREÇÃO CIRÚRGICA: O jogo exporta montarias com @1. A API do Albion não entende e retorna Rageclaw. Cortamos o @1 aqui.
+    if (rawId.includes('MOUNT') && rawId.includes('@')) {
+      rawId = rawId.split('@')[0];
+    }
+
     return {
       timestamp:         ts,
       looted_by_guild:   byG,
       looted_by_name:    byN,
-      item_id:           (p[iId] ||'').trim(),
+      item_id:           rawId,
       item_name:         (p[iNm] ||'').trim(),
       quantity:          parseInt(p[iQty])||1,
       looted_from_guild: (p[iFrG]||'').trim(),
@@ -516,16 +522,13 @@ function detectSessionTime(rows) {
   rows.forEach(r => {
     const d = new Date(r.timestamp);
     if(isNaN(d)) return;
-    
     const hhUTC = String(d.getUTCHours()).padStart(2, '0');
     const ddUTC = String(d.getUTCDate()).padStart(2, '0');
     const mmUTC = String(d.getUTCMonth() + 1).padStart(2, '0');
     const yyyyUTC = d.getUTCFullYear();
-
     const key = `${ddUTC}/${mmUTC}/${yyyyUTC} - ${hhUTC}:00 UTC`;
     counts[key] = (counts[key] || 0) + 1;
   });
-  
   let best = '', max = 0;
   for(const [k, v] of Object.entries(counts)){
     if(v > max){ max = v; best = k; }
@@ -539,17 +542,13 @@ function enrichRows(lootRows, ourGuild, chestRows){
     const key = c._key;
     pool[key] = (pool[key] || 0) + c.quantity;
   });
-  
-  const hasChest = chestRows.length > 0;
   return lootRows.map(r => {
     if(!ourGuild) return {...r, status:'neutral'};
     const byUs = r.looted_by_guild === ourGuild;
     const fromUs = r.looted_from_guild === ourGuild;
-    
     if(fromUs && !byUs) return {...r, status:'lost'};
     if(!byUs)           return {...r, status:'neutral'};
-    if(!hasChest)       return {...r, status:'looted'};
-    
+    if(!chestRows.length) return {...r, status:'looted'};
     const key = mkey(r.item_name, encId(r.item_id));
     if(pool[key] >= r.quantity){
       pool[key] -= r.quantity;
@@ -634,10 +633,7 @@ setupDZ('dz-chest','fi-chest',chestFiles,'fl-chest');
 
 document.getElementById('btn-go').addEventListener('click',()=>{
   let tempRows = [];
-  lootFiles.forEach(f=>{
-    tempRows = tempRows.concat(parseLoot(f.text));
-  });
-
+  lootFiles.forEach(f=>{ tempRows = tempRows.concat(parseLoot(f.text)); });
   tempRows.sort((a,b) => {
     const tA = new Date(a.timestamp).getTime() || 0;
     const tB = new Date(b.timestamp).getTime() || 0;
@@ -647,12 +643,11 @@ document.getElementById('btn-go').addEventListener('click',()=>{
 
   const seen = [];
   let lootRows = [];
-  const baseId = id => (id || ''); // MANTEM O ID ORIGINAL PARA NÃO FUNDIR ITENS COM ENCANTAMENTOS
+  const baseId = id => (id || ''); 
   
   tempRows.forEach(r => {
     const rTime = new Date(r.timestamp).getTime() || 0;
     const bId = baseId(r.item_id);
-    
     const isDuplicate = seen.some(s => 
       s.looted_by === r.looted_by_name &&
       s.item === bId &&
@@ -660,15 +655,8 @@ document.getElementById('btn-go').addEventListener('click',()=>{
       s.qty === r.quantity &&
       Math.abs(s.time - rTime) < 60000 
     );
-
     if(!isDuplicate) {
-      seen.push({
-        looted_by: r.looted_by_name,
-        item: bId,
-        looted_from: r.looted_from_name,
-        qty: r.quantity,
-        time: rTime
-      });
+      seen.push({ looted_by: r.looted_by_name, item: bId, looted_from: r.looted_from_name, qty: r.quantity, time: rTime });
       lootRows.push(r);
     }
   });
@@ -908,15 +896,11 @@ let tipActive = false;
 document.addEventListener('mouseover', e => {
   const chip = e.target.closest('[data-cid]');
   if (!chip) return;
-  
   const GT = document.getElementById('global-tip');
   if (!GT) return;
-
   if (tipActive && GT.dataset.currentCid === chip.dataset.cid) return;
-
   const d = TIPDATA[chip.dataset.cid];
   if (!d) return;
-
   const tc = ['','','','','t4','t5','t6','t7','t8'][d.tier]||'';
   const encDot = d.enc ? `<span class="enc e${d.enc}"></span>` : '';
   
@@ -938,12 +922,8 @@ document.addEventListener('mouseout', e => {
   const chip = e.target.closest('[data-cid]');
   if (!chip) return;
   if (e.relatedTarget && chip.contains(e.relatedTarget)) return;
-  
   const GT = document.getElementById('global-tip');
-  if (GT) {
-    GT.style.display = 'none';
-    GT.dataset.currentCid = '';
-  }
+  if (GT) { GT.style.display = 'none'; GT.dataset.currentCid = ''; }
   tipActive = false;
 });
 
@@ -1009,11 +989,10 @@ cfgSave.addEventListener('click',()=>{
   setStatus(`Saved ${Object.keys(discordIdMap).length} Discord IDs`, true);
 });
 
-// A LÓGICA CORRIGIDA: Mantemos o ID original e agrupamos as quantidades exatas
 function dedupItems(items){
   const map = {};
   items.forEach(r=>{
-    const base = r.item_id; // Mantém o ID exato para não fundir encantamentos diferentes!
+    const base = r.item_id; 
     if(!map[base]) map[base] = {...r, quantity: 0};
     map[base].quantity += r.quantity;
   });
