@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Log Viewer</title>
+
+<link rel="icon" href="logo.png" type="image/png"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:        #09090b;
+  --bg1:       #0f1014;
+  --bg2:       #141418;
+  --bg3:       #1a1a20;
+  --bg4:       #222228;
+  --bg5:       #2a2a32;
+  --line:      rgba(255,255,255,.07);
+  --line2:     rgba(255,255,255,.12);
+  --line3:     rgba(255,255,255,.18);
+
+  --blue:      #3b82f6;
+  --blue-dim:  rgba(59,130,246,.15);
+  --blue-bdr:  rgba(59,130,246,.35);
+
+  --amber:     #f59e0b;
+  --amber-dim: rgba(245,158,11,.12);
+  --amber-bdr: rgba(245,158,11,.3);
+
+  --red:       #ef4444;
+  --red-dim:   rgba(239,68,68,.12);
+  --red-bdr:   rgba(239,68,68,.3);
+
+  --green:     #22c55e;
+  --green-dim: rgba(34,197,94,.1);
+  --green-bdr: rgba(34,197,94,.25);
+
+  --purple:    #a855f7;
+  --slate:     #64748b;
+
+  --t:         #e4e4e7;
+  --t2:        #a1a1aa;
+  --t3:        #52525b;
+  --t4:        #3f3f46;
+
+  --r:  10px;
+  --r2: 7px;
+  --r3: 5px;
+  --fn: 'Geist', system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  background: var(--bg);
+  color: var(--t);
+  font-family: var(--fn);
+  line-height: 1.55;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+header {
+  position: sticky; top: 0; z-index: 200;
+  height: 60px;
+  background: rgba(9,9,11,.8);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; padding: 0 24px; gap: 12px;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-sq {
+  width: 28px; height: 28px; border-radius: 6px;
+  display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0; overflow: hidden;
+}
+.logo-sq img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.logo-name { font-size: .95rem; font-weight: 600; color: var(--t); letter-spacing: -.01em; }
+.logo-name span { color: var(--t3); font-weight: 400; }
+header .divider { width: 1px; height: 20px; background: var(--line2); margin: 0 6px; }
+.guild-chip {
+  font-size: .8rem; color: var(--t2); background: var(--bg3);
+  border: 1px solid var(--line); border-radius: 6px;
+  padding: 4px 10px; display: none; align-items: center; gap: 6px;
+}
+.guild-chip.show { display: flex; }
+.guild-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
+
+.session-chip {
+  font-size: .75rem; color: var(--amber); background: var(--amber-dim);
+  border: 1px solid var(--amber-bdr); border-radius: 6px;
+  padding: 4px 12px; display: none; align-items: center; gap: 6px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.session-chip.show { display: flex; }
+
+.hright { margin-left: auto; }
+.btn-sm {
+  font-family: var(--fn); font-size: .85rem; font-weight: 500;
+  padding: 6px 14px; border-radius: var(--r3);
+  border: 1px solid var(--line2); background: var(--bg3); color: var(--t2);
+  cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-sm:hover { background: var(--bg4); color: var(--t); border-color: var(--line3); }
+
+#page-upload {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; flex: 1;
+  padding: 30px 20px; gap: 24px;
+}
+.up-hero { text-align: center; margin-bottom: 0; }
+.up-logo-large {
+  width: 160px; max-width: 50vw; height: auto; margin: 0 auto 16px auto;
+  display: block; filter: drop-shadow(0 8px 24px rgba(0,0,0,0.5));
+}
+.up-hero h1 {
+  font-size: 2.4rem; font-weight: 800; letter-spacing: 0.05em;
+  color: var(--t); line-height: 1.1; margin-bottom: 4px; text-transform: uppercase;
+}
+.up-hero h2 {
+  font-size: 0.85rem; font-weight: 600; color: var(--t3);
+  letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 16px;
+}
+.up-hero p.up-desc { font-size: 0.95rem; color: var(--t2); max-width: 480px; margin: 0 auto; }
+
+.upload-cols { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 760px; }
+.upload-col { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 260px; }
+.col-label { font-size: .8rem; font-weight: 600; color: var(--t3); text-transform: uppercase; letter-spacing: .1em; display: flex; align-items: center; gap: 8px; }
+.col-badge { background: var(--bg4); border: 1px solid var(--line); border-radius: 4px; padding: 2px 8px; font-size: .75rem; color: var(--t3); font-weight: 400; text-transform: none; letter-spacing: 0; }
+.drop-zone {
+  border: 1px dashed var(--line2); border-radius: var(--r); background: var(--bg1); padding: 20px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: all .18s; text-align: center; min-height: 90px; justify-content: center;
+}
+.drop-zone:hover, .drop-zone.over { border-color: var(--blue-bdr); background: var(--blue-dim); }
+.drop-zone-icon { font-size: 1.6rem; line-height: 1; }
+.drop-zone-text { font-size: .85rem; color: var(--t3); }
+.drop-zone-text b { color: var(--blue); font-weight: 600; }
+.file-list { display: flex; flex-direction: column; gap: 6px; max-height: 130px; overflow-y: auto; padding-right: 5px; }
+.file-pill { display: flex; align-items: center; gap: 10px; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r3); padding: 8px 12px; font-size: .85rem; }
+.fp-icon { font-size: 1rem; flex-shrink: 0; }
+.fp-name { flex: 1; min-width: 0; color: var(--t2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fp-size { color: var(--t3); flex-shrink: 0; }
+.fp-remove { width: 20px; height: 20px; border-radius: 4px; flex-shrink: 0; background: none; border: none; color: var(--t3); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: .9rem; transition: all .1s; }
+.fp-remove:hover { background: var(--red-dim); color: var(--red); }
+.go-btn {
+  font-family: var(--fn); font-size: 1rem; font-weight: 600; padding: 12px 32px; border-radius: var(--r); cursor: pointer; transition: all .15s;
+  border: 1px solid var(--blue-bdr); background: var(--blue-dim); color: var(--blue); width: 100%; max-width: 760px; letter-spacing: -.01em;
+}
+.go-btn:hover:not(:disabled) { background: rgba(59,130,246,.22); border-color: var(--blue); }
+.go-btn:disabled { opacity: .3; cursor: not-allowed; }
+input[type=file] { display: none; }
+
+#page-app { display: none; flex: 1; }
+
+.stats { display: grid; grid-template-columns: repeat(6, 1fr); border-bottom: 1px solid var(--line); background: var(--bg1); }
+@media(max-width:900px){ .stats { grid-template-columns: repeat(3,1fr); } }
+.stt { padding: 16px 20px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
+.stt:last-child { border-right: none; }
+.stt-label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--t3); display: flex; align-items: center; gap: 6px; }
+.stt-val { font-size: 1.8rem; font-weight: 700; letter-spacing: -.03em; line-height: 1; color: var(--t); }
+.stt-sub { font-size: .75rem; color: var(--t4); }
+.cv-blue  { color: var(--blue);  } .cv-amber { color: var(--amber); } .cv-red   { color: var(--red);   } .cv-slate { color: var(--slate); } .cv-green { color: var(--green); }
+
+.controls {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px 20px; background: var(--bg1); border-bottom: 1px solid var(--line); position: sticky; top: 60px; z-index: 100;
+}
+.search { display: flex; align-items: center; gap: 8px; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r2); padding: 8px 12px; flex: 1; min-width: 180px; max-width: 260px; transition: border-color .15s; }
+.search:focus-within { border-color: var(--blue-bdr); }
+.search svg { opacity: .25; flex-shrink: 0; width: 15px; height: 15px; }
+.search input { background: none; border: none; outline: none; color: var(--t); font-family: var(--fn); font-size: .95rem; width: 100%; }
+.search input::placeholder { color: var(--t3); }
+
+.seg { display: flex; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r2); padding: 3px; gap: 2px; }
+.seg-btn { font-family: var(--fn); font-size: .85rem; font-weight: 500; padding: 5px 14px; border-radius: 5px; border: none; background: none; color: var(--t3); cursor: pointer; transition: all .12s; white-space: nowrap; }
+.seg-btn:hover { color: var(--t); }
+.seg-btn.on { background: var(--bg4); color: var(--t); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+.seg-btn.on-pending { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--amber-bdr); }
+
+.cdiv { width: 1px; height: 24px; background: var(--line); flex-shrink: 0; align-self: center; }
+.ctl-lbl { font-size: .75rem; font-weight: 600; color: var(--t3); text-transform: uppercase; letter-spacing: .1em; white-space: nowrap; }
+
+select { font-family: var(--fn); font-size: .9rem; font-weight: 500; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r2); color: var(--t2); padding: 6px 12px; cursor: pointer; transition: border-color .15s; min-width: 140px; }
+select:hover, select:focus { border-color: var(--line2); outline: none; color: var(--t); }
+select option { background: var(--bg2); }
+
+.htoggles { display: flex; gap: 6px; flex-wrap: wrap; }
+.htog { font-family: var(--fn); font-size: .82rem; font-weight: 500; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--line); background: var(--bg2); color: var(--t3); cursor: pointer; transition: all .12s; display: flex; align-items: center; gap: 5px; white-space: nowrap; line-height: 1.3; }
+.htog:hover { color: var(--t); border-color: var(--line2); background: var(--bg3); }
+.htog.on[data-t="food"]   { background: rgba(245,158,11,.1);  border-color: rgba(245,158,11,.3);  color: var(--amber);  }
+.htog.on[data-t="potion"] { background: rgba(59,130,246,.1);  border-color: rgba(59,130,246,.3);  color: var(--blue);   }
+.htog.on[data-t="mount"]  { background: rgba(34,197,94,.08);  border-color: rgba(34,197,94,.25);  color: var(--green);  }
+.htog.on[data-t="trash"]  { background: rgba(168,85,247,.1);  border-color: rgba(168,85,247,.3);  color: var(--purple); }
+.htog.on[data-t="other"]  { background: rgba(100,116,139,.1); border-color: rgba(100,116,139,.3); color: var(--slate);  }
+.htog.on[data-t="untradable"] { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.3); color: var(--red); }
+
+#cards-view { padding: 16px 20px; }
+.cards-col { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 760px; margin: 0 auto; }
+.pcard { width: 100%; background: var(--bg1); border: 1px solid var(--line); border-radius: var(--r); transition: border-color .15s; overflow: visible; animation: rise .16s ease both; }
+.pcard:hover { border-color: var(--line2); }
+.pcard.s-pending   { border-top: 2px solid var(--amber); }
+.pcard.s-deposited { border-top: 2px solid var(--blue); }
+.pcard.s-lost      { border-top: 2px solid var(--red); }
+.pcard.s-looted    { border-top: 2px solid var(--green); }
+@keyframes rise { from { opacity:0; transform:translateY(5px) } to { opacity:1; transform:none } }
+
+.ch { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); background: var(--bg2); border-radius: var(--r) var(--r) 0 0; }
+.avatar { width: 44px; height: 44px; border-radius: 8px; flex-shrink: 0; background: var(--bg4); border: 1px solid var(--line2); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; color: var(--blue); text-transform: uppercase; }
+img.avatar { object-fit: cover; border: 1px solid var(--line2); }
+.ci { flex: 1; min-width: 0; }
+.ci-name { font-size: 1.05rem; font-weight: 600; color: var(--t); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.01em; }
+.ci-guild { font-size: .8rem; color: var(--t3); margin-top: 2px; }
+.cr { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.bd-looted    { background: var(--green-dim);  color: var(--green);  border: 1px solid var(--green-bdr);  }
+.bd-deposited { background: var(--blue-dim);   color: var(--blue);   border: 1px solid var(--blue-bdr);   }
+.bd-pending   { background: var(--amber-dim);  color: var(--amber);  border: 1px solid var(--amber-bdr);  }
+.bd-lost      { background: var(--red-dim);    color: var(--red);    border: 1px solid var(--red-bdr);    }
+.bd-neutral   { background: var(--bg4);        color: var(--t3);     border: 1px solid var(--line);       }
+.cr-count { font-size: .75rem; color: var(--t4); }
+.cr-silver { font-size: .75rem; color: var(--amber); font-weight: 600; }
+
+.citems { padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { position: relative; width: 64px; height: 64px; border-radius: var(--r2); background: var(--bg3); border: 1px solid var(--line); overflow: visible; flex-shrink: 0; transition: transform .12s, border-color .12s; cursor: default; }
+.chip:hover { transform: scale(1.1) translateY(-2px); border-color: var(--line3); z-index: 30; }
+.chip.dep  { border-color: var(--blue-bdr); }
+.chip.pend { border-color: var(--amber-bdr); }
+.chip img { width: 64px; height: 64px; object-fit: cover; border-radius: calc(var(--r2) - 1px); display: block; }
+.chip .noi { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+.chip-qty { position: absolute; bottom: 3px; right: 3px; background: rgba(15, 16, 20, 0.9); color: #fff; font-size: 0.75rem; font-weight: 700; padding: 1px 5px; border-radius: 4px; border: 1px solid var(--line2); z-index: 5; pointer-events: none; line-height: 1.1; }
+
+#global-tip { display: none; position: fixed; z-index: 99999; background: var(--bg3); border: 1px solid var(--line2); border-radius: var(--r); padding: 12px 14px; width: 230px; box-shadow: 0 12px 40px rgba(0,0,0,.8); pointer-events: none; font-family: var(--fn); }
+#global-tip::after { content: ''; position: absolute; top: 100%; left: var(--arrow-left, 50%); transform: translateX(-50%); border: 6px solid transparent; border-top-color: var(--line2); }
+#global-tip.tip-below::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--line2); }
+.tip-name { font-size: .95rem; font-weight: 600; color: var(--t); margin-bottom: 4px; line-height: 1.35; }
+.tip-id   { font-size: .7rem; color: var(--t3); font-family: monospace; margin-bottom: 8px; }
+.tip-row  { display: flex; justify-content: space-between; font-size: .85rem; color: var(--t2); padding: 2px 0; gap: 8px; }
+.tip-row strong { color: var(--t); font-weight: 600; }
+.tip-st { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.ts-d { color: var(--blue); } .ts-p { color: var(--amber); } .ts-l { color: var(--red); } .ts-loot { color: var(--green); }
+
+.t4{color:#60b8d8}.t5{color:#7dc850}.t6{color:#d4b030}.t7{color:#d06020}.t8{color:#a848c8}
+.enc { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 4px; vertical-align: middle; }
+.e1{background:#50d050}.e2{background:#50a8f0}.e3{background:#b850f0}.e4{background:#f07820}
+
+.cf { padding: 12px 16px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 12px; background: var(--bg2); border-radius: 0 0 var(--r) var(--r); }
+.cf-txt { font-size: .8rem; color: var(--t3); white-space: nowrap; }
+.cf-pct { font-size: .8rem; color: var(--t2); font-weight: 600; white-space: nowrap; }
+.prog { flex: 1; height: 4px; background: var(--bg5); border-radius: 2px; overflow: hidden; }
+.prog-fill { height: 4px; border-radius: 2px; background: var(--blue); transition: width .35s ease; }
+.empty-msg { text-align: center; padding: 60px 20px; color: var(--t3); font-size: .95rem; width: 100%; }
+
+.pgn { background: var(--bg1); border-top: 1px solid var(--line); padding: 14px 20px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: center; }
+.pb { min-width: 34px; height: 34px; border-radius: var(--r3); border: 1px solid var(--line); background: var(--bg2); color: var(--t3); cursor: pointer; font-family: var(--fn); font-size: .9rem; display: flex; align-items: center; justify-content: center; transition: all .1s; }
+.pb:hover:not(:disabled) { border-color: var(--line2); color: var(--t); background: var(--bg3); }
+.pb.active { background: var(--blue-dim); border-color: var(--blue-bdr); color: var(--blue); font-weight: 600; }
+.pb:disabled { opacity: .2; cursor: default; }
+.pi { font-size: .85rem; color: var(--t3); padding: 0 6px; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: 3px; }
+
+.webhook-bar{ background:var(--bg1);border-bottom:1px solid var(--line); padding:10px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center; }
+.btn-discord{ font-family:var(--fn);font-size:.9rem;font-weight:700; padding:6px 16px;border-radius:var(--r2);cursor:pointer;transition:all .15s; border:1px solid rgba(88,101,242,.4);background:rgba(88,101,242,.12);color:#7289da; display:inline-flex;align-items:center;gap:6px;white-space:nowrap; }
+.btn-discord:hover{background:rgba(88,101,242,.22);border-color:rgba(88,101,242,.7)}
+.btn-discord:disabled{opacity:.3;cursor:not-allowed}
+.btn-discord svg{flex-shrink:0}
+.card-send-btn{ font-family:var(--fn);font-size:.8rem;font-weight:700; padding:4px 12px;border-radius:5px;cursor:pointer;transition:all .15s; border:1px solid rgba(88,101,242,.35);background:rgba(88,101,242,.1);color:#7289da; display:inline-flex;align-items:center;gap:4px; }
+.card-send-btn:hover{background:rgba(88,101,242,.22);border-color:rgba(88,101,242,.6)}
+.card-send-btn.sending{opacity:.5;cursor:not-allowed}
+.card-send-btn.sent{border-color:var(--green-bdr);background:rgba(34,197,94,.1);color:var(--green)}
+.card-send-btn.failed{border-color:var(--red-bdr);background:rgba(239,68,68,.1);color:var(--red)}
+
+.wh-status{font-size:.85rem;padding:5px 12px;border-radius:5px;font-weight:600;display:none}
+.wh-status.ok {background:rgba(34,197,94,.1); color:var(--green); border:1px solid var(--green-bdr)}
+.wh-status.err{background:rgba(239,68,68,.1); color:var(--red); border:1px solid var(--red-bdr)}
+
+.site-footer { margin-top: auto; text-align: center; padding: 30px 20px; color: var(--t3); font-size: 0.85rem; letter-spacing: 0.02em; }
+</style>
+</head>
+<body>
+
+<header id="main-header" style="display: none;">
+  <div class="logo">
+    <div class="logo-sq">
+      <img src="logo.png" alt="Logo">
+    </div>
+    <span class="logo-name">Log Viewer <span>/ AO</span></span>
+  </div>
+  <div class="divider"></div>
+  <div class="guild-chip" id="guild-chip">
+    <span class="guild-chip-dot"></span>
+    <span id="guild-chip-name"></span>
+  </div>
+  
+  <div class="session-chip" id="session-chip">
+    <span>⏱️</span>
+    <span id="session-chip-text"></span>
+  </div>
+
+  <div class="hright">
+    <button class="btn-sm" id="btn-reload" style="display:none">
+      <svg width="12" height="12" viewBox="0 0 11 11" fill="none"><path d="M1 5.5a4.5 4.5 0 1 0 1.2-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M1 2v3.5h3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      New upload
+    </button>
+  </div>
+</header>
+
+<div id="page-upload">
+  <div class="up-hero">
+    <img src="logo.png" alt="Log Viewer Logo" class="up-logo-large">
+    <h1>LOG VIEWER</h1>
+    <h2>CREATED BY CHAKZ</h2>
+    <p class="up-desc">Upload loot logs and chest logs — combine multiple files from the same session.</p>
+  </div>
+  <div class="upload-cols">
+    <div class="upload-col">
+      <div class="col-label">📋 Loot Logs <span class="col-badge">loot-events-*.txt</span></div>
+      <div class="drop-zone" id="dz-loot" tabindex="0">
+        <div class="drop-zone-icon">↑</div>
+        <div class="drop-zone-text"><b>Click or drag</b> to add files</div>
+      </div>
+      <div class="file-list" id="fl-loot"></div>
+      <input type="file" id="fi-loot" accept=".txt,.csv" multiple/>
+    </div>
+    <div class="upload-col">
+      <div class="col-label">📦 Chest Logs <span class="col-badge">optional</span></div>
+      <div class="drop-zone" id="dz-chest" tabindex="0">
+        <div class="drop-zone-icon">↑</div>
+        <div class="drop-zone-text"><b>Click or drag</b> to add files</div>
+      </div>
+      <div class="file-list" id="fl-chest"></div>
+      <input type="file" id="fi-chest" accept=".txt,.csv" multiple/>
+    </div>
+  </div>
+  <button class="go-btn" id="btn-go" disabled>START</button>
+</div>
+
+<div id="page-app">
+  <div class="stats" id="stats"></div>
+  <div class="webhook-bar" id="webhook-bar" style="justify-content:flex-end">
+    <button class="btn-discord" id="btn-discord-config" style="background:rgba(255,255,255,.05);border-color:var(--line2);color:var(--t2)">
+      ⚙ Discord IDs
+    </button>
+    <button class="btn-discord" id="btn-send-all">
+      <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M11.5 2C10 1 8 .5 7 .5S4 1 2.5 2C1.5 2.8 1 4 1 5.5c0 1 .3 2 .8 2.7.2.3.2.7 0 1L1 11l2-.5c.3-.1.6 0 .8.2C5 11.5 6 12 7 12s2-.5 3.2-1.3c.2-.2.5-.3.8-.2l2 .5-.8-1.8c-.2-.3-.2-.7 0-1C12.7 7.5 13 6.5 13 5.5c0-1.5-.5-2.7-1.5-3.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+      Notify All Pending
+    </button>
+    <span class="wh-status" id="wh-status"></span>
+  </div>
+
+  <div id="discord-config-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+    <div style="background:var(--bg2);border:1px solid var(--line2);border-radius:14px;padding:24px;width:480px;max-width:90vw;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:1.1rem;font-weight:700;color:var(--t)">⚙ Discord User IDs</div>
+        <button id="cfg-close" style="background:none;border:none;color:var(--t3);font-size:1.3rem;cursor:pointer;padding:0 4px">✕</button>
+      </div>
+      <div style="font-size:.85rem;color:var(--t2);line-height:1.6">
+        Map in-game player names to Discord user IDs for proper @mentions.<br>
+        One per line: <code style="background:var(--bg4);padding:2px 6px;border-radius:4px;font-size:.8rem">PlayerName=123456789012345678</code>
+      </div>
+      <textarea id="cfg-textarea" placeholder="Senpai1=123456789012345678" style="background:var(--bg3);border:1px solid var(--line);border-radius:8px;color:var(--t);font-family:monospace;font-size:.9rem;padding:12px;resize:vertical;height:180px;outline:none;width:100%"></textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button id="cfg-save" class="btn-discord" style="padding:8px 24px;font-size:.95rem">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="search">
+      <svg viewBox="0 0 13 13" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="currentColor" stroke-width="1.4"/><line x1="8.7" y1="8.7" x2="12" y2="12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <input type="text" id="s-input" placeholder="Search item, player…"/>
+    </div>
+    
+    <div class="seg" id="status-seg">
+      <button class="seg-btn" data-s="all">All</button>
+      <button class="seg-btn on-pending" data-s="pending">Pending</button>
+    </div>
+    
+    <div class="cdiv"></div>
+    <span class="ctl-lbl">Guild</span>
+    <select id="f-guild"><option value="">All guilds</option></select>
+    <div class="cdiv"></div>
+    <span class="ctl-lbl">Hide</span>
+    <div class="htoggles">
+      <div class="htog on" data-t="food">🍖 Food</div>
+      <div class="htog on" data-t="potion">🧪 Potions</div>
+      <div class="htog on" data-t="mount">🐴 Mounts</div>
+      <div class="htog on" data-t="trash">🗑 Trash</div>
+      <div class="htog on" data-t="other">🪨 Others</div>
+      <div class="htog on" data-t="untradable">🚫 PvE / Untradable</div>
+    </div>
+    <div class="cdiv"></div>
+    <select id="f-per">
+      <option value="20">20 / page</option>
+      <option value="40" selected>40 / page</option>
+      <option value="80">80 / page</option>
+    </select>
+  </div>
+  <div id="cards-view">
+    <div class="cards-col" id="cards-col"></div>
+    <div class="pgn" id="pgn"></div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  Log Viewer &copy; 2026 &middot; Made by Chakz
+</footer>
+
+<div id="global-tip"></div>
+
+<script>
+const esc   = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const fmtT  = ts => { try{ const d=new Date(ts.replace(/\.\d+Z$/,'Z').replace(/\.\d+$/,'')); if(isNaN(d))return ts; return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }catch{return ts;} };
+const fmtSz = b  => b>1e6?`${(b/1e6).toFixed(1)}mb`:b>1e3?`${(b/1e3).toFixed(0)}kb`:`${b}b`;
+const encId = id => { const m=(id||'').match(/@(\d)$/); return m?+m[1]:0; };
+const tierId= id => { const m=(id||'').match(/^T(\d)/); return m?+m[1]:0; };
+const tCls  = t  => ['','','','','t4','t5','t6','t7','t8'][t]||'';
+const imgUrl= id => `https://render.albiononline.com/v1/item/${encodeURIComponent(id)}.png?size=64&quality=2`;
+const mkey  = (name,enc) => (name||'').toLowerCase().trim()+'@@'+(enc||0);
+
+const fmtSilver = v => {
+  if (v >= 1e6) return (v / 1e6).toFixed(2) + 'm';
+  if (v >= 1e3) return (v / 1e3).toFixed(1) + 'k';
+  return v.toLocaleString();
+};
+
+// ─── calcSilver ────────────────────────────────────────────────────────────────
+// Calcula o valor estimado de prata de um array de rows.
+// Só soma itens com status === targetStatus (default: 'pending').
+function calcSilver(rows, targetStatus = 'pending') {
+  let total = 0;
+  rows.forEach(r => {
+    if (r.status === targetStatus) {
+      total += (PRICE_MAP[r.item_id] || 0) * r.quantity;
+    }
+  });
+  return total;
+}
+// ───────────────────────────────────────────────────────────────────────────────
+
+let currentSessionTime = '';
+const PRICE_MAP = {}; 
+
+function itemType(r){
+  const id=(r.item_id||'').toUpperCase(), nm=(r.item_name||'').toLowerCase();
+  const from=(r.looted_from_name||'');
+  
+  if(id.includes('NONTRADABLE') || id.includes('SILVERBAG') || from.startsWith('@')) return 'untradable';
+  if(/_TRASH/.test(id)||nm==='trash') return 'trash';
+  if(/_POTION/.test(id)||/\bpotion\b/.test(nm)) return 'potion';
+  if(/^T\d_MOUNT_/.test(id)||/^T\d_FARM_/.test(id)) return 'mount';
+  if(/_MEAL_/.test(id)||/_STEW/.test(id)||/_PIE/.test(id)||/_OMELETTE/.test(id)||/_SANDWICH/.test(id)||/\b(stew|pie|omelette|sandwich|meal|beef |pork |soup)\b/.test(nm)) return 'food';
+  if(/^T\d_(ORE|FIBER|HIDE|ROCK|WOOD|STONE|METAL|CLOTH|LEATHER)/.test(id)) return 'other';
+  if(/_(RUNE|SOUL|RELIC|ESSENCE|SHARD|SIGIL|FRAGMENT|ARTEFACT_RUNE)/.test(id)) return 'other';
+  if(/^(TREASURE_|UNIQUE_GVGTOKEN|QUESTITEM_|UNIQUE_FURNITURE)/.test(id)) return 'other';
+  if(/_(LEVEL\d|LEVEL\d@)/.test(id)&&!/_ARMOR_|_HEAD_|_SHOES_|_MAIN_|_OFF_|_2H_|_BAG/.test(id)) return 'other';
+  if(/\b(rune|soul|relic|essence|shard|sigil|ore|cotton|hide|fiber|basalt|energy|coin|scroll|candle|talisman|trophy|memento|trophy)\b/.test(nm)) return 'other';
+  return 'gear';
+}
+
+function parseLoot(raw){
+  raw = raw.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const lines = raw.trim().split('\n');
+  if(lines.length < 2) return [];
+  const hdr = lines[0].split(';').map(h=>h.trim().toLowerCase().replace(/__/g,'_'));
+  const ci  = (...ns) => { for(const n of ns){ const i=hdr.findIndex(h=>h===n||h.includes(n)); if(i>=0)return i; } return -1; };
+
+  const hasDate    = hdr.findIndex(h=>h==='date')>=0;
+  const hasUtcTime = hdr.findIndex(h=>h==='utc_time'||h==='time')>=0;
+  const iDate = hasDate ? hdr.findIndex(h=>h==='date') : -1;
+  const iTime = hasUtcTime ? hdr.findIndex(h=>h==='utc_time'||h==='time') : -1;
+  const iTs   = ci('timestamp');
+  const iByG  = ci('looted_by_guild');
+  const iByN  = ci('looted_by_name');
+  const iId   = ci('item_id');
+  const iNm   = ci('item_name');
+  const iQty  = ci('quantity');
+  const iFrG  = ci('looted_from_guild');
+  const iFrN  = ci('looted_from_name');
+
+  return lines.slice(1).map(line=>{
+    const p = line.split(';');
+    if(p.length < 8) return null;
+    const byN = (p[iByN]||'').trim();
+    const byG = (p[iByG]||'').trim();
+    if(!byN && !byG) return null;
+
+    let ts = '';
+    if(iTs >= 0 && p[iTs]) ts = p[iTs].trim();
+    else if(iDate >= 0 && iTime >= 0) {
+      const d = (p[iDate]||'').trim();
+      const t = (p[iTime]||'').trim();
+      const parts = d.split('-');
+      if(parts.length === 3) {
+        const y = parts[0].length===4 ? parts[0] : parts[2];
+        const m = parts[0].length===4 ? parts[1] : parts[1];
+        const day = parts[0].length===4 ? parts[2] : parts[0];
+        ts = `${y}-${m}-${day}T${t}Z`;
+      }
+    }
+    
+    let rawId = (p[iId] || '').trim();
+    if (rawId.includes('MOUNT') && rawId.includes('@')) {
+      rawId = rawId.split('@')[0];
+    }
+
+    return {
+      timestamp:         ts,
+      looted_by_guild:   byG,
+      looted_by_name:    byN,
+      item_id:           rawId,
+      item_name:         (p[iNm] ||'').trim(),
+      quantity:          parseInt(p[iQty])||1,
+      looted_from_guild: (p[iFrG]||'').trim(),
+      looted_from_name:  (p[iFrN]||'').trim(),
+    };
+  }).filter(Boolean);
+}
+
+function parseChest(raw){
+  const unq=s=>s.replace(/^"|"$/g,'').trim();
+  return raw.trim().split(/\r?\n/).reduce((acc,line)=>{
+    const p=line.split('\t').map(unq);
+    if(!p[0]||p[0].toLowerCase()==='date'||p.length<3||!p[2])return acc;
+    const enc=parseInt(p[3])||0;
+    acc.push({ item_name: p[2], enc, quantity: parseInt(p[5])||1, _key: mkey(p[2],enc) });
+    return acc;
+  },[]);
+}
+
+function detectGuild(rows){
+  const f={};
+  rows.forEach(r=>{ if(r.looted_by_guild)f[r.looted_by_guild]=(f[r.looted_by_guild]||0)+1; });
+  return Object.entries(f).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
+}
+
+function detectSessionTime(rows) {
+  if(!rows || !rows.length) return '';
+  const counts = {};
+  rows.forEach(r => {
+    const d = new Date(r.timestamp);
+    if(isNaN(d)) return;
+    const hhUTC = String(d.getUTCHours()).padStart(2, '0');
+    const ddUTC = String(d.getUTCDate()).padStart(2, '0');
+    const mmUTC = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const yyyyUTC = d.getUTCFullYear();
+    const key = `${ddUTC}/${mmUTC}/${yyyyUTC} - ${hhUTC}:00 UTC`;
+    counts[key] = (counts[key] || 0) + 1;
+  });
+  let best = '', max = 0;
+  for(const [k, v] of Object.entries(counts)){
+    if(v > max){ max = v; best = k; }
+  }
+  return best;
+}
+
+function enrichRows(lootRows, ourGuild, chestRows){
+  const pool = {};
+  chestRows.forEach(c => {
+    const key = c._key;
+    pool[key] = (pool[key] || 0) + c.quantity;
+  });
+  return lootRows.map(r => {
+    if(!ourGuild) return {...r, status:'neutral'};
+    const byUs = r.looted_by_guild === ourGuild;
+    const fromUs = r.looted_from_guild === ourGuild;
+    if(fromUs && !byUs) return {...r, status:'lost'};
+    if(!byUs)           return {...r, status:'neutral'};
+    if(!chestRows.length) return {...r, status:'looted'};
+    const key = mkey(r.item_name, encId(r.item_id));
+    if(pool[key] >= r.quantity){
+      pool[key] -= r.quantity;
+      return {...r, status:'deposited'};
+    }
+    return {...r, status:'pending'};
+  });
+}
+
+async function fetchPrices(rows) {
+  const uniqueIds = [...new Set(rows.map(r => r.item_id))];
+  const chunks = [];
+  for (let i = 0; i < uniqueIds.length; i += 100) {
+    chunks.push(uniqueIds.slice(i, i + 100));
+  }
+
+  for (const chunk of chunks) {
+    try {
+      const res = await fetch(`https://europe.albion-online-data.com/api/v2/stats/prices/${chunk.join(',')}?locations=Caerleon,Bridgewatch,Martlock,Thetford,FortSterling,Lymhurst,Brecilien`);
+      if (!res.ok) continue;
+      const data = await res.json();
+      
+      data.forEach(d => {
+        if (d.sell_price_min > 0) {
+          if (!PRICE_MAP[d.item_id]) PRICE_MAP[d.item_id] = [];
+          PRICE_MAP[d.item_id].push(d.sell_price_min);
+        }
+      });
+    } catch (e) {
+      console.warn('Falha ao puxar preços:', e);
+    }
+  }
+
+  for (const k in PRICE_MAP) {
+    const arr = PRICE_MAP[k];
+    if (arr.length > 0) {
+      PRICE_MAP[k] = Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+    } else {
+      PRICE_MAP[k] = 0;
+    }
+  }
+}
+
+function getPlayerAvatar(name, format='svg') {
+  const formatParams = format === 'png' ? '&size=128&ext=.png' : '';
+  return `https://api.dicebear.com/8.x/adventurer/${format}?seed=${encodeURIComponent(name)}&backgroundColor=1a1a20${formatParams}`;
+}
+
+async function fetchAvatarImage(playerName){
+  try{
+    const url = `https://api.dicebear.com/8.x/adventurer/png?seed=${encodeURIComponent(playerName)}&backgroundColor=1a1a20&size=128`;
+    const resp = await fetch(url);
+    if(!resp.ok) return null;
+    return await resp.blob();
+  } catch(e){
+    console.warn('Falha ao baixar avatar:', e);
+    return null;
+  }
+}
+
+const TIPDATA = {};
+let _chipCounter = 0;
+let allRows=[],filtered=[],ourGuild='';
+
+// FILTRO PENDING ATIVADO POR PADRÃO NO JAVASCRIPT
+let pg=1,perPg=40,sf='pending',sq='',sguild='';
+
+const hideT=new Set(['food','potion','mount','trash','other','untradable']);
+const lootFiles=[], chestFiles=[];
+
+function renderFilePills(listId, files, onRemove){
+  const el=document.getElementById(listId);
+  el.innerHTML=files.map((f,i)=>`
+    <div class="file-pill">
+      <span class="fp-icon">📄</span>
+      <span class="fp-name">${esc(f.name)}</span>
+      <span class="fp-size">${fmtSz(f.size)}</span>
+      <button class="fp-remove" data-i="${i}">✕</button>
+    </div>`).join('');
+  el.querySelectorAll('.fp-remove').forEach(b=>b.addEventListener('click',()=>{
+    files.splice(+b.dataset.i,1);
+    renderFilePills(listId,files,onRemove);
+    checkGoBtn();
+  }));
+}
+
+function checkGoBtn(){ document.getElementById('btn-go').disabled = lootFiles.length===0; }
+
+function addFiles(newFiles, store, listId){
+  for(const f of newFiles){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      store.push({name:f.name,size:f.size,text:e.target.result});
+      renderFilePills(listId,store,()=>{});
+      checkGoBtn();
+    };
+    reader.readAsText(f);
+  }
+}
+
+function setupDZ(dzId, fiId, store, listId){
+  const dz=document.getElementById(dzId), fi=document.getElementById(fiId);
+  dz.addEventListener('click',()=>fi.click());
+  dz.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' ')fi.click(); });
+  ['dragover','dragenter'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('over');}));
+  ['dragleave','dragend'].forEach(ev=>dz.addEventListener(ev,()=>dz.classList.remove('over')));
+  dz.addEventListener('drop',e=>{
+    e.preventDefault();dz.classList.remove('over');
+    if(e.dataTransfer.files.length)addFiles([...e.dataTransfer.files],store,listId);
+  });
+  fi.addEventListener('change',e=>{
+    if(e.target.files.length)addFiles([...e.target.files],store,listId);
+    fi.value='';
+  });
+}
+
+setupDZ('dz-loot','fi-loot',lootFiles,'fl-loot');
+setupDZ('dz-chest','fi-chest',chestFiles,'fl-chest');
+
+document.getElementById('btn-go').addEventListener('click', async () => {
+  const btnGo = document.getElementById('btn-go');
+  btnGo.innerHTML = 'FETCHING PRICES...';
+  btnGo.disabled = true;
+
+  let tempRows = [];
+  lootFiles.forEach(f=>{ tempRows = tempRows.concat(parseLoot(f.text)); });
+  tempRows.sort((a,b) => {
+    const tA = new Date(a.timestamp).getTime() || 0;
+    const tB = new Date(b.timestamp).getTime() || 0;
+    if (tA !== tB) return tA - tB;
+    return (a.item_id || '').localeCompare(b.item_id || ''); 
+  });
+
+  const seen = [];
+  let lootRows = [];
+  const baseId = id => (id || ''); 
+  
+  tempRows.forEach(r => {
+    const rTime = new Date(r.timestamp).getTime() || 0;
+    const bId = baseId(r.item_id);
+    const isDuplicate = seen.some(s => 
+      s.looted_by === r.looted_by_name &&
+      s.item === bId &&
+      s.looted_from === r.looted_from_name &&
+      s.qty === r.quantity &&
+      Math.abs(s.time - rTime) < 60000 
+    );
+    if(!isDuplicate) {
+      seen.push({ looted_by: r.looted_by_name, item: bId, looted_from: r.looted_from_name, qty: r.quantity, time: rTime });
+      lootRows.push(r);
+    }
+  });
+
+  if(!lootRows.length){ 
+    alert('Could not parse any loot rows. Check file formats.'); 
+    btnGo.innerHTML = 'START';
+    btnGo.disabled = false;
+    return; 
+  }
+
+  let chestRows=[];
+  chestFiles.forEach(f=>{ chestRows=chestRows.concat(parseChest(f.text)); });
+
+  ourGuild=detectGuild(lootRows);
+  allRows=enrichRows(lootRows,ourGuild,chestRows);
+  populateGuildFilter(allRows);
+  
+  await fetchPrices(allRows);
+
+  currentSessionTime = detectSessionTime(lootRows);
+  const stChip = document.getElementById('session-chip');
+  if (currentSessionTime) {
+    document.getElementById('session-chip-text').textContent = currentSessionTime;
+    stChip.classList.add('show');
+  } else {
+    stChip.classList.remove('show');
+  }
+
+  document.getElementById('page-upload').style.display='none';
+  document.getElementById('main-header').style.display='flex';
+  document.getElementById('page-app').style.display='block';
+  document.getElementById('btn-reload').style.display='';
+  const chip=document.getElementById('guild-chip');
+  document.getElementById('guild-chip-name').textContent=ourGuild||'unknown';
+  if(ourGuild) chip.classList.add('show');
+
+  btnGo.innerHTML = 'START';
+  applyFilters();
+  window.scrollTo(0, 0); 
+});
+
+document.getElementById('btn-reload').addEventListener('click',()=>{
+  document.getElementById('page-upload').style.display='flex';
+  document.getElementById('main-header').style.display='none';
+  document.getElementById('page-app').style.display='none';
+  document.getElementById('btn-reload').style.display='none';
+  document.getElementById('guild-chip').classList.remove('show');
+  document.getElementById('session-chip').classList.remove('show');
+  lootFiles.length=0; chestFiles.length=0;
+  ['fl-loot','fl-chest'].forEach(id=>document.getElementById(id).innerHTML='');
+  allRows=[]; document.getElementById('btn-go').disabled=true;
+  window.scrollTo(0, 0); 
+});
+
+function populateGuildFilter(rows){
+  const guilds=[...new Set(rows.map(r=>r.looted_by_guild).filter(Boolean))].sort();
+  const sel=document.getElementById('f-guild');
+  sel.innerHTML='<option value="">All guilds</option>'+guilds.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');
+  if(guilds.includes(ourGuild)){ sel.value=ourGuild; sguild=ourGuild; }
+  else { sel.value=''; sguild=''; }
+}
+
+function renderStats(baseRows) {
+  // baseRows: já filtrado por guild + hideT + sq, mas SEM filtro de status (sf).
+  // Assim o topo sempre mostra o resumo do evento completo,
+  // mas o valor estimado respeita os filtros ativos de categoria/guild/busca.
+
+  const c = {looted:0, deposited:0, pending:0, lost:0};
+  let totalPendingSilver = 0;
+
+  baseRows.forEach(r => {
+    if(c[r.status] !== undefined) c[r.status]++;
+    // Valor = apenas itens pending visíveis nos filtros ativos
+    if (r.status === 'pending') {
+      totalPendingSilver += (PRICE_MAP[r.item_id] || 0) * r.quantity;
+    }
+  });
+
+  const players = new Set(baseRows.map(r=>r.looted_by_name).filter(Boolean)).size;
+  const pct = baseRows.length > 0 ? Math.round(c.deposited / baseRows.length * 100) : 0;
+  
+  document.getElementById('stats').innerHTML=`
+    <div class="stt">
+      <div class="stt-label">⚔️ Total looted</div>
+      <div class="stt-val">${baseRows.length.toLocaleString()}</div>
+      <div class="stt-sub">${ourGuild||'all guilds'}</div>
+    </div>
+    <div class="stt">
+      <div class="stt-label">🔵 Deposited</div>
+      <div class="stt-val cv-blue">${c.deposited.toLocaleString()}</div>
+      <div class="stt-sub">${pct}% of total</div>
+    </div>
+    <div class="stt">
+      <div class="stt-label">🟡 Pending</div>
+      <div class="stt-val cv-amber">${c.pending.toLocaleString()}</div>
+      <div class="stt-sub">not deposited</div>
+    </div>
+    <div class="stt">
+      <div class="stt-label">💰 Pend. Value</div>
+      <div class="stt-val cv-amber">${fmtSilver(totalPendingSilver)}</div>
+      <div class="stt-sub">estimated silver</div>
+    </div>
+    <div class="stt">
+      <div class="stt-label">🔴 Lost</div>
+      <div class="stt-val cv-red">${c.lost.toLocaleString()}</div>
+      <div class="stt-sub">taken from us</div>
+    </div>
+    <div class="stt">
+      <div class="stt-label">👥 Players</div>
+      <div class="stt-val cv-slate">${players.toLocaleString()}</div>
+      <div class="stt-sub">in view</div>
+    </div>`;
+}
+
+function applyFilters(){
+  let rows = allRows.slice();
+
+  // 1. Filtros base (guild + tipos ocultados + busca)
+  if(sguild) rows = rows.filter(r => r.looted_by_guild === sguild);
+  if(hideT.size) rows = rows.filter(r => !hideT.has(itemType(r)));
+  if(sq){ 
+    const q = sq.toLowerCase(); 
+    rows = rows.filter(r =>
+      r.item_name.toLowerCase().includes(q) ||
+      r.item_id.toLowerCase().includes(q) ||
+      r.looted_by_name.toLowerCase().includes(q) ||
+      r.looted_from_name.toLowerCase().includes(q)
+    ); 
+  }
+
+  // 2. Renderiza stats com base nos filtros ativos (sem filtro de status)
+  //    → o valor estimado já é calculado APENAS para pending dentro desses filtros
+  renderStats(rows);
+
+  // 3. Aplica filtro de status só para a lista de cards
+  if(sf === 'pending') rows = rows.filter(r => r.status === 'pending');
+
+  rows.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+  filtered = rows;
+  pg = 1;
+  renderCards(); 
+}
+
+function groupByPlayer(rows){
+  const m={};
+  rows.forEach(r=>{
+    const k=r.looted_by_name||'(unknown)';
+    if(!m[k]) m[k]={name:k,guild:r.looted_by_guild,items:[],c:{looted:0,deposited:0,pending:0,lost:0,neutral:0,silver:0}};
+    m[k].items.push(r);
+    m[k].c[r.status]=(m[k].c[r.status]||0)+1;
+  });
+  
+  // Calcula silver pendente buscando SEMPRE em allRows para não depender do filtro sf.
+  // Isso garante que mesmo na aba "All", o badge mostra só o valor dos itens pending.
+  const pendingByPlayer = {};
+  allRows.forEach(r => {
+    if (r.status !== 'pending') return;
+    // Respeita os mesmos filtros ativos (guild, hideT, busca) mas ignora o filtro de status
+    if (sguild && r.looted_by_guild !== sguild) return;
+    if (hideT.has(itemType(r))) return;
+    if (sq) {
+      const q = sq.toLowerCase();
+      const match = r.item_name.toLowerCase().includes(q) ||
+                    r.item_id.toLowerCase().includes(q) ||
+                    r.looted_by_name.toLowerCase().includes(q) ||
+                    r.looted_from_name.toLowerCase().includes(q);
+      if (!match) return;
+    }
+    const k = r.looted_by_name || '(unknown)';
+    pendingByPlayer[k] = (pendingByPlayer[k] || 0) + (PRICE_MAP[r.item_id] || 0) * r.quantity;
+  });
+
+  const pri={pending:0,looted:1,deposited:2,lost:3,neutral:4};
+  return Object.values(m).map(g=>{
+    let ov='neutral';
+    if(g.c.pending>0)       ov='pending';
+    else if(g.c.looted>0)   ov='looted';
+    else if(g.c.deposited>0)ov='deposited';
+    else if(g.c.lost>0)     ov='lost';
+    return {...g, overall:ov, pendingSilver: pendingByPlayer[g.name] || 0};
+  }).sort((a,b)=>{ const d=pri[a.overall]-pri[b.overall]; return d||b.items.length-a.items.length; });
+}
+
+function renderCards(){
+  Object.keys(TIPDATA).forEach(k=>delete TIPDATA[k]); _chipCounter=0;
+  const groups=groupByPlayer(filtered);
+  const col=document.getElementById('cards-col');
+  if(!groups.length){
+    col.innerHTML='<div class="empty-msg">No results for the current filters.</div>';
+    document.getElementById('pgn').innerHTML=''; return;
+  }
+  const start=(pg-1)*perPg, page=groups.slice(start,start+perPg);
+  const bdM={looted:'bd-looted',deposited:'bd-deposited',pending:'bd-pending',lost:'bd-lost',neutral:'bd-neutral'};
+  const bdL={looted:'Looted',deposited:'Deposited',pending:'Pending',lost:'Lost',neutral:'—'};
+  const bdC={looted:'var(--green)',deposited:'var(--blue)',pending:'var(--amber)',lost:'var(--red)',neutral:'var(--t3)'};
+
+  col.innerHTML=page.map(g=>{
+    const dep=g.c.deposited||0,tot=g.items.length;
+    const pct=tot>0?Math.round(dep/tot*100):0;
+    const init=(g.name||'?').charAt(0).toUpperCase();
+
+    const avatarUrl = getPlayerAvatar(g.name);
+    const avatarHtml = `<img class="avatar" src="${avatarUrl}" alt="${init}" onerror="this.outerHTML='<div class=\\'avatar\\'>${init}</div>'"/>`;
+
+    const groupedItems = Object.values(g.items.reduce((acc, r) => {
+      const key = r.item_id + '|' + r.status;
+      if (!acc[key]) acc[key] = { ...r, displayQty: 0 };
+      acc[key].displayQty += r.quantity;
+      return acc;
+    }, {}));
+
+    const chips = groupedItems.map((r) => {
+      const st = r.status, enc = encId(r.item_id), tier = tierId(r.item_id);
+      const isTrash = r.item_id.toUpperCase().includes('TRASH');
+      const cc = st==='deposited'?' dep':st==='pending'?' pend':'';
+      const img = isTrash
+        ? `<div class="noi">🗑</div>`
+        : `<img src="${imgUrl(r.item_id)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noi',textContent:'?'}))"/>`;
+      
+      const qtyHtml = r.displayQty > 1 ? `<div class="chip-qty">${r.displayQty}</div>` : '';
+      const chipId = `c${++_chipCounter}`;
+
+      TIPDATA[chipId] = {
+        name: r.item_name, id: r.item_id, tier, enc,
+        qty: r.displayQty, time: fmtT(r.timestamp),
+        from: (st==='looted'||st==='deposited'||st==='pending') ? ('From: '+(r.looted_from_name||'?')+(r.looted_from_guild?' ('+r.looted_from_guild+')':'')) : st==='lost' ? ('To: '+(r.looted_by_name||'?')) : (r.looted_from_name||'?'),
+        st, sc:{deposited:'ts-d',pending:'ts-p',lost:'ts-l',looted:'ts-loot'}[st]||'',
+        stxt:{looted:'Waiting for deposit',deposited:'Deposited in chest',pending:'Not deposited yet',lost:'Lost to enemy',neutral:'—'}[st]||'—'
+      };
+      
+      return `<div class="chip${cc}" data-cid="${chipId}">${img}${qtyHtml}</div>`;
+    }).join('');
+
+    // Badge de prata: usa pendingSilver calculado independente do filtro de status
+    const silverBadge = g.pendingSilver > 0 ? ` · <span class="cr-silver">💰 ${fmtSilver(g.pendingSilver)}</span>` : '';
+
+    return `<div class="pcard s-${g.overall}">
+      <div class="ch">
+        ${avatarHtml}
+        <div class="ci">
+          <div class="ci-name">${esc(g.name)}</div>
+          ${g.guild?`<div class="ci-guild">🏰 ${esc(g.guild)}</div>`:''}
+        </div>
+        <div class="cr">
+          <span class="badge ${bdM[g.overall]}"><span style="color:${bdC[g.overall]};font-size:.6rem">●</span> ${bdL[g.overall]}</span>
+          <span class="cr-count">${tot} item${tot!==1?'s':''}${dep?` · ${dep} dep.`:''}${silverBadge}</span>
+          ${g.overall==='pending'?`<button class="card-send-btn" data-player="${esc(g.name)}" onclick="sendPlayerPing(this,'${esc(g.name)}')">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M11.5 2C10 1 8 .5 7 .5S4 1 2.5 2C1.5 2.8 1 4 1 5.5c0 1 .3 2 .8 2.7.2.3.2.7 0 1L1 11l2-.5c.3-.1.6 0 .8.2C5 11.5 6 12 7 12s2-.5 3.2-1.3c.2-.2.5-.3.8-.2l2 .5-.8-1.8c-.2-.3-.2-.7 0-1C12.7 7.5 13 6.5 13 5.5c0-1.5-.5-2.7-1.5-3.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+            Ping
+          </button>`:''}
+        </div>
+      </div>
+      <div class="citems">${chips}</div>
+      <div class="cf">
+        <span class="cf-txt">Deposited: ${dep}/${tot}</span>
+        <div class="prog"><div class="prog-fill" style="width:${pct}%"></div></div>
+        <span class="cf-pct">${pct}%</span>
+      </div>
+    </div>`;
+  }).join('');
+  renderPgn(groups.length);
+}
+
+function renderPgn(total){
+  const tp=Math.ceil(total/perPg),el=document.getElementById('pgn');
+  if(tp<=1){el.innerHTML=`<span class="pi">${total} player${total!==1?'s':''}</span>`;return;}
+  const pages=[],R=2;
+  for(let i=1;i<=tp;i++)if(i===1||i===tp||Math.abs(i-pg)<=R)pages.push(i);
+  let h=`<button class="pb" data-a="p" ${pg===1?'disabled':''}>‹</button>`;
+  let prev=0;
+  for(const p of pages){if(prev&&p-prev>1)h+=`<span class="pi">…</span>`;h+=`<button class="pb ${p===pg?'active':''}" data-p="${p}">${p}</button>`;prev=p;}
+  h+=`<button class="pb" data-a="n" ${pg===tp?'disabled':''}>›</button>`;
+  h+=`<span class="pi">${total} player${total!==1?'s':''}</span>`;
+  el.innerHTML=h;
+  el.querySelectorAll('[data-p]').forEach(b=>b.addEventListener('click',()=>{pg=+b.dataset.p;renderCards();}));
+  el.querySelector('[data-a="p"]')?.addEventListener('click',()=>{if(pg>1){pg--;renderCards();}});
+  el.querySelector('[data-a="n"]')?.addEventListener('click',()=>{if(pg<tp){pg++;renderCards();}});
+}
+
+document.getElementById('s-input').addEventListener('input',e=>{sq=e.target.value;applyFilters();});
+document.getElementById('f-guild').addEventListener('change',e=>{sguild=e.target.value;applyFilters();});
+document.getElementById('f-per').addEventListener('change',e=>{perPg=+e.target.value;pg=1;renderCards();});
+document.getElementById('status-seg').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-s]');if(!btn)return;
+  sf=btn.dataset.s;
+  document.querySelectorAll('[data-s]').forEach(b=>{
+    b.className='seg-btn';
+    if(b.dataset.s===sf)b.classList.add(sf==='pending'?'on-pending':'on');
+  });
+  applyFilters();
+});
+document.querySelectorAll('.htog').forEach(t=>{
+  t.addEventListener('click',()=>{
+    const type=t.dataset.t;
+    if(hideT.has(type)){hideT.delete(type);t.classList.remove('on');}
+    else{hideT.add(type);t.classList.add('on');}
+    applyFilters();
+  });
+});
+
+let tipActive = false;
+
+document.addEventListener('mouseover', e => {
+  const chip = e.target.closest('[data-cid]');
+  if (!chip) return;
+  const GT = document.getElementById('global-tip');
+  if (!GT) return;
+  if (tipActive && GT.dataset.currentCid === chip.dataset.cid) return;
+  const d = TIPDATA[chip.dataset.cid];
+  if (!d) return;
+  const tc = ['','','','','t4','t5','t6','t7','t8'][d.tier]||'';
+  const encDot = d.enc ? `<span class="enc e${d.enc}"></span>` : '';
+  
+  GT.innerHTML =
+    `<div class="tip-name ${tc}">${esc(d.name)}${encDot}</div>`
+   +`<div class="tip-id">${esc(d.id)}</div>`
+   +`<div class="tip-row"><span style="flex:1">${esc(d.from)}</span></div>`
+   +`<div class="tip-row"><span>Qty</span><strong>×${d.qty}</strong></div>`
+   +`<div class="tip-row"><span>Time</span><strong>${d.time||'—'}</strong></div>`
+   +`<div class="tip-st ${d.sc}">${d.stxt}</div>`;
+   
+  GT.style.display = 'block';
+  GT.dataset.currentCid = chip.dataset.cid;
+  tipActive = true;
+  positionTip(chip, GT);
+});
+
+document.addEventListener('mouseout', e => {
+  const chip = e.target.closest('[data-cid]');
+  if (!chip) return;
+  if (e.relatedTarget && chip.contains(e.relatedTarget)) return;
+  const GT = document.getElementById('global-tip');
+  if (GT) { GT.style.display = 'none'; GT.dataset.currentCid = ''; }
+  tipActive = false;
+});
+
+document.addEventListener('scroll', () => { 
+  if(tipActive){
+    const GT = document.getElementById('global-tip');
+    if(GT) GT.style.display = 'none';
+    tipActive = false;
+  } 
+}, true);
+
+function positionTip(chip, GT) {
+  const cr = chip.getBoundingClientRect();
+  const TW = 230, TH = GT.offsetHeight || 160, M = 12;
+  const W = window.innerWidth, H = window.innerHeight;
+  let left = cr.left + cr.width/2 - TW/2;
+  left = Math.max(8, Math.min(left, W - TW - 8));
+  const above = cr.top >= TH + M + 20;
+  const below = !above && (H - cr.bottom >= TH + M + 20);
+  let top = above ? cr.top - TH - M : below ? cr.bottom + M : Math.max(8, cr.top - TH - M);
+  GT.style.left = left + 'px';
+  GT.style.top  = top  + 'px';
+  GT.classList.toggle('tip-below', below && !above);
+  const arrowL = Math.max(12, Math.min((cr.left + cr.width/2) - left, TW - 12));
+  GT.style.setProperty('--arrow-left', arrowL + 'px');
+}
+
+const WEBHOOK_URL = 'https://discord.com/api/webhooks/1485254555816956125/X_i-Yl422TpZrfUorNwLW7wfdLAtgLVoSd3zXOexno3kEHHIwri1L0WLL7qDjgjXOSei';
+const WORKER_URL = '/api/grid';
+
+const whStatus   = document.getElementById('wh-status');
+const btnSendAll = document.getElementById('btn-send-all');
+const btnConfig  = document.getElementById('btn-discord-config');
+const cfgModal   = document.getElementById('discord-config-modal');
+const cfgClose   = document.getElementById('cfg-close');
+const cfgSave    = document.getElementById('cfg-save');
+const cfgArea    = document.getElementById('cfg-textarea');
+
+let discordIdMap = JSON.parse(localStorage.getItem('ao_discord_ids')||'{}');
+
+function setStatus(msg, ok){
+  whStatus.textContent   = msg;
+  whStatus.className     = 'wh-status '+(ok?'ok':'err');
+  whStatus.style.display = 'inline-block';
+  setTimeout(()=>{ whStatus.style.display='none'; }, 6000);
+}
+
+btnConfig.addEventListener('click',()=>{
+  cfgArea.value = Object.entries(discordIdMap).map(([k,v])=>`${k}=${v}`).join('\n');
+  cfgModal.style.display='flex';
+});
+cfgClose.addEventListener('click',()=>{ cfgModal.style.display='none'; });
+cfgModal.addEventListener('click',e=>{ if(e.target===cfgModal) cfgModal.style.display='none'; });
+cfgSave.addEventListener('click',()=>{
+  discordIdMap={};
+  cfgArea.value.split('\n').forEach(line=>{
+    const [name,...rest]=line.trim().split('=');
+    const id=rest.join('=').trim();
+    if(name&&id) discordIdMap[name.trim()]=id;
+  });
+  localStorage.setItem('ao_discord_ids', JSON.stringify(discordIdMap));
+  cfgModal.style.display='none';
+  setStatus(`Saved ${Object.keys(discordIdMap).length} Discord IDs`, true);
+});
+
+function dedupItems(items){
+  const map = {};
+  items.forEach(r=>{
+    const base = r.item_id; 
+    if(!map[base]) map[base] = {...r, quantity: 0};
+    map[base].quantity += r.quantity;
+  });
+  return Object.values(map);
+}
+
+function albionImgUrl(itemId){
+  return `https://render.albiononline.com/v1/item/${encodeURIComponent(itemId)}.png?size=64&quality=2`;
+}
+
+async function fetchGridImage(items){
+  if(!WORKER_URL) return null;
+  try{
+    const ids = items.map(r=>`${r.item_id}:${r.quantity||1}`).join(',');
+    const resp = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: ids })
+    });
+    if(!resp.ok) return null;
+    return await resp.blob();
+  } catch(e){
+    console.warn('Worker fetch failed:', e);
+    return null;
+  }
+}
+
+const tierEmoji = t => ['','⬛','🟫','🟩','🟦','🟥','🟧','🟨','⬜'][t]||'⬜';
+
+function buildPayload(playerName, pendingItems, guild, imgBlob, avatarBlob){
+  const id      = discordIdMap[playerName];
+  const mention = id ? `<@${id}>` : `📋 **${playerName}**`;
+  
+  const groupedList = dedupItems(pendingItems);
+
+  // ── FIX: calcula silver APENAS dos itens pending passados para a função ──
+  let totalSilver = 0;
+  groupedList.forEach(g => {
+    totalSilver += (PRICE_MAP[g.item_id] || 0) * g.quantity;
+  });
+  const silverStr = totalSilver > 0 ? `~${fmtSilver(totalSilver)} Silver` : 'Unknown';
+
+  const lines = groupedList.map(g=>{
+    const t = parseInt((g.item_id||'').match(/^T(\d)/)?.[1]||0);
+    return `${tierEmoji(t)} ${g.item_name}${g.quantity>1?` ×${g.quantity}`:''}`;
+  }).join('\n');
+
+  const killboardUrl = `https://killboard-1.com/eu/player/${encodeURIComponent(playerName)}`;
+  
+  const descLines = [];
+  if (currentSessionTime) {
+    descLines.push(`**🗓️ EVENT: ${currentSessionTime}**`);
+    descLines.push(``);
+  }
+  descLines.push(`**${groupedList.length} item${groupedList.length!==1?'s':''} not deposited yet**`);
+  descLines.push(`**💰 Estimated Value:** ${silverStr}`); 
+  descLines.push(``);
+  descLines.push(`You have **24 hours** to deposit or get charged.`);
+  descLines.push(`📌 Open a thread and explain why this loot is missing.`);
+  descLines.push(``);
+  descLines.push(`🔗 [View Killboard](${killboardUrl})`);
+
+  const embed = {
+    color: 0xf59e0b,
+    author: { name:'⚠️ PENDING DEPOSIT — SQUIRTLE SQUAD' },
+    title:  playerName,
+    url:    killboardUrl,
+    description: descLines.join('\n'),
+    fields:[
+      { name:'Guild', value:guild||'—', inline:true },
+      { name:`Missing Items (${groupedList.length})`, value:lines.slice(0,1020)||'—', inline:false },
+    ],
+    footer:    { text:'Log Viewer · Made by Chakz, 2026' },
+    timestamp: new Date().toISOString(),
+  };
+
+  if (avatarBlob) {
+    embed.thumbnail = { url: 'attachment://avatar.png' };
+  } else {
+    embed.thumbnail = { url: albionImgUrl(pendingItems[0].item_id) }; 
+  }
+
+  if (imgBlob) {
+    embed.image = { url: 'attachment://items.png' };
+  }
+
+  if (imgBlob || avatarBlob) {
+    const form  = new FormData();
+    form.append('payload_json', JSON.stringify({ content:mention, username:'Log Viewer', embeds:[embed] }));
+    
+    let fileIndex = 0;
+    if (imgBlob) {
+      form.append(`files[${fileIndex}]`, imgBlob, 'items.png');
+      fileIndex++;
+    }
+    if (avatarBlob) {
+      form.append(`files[${fileIndex}]`, avatarBlob, 'avatar.png');
+    }
+    return { useForm:true, form };
+  } else {
+    return { useForm:false, payload:{ content:mention, username:'Log Viewer', embeds:[embed] } };
+  }
+}
+
+async function postOne(msgData){
+  let resp;
+  if(msgData.useForm){
+    resp = await fetch(WEBHOOK_URL, { method:'POST', body: msgData.form });
+  } else {
+    resp = await fetch(WEBHOOK_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(msgData.payload)
+    });
+  }
+  if(!resp.ok){
+    const txt = await resp.text();
+    console.error('Discord error:', txt);
+    throw new Error(`Discord ${resp.status}: ${txt.slice(0,120)}`);
+  }
+}
+
+async function sendToDiscord(playerName, pendingItems, guild, btnEl){
+  if(!pendingItems.length){ setStatus('No pending items for '+playerName, false); return; }
+  if(btnEl){ btnEl.classList.add('sending'); btnEl.disabled=true; }
+  try{
+    const dedupedItems = dedupItems(pendingItems);
+    const imgBlob = await fetchGridImage(dedupedItems);
+    const avatarBlob = await fetchAvatarImage(playerName);
+    // buildPayload recebe apenas os itens pending → silver calculado corretamente
+    const msgData = buildPayload(playerName, dedupedItems, guild, imgBlob, avatarBlob);
+    await postOne(msgData);
+    setStatus(`✓ Sent for ${playerName}${imgBlob?' 🖼️':' (text only)'}`, true);
+    if(btnEl){ btnEl.classList.remove('sending'); btnEl.classList.add('sent'); btnEl.innerHTML='✓ Sent'; btnEl.disabled=false; }
+  } catch(e){
+    console.error(e);
+    setStatus('Failed: '+e.message.slice(0,80), false);
+    if(btnEl){ btnEl.classList.remove('sending'); btnEl.classList.add('failed'); btnEl.innerHTML='✗ Error'; btnEl.disabled=false; }
+  }
+}
+
+window.sendPlayerPing = async function(btnEl, playerName){
+  const group = groupByPlayer(filtered).find(g=>g.name===playerName);
+  if(!group) return;
+  // Filtra apenas pending antes de mandar → silver correto no Discord
+  await sendToDiscord(playerName, group.items.filter(r=>r.status==='pending'), group.guild, btnEl);
+};
+
+btnSendAll.addEventListener('click', async()=>{
+  const groups = groupByPlayer(filtered).filter(g=>g.c.pending>0);
+  if(!groups.length){ setStatus('No pending players.', false); return; }
+  btnSendAll.disabled=true;
+  const origHTML = btnSendAll.innerHTML;
+  btnSendAll.innerHTML='Sending…';
+  let ok=0, fail=0;
+  for(const g of groups){
+    const pending = g.items.filter(r=>r.status==='pending');
+    if(!pending.length) continue;
+    try{
+      const dedupedPending = dedupItems(pending);
+      const imgBlob = await fetchGridImage(dedupedPending);
+      const avatarBlob = await fetchAvatarImage(g.name); 
+      // buildPayload recebe apenas pending → silver correto
+      const msgData = buildPayload(g.name, pending, g.guild, imgBlob, avatarBlob);
+      await postOne(msgData);
+      ok++;
+    } catch(e){ fail++; console.error(e); }
+    await new Promise(r=>setTimeout(r,1400));
+  }
+  btnSendAll.disabled=false;
+  btnSendAll.innerHTML=origHTML;
+  setStatus(`Done: ${ok} sent${fail?`, ${fail} failed`:''}`, fail===0);
+});
+
+</script>
+</body>
+</html>
