@@ -531,6 +531,8 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
   </div>
 </div>
 
+<div id="global-tip"></div>
+
 <script>
 const esc   = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const fmtT  = ts => { try{ const d=new Date(ts.replace(/\.\d+Z$/,'Z').replace(/\.\d+$/,'')); if(isNaN(d))return ts; return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }catch{return ts;} };
@@ -970,16 +972,25 @@ document.querySelectorAll('.htog').forEach(t=>{
   });
 });
 
-const GT = document.getElementById('global-tip');
+// ── CORREÇÃO DE BUG: TOOLTIP ───────────────────────────────────────
 let tipActive = false;
 
 document.addEventListener('mouseover', e => {
   const chip = e.target.closest('[data-cid]');
   if (!chip) return;
+  
+  const GT = document.getElementById('global-tip');
+  if (!GT) return;
+
+  // Previne recarregar a tela se já estivermos com o mouse no mesmo item
+  if (tipActive && GT.dataset.currentCid === chip.dataset.cid) return;
+
   const d = TIPDATA[chip.dataset.cid];
   if (!d) return;
+
   const tc = ['','','','','t4','t5','t6','t7','t8'][d.tier]||'';
   const encDot = d.enc ? `<span class="enc e${d.enc}"></span>` : '';
+  
   GT.innerHTML =
     `<div class="tip-name ${tc}">${esc(d.name)}${encDot}</div>`
    +`<div class="tip-id">${esc(d.id)}</div>`
@@ -987,18 +998,37 @@ document.addEventListener('mouseover', e => {
    +`<div class="tip-row"><span>Qty</span><strong>×${d.qty}</strong></div>`
    +`<div class="tip-row"><span>Time</span><strong>${d.time||'—'}</strong></div>`
    +`<div class="tip-st ${d.sc}">${d.stxt}</div>`;
+   
   GT.style.display = 'block';
+  GT.dataset.currentCid = chip.dataset.cid;
   tipActive = true;
-  positionTip(chip);
+  positionTip(chip, GT);
 });
+
 document.addEventListener('mouseout', e => {
-  if (!e.target.closest('[data-cid]')) return;
-  GT.style.display = 'none';
+  const chip = e.target.closest('[data-cid]');
+  if (!chip) return;
+  
+  // A TRAVA MÁGICA: Verifica se o mouse só moveu DENTRO da caixinha (ex: para cima da imagem) e impede que o tooltip suma (flicker)
+  if (e.relatedTarget && chip.contains(e.relatedTarget)) return;
+  
+  const GT = document.getElementById('global-tip');
+  if (GT) {
+    GT.style.display = 'none';
+    GT.dataset.currentCid = '';
+  }
   tipActive = false;
 });
-document.addEventListener('scroll', () => { if(tipActive){GT.style.display='none';tipActive=false;} }, true);
 
-function positionTip(chip) {
+document.addEventListener('scroll', () => { 
+  if(tipActive){
+    const GT = document.getElementById('global-tip');
+    if(GT) GT.style.display = 'none';
+    tipActive = false;
+  } 
+}, true);
+
+function positionTip(chip, GT) {
   const cr = chip.getBoundingClientRect();
   const TW = 230, TH = GT.offsetHeight || 160, M = 12;
   const W = window.innerWidth, H = window.innerHeight;
@@ -1083,7 +1113,7 @@ async function fetchGridImage(items){
   }
 }
 
-// CORREÇÃO: Paleta de cores exata dos Tiers (T1 ao T8)
+// CORREÇÃO: Paleta exata de Tiers pro Ping no Discord (T1 a T8)
 const tierEmoji = t => ['','⬛','🟫','🟩','🟦','🟥','🟧','🟨','⬜'][t]||'⬜';
 
 function buildPayload(playerName, pendingItems, guild, imgBlob){
@@ -1195,6 +1225,5 @@ btnSendAll.addEventListener('click', async()=>{
 });
 
 </script>
-<div id="global-tip"></div>
 </body>
 </html>
