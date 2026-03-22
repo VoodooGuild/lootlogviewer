@@ -50,17 +50,21 @@ export default async function handler(req, res) {
             fill="none" stroke="rgba(245,158,11,0.8)" stroke-width="1.5"/>
         </svg>`), left: x, top: y });
 
-      // Badge: blue ×N for qty>1, amber ! for single
+      // Badge: show qty if >1, otherwise show "!"
+      // Position: bottom-right corner, always fully visible
       const badgeText  = qty > 1 ? `x${qty}` : '!';
-      const badgeW     = qty > 1 ? Math.max(18, badgeText.length * 7 + 6) : 14;
+      const badgeH     = 16;
+      const badgeW     = qty > 1 ? Math.max(20, badgeText.length * 8 + 8) : 16;
       const badgeColor = qty > 1 ? '#3b82f6' : '#f59e0b';
-      const textColor  = qty > 1 ? '#fff' : '#000';
+      const textColor  = qty > 1 ? '#ffffff' : '#000000';
+      const bx         = x + SIZE - badgeW + 4;  // slight overflow right is fine
+      const by         = y + SIZE - badgeH + 4;  // slight overflow bottom
       composites.push({ input: Buffer.from(
-        `<svg width="${badgeW}" height="14">
-          <rect x="0" y="0" width="${badgeW}" height="14" rx="7" fill="${badgeColor}"/>
-          <text x="${badgeW/2}" y="11" font-size="9" font-weight="bold"
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${badgeW}" height="${badgeH}">
+          <rect x="0" y="0" width="${badgeW}" height="${badgeH}" rx="8" fill="${badgeColor}"/>
+          <text x="${badgeW/2}" y="${badgeH-4}" font-size="10" font-weight="bold" font-family="Arial,sans-serif"
             text-anchor="middle" fill="${textColor}">${badgeText}</text>
-        </svg>`), left: x + SIZE - badgeW, top: y + SIZE - 14 });
+        </svg>`), left: Math.max(0, bx), top: Math.max(0, by) });
     }
 
     const png = await sharp({
