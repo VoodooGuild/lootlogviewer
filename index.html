@@ -286,6 +286,7 @@ select option { background: var(--bg2); }
   display: flex; align-items: center; justify-content: center;
   font-size: .85rem; font-weight: 700; color: var(--blue); text-transform: uppercase;
 }
+img.avatar { object-fit: cover; border: 1px solid var(--line2); }
 .ci { flex: 1; min-width: 0; }
 .ci-name { font-size: .9rem; font-weight: 600; color: var(--t); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.01em; }
 .ci-guild { font-size: .7rem; color: var(--t3); margin-top: 1px; }
@@ -315,7 +316,6 @@ select option { background: var(--bg2); }
 .chip img { width: 50px; height: 50px; object-fit: cover; border-radius: calc(var(--r2) - 1px); display: block; }
 .chip .noi { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
 
-/* Novo badge de quantidade agrupado na UI do site */
 .chip-qty {
   position: absolute; bottom: 2px; right: 2px;
   background: rgba(15, 16, 20, 0.85); color: #fff;
@@ -424,7 +424,6 @@ select option { background: var(--bg2); }
 .card-send-btn.sent{border-color:var(--green-bdr);background:rgba(34,197,94,.1);color:var(--green)}
 .card-send-btn.failed{border-color:var(--red-bdr);background:rgba(239,68,68,.1);color:var(--red)}
 
-#snap-canvas{position:fixed;left:-9999px;top:-9999px;pointer-events:none}
 </style>
 </head>
 <body>
@@ -622,13 +621,15 @@ function parseLoot(raw){
   }).filter(Boolean);
 }
 
+// CORREÇÃO: Capturando o nome do jogador diretamente do baú
 function parseChest(raw){
   const unq=s=>s.replace(/^"|"$/g,'').trim();
   return raw.trim().split(/\r?\n/).reduce((acc,line)=>{
     const p=line.split('\t').map(unq);
     if(!p[0]||p[0].toLowerCase()==='date'||p.length<3||!p[2])return acc;
     const enc=parseInt(p[3])||0;
-    acc.push({item_name:p[2],enc,quantity:parseInt(p[5])||1,_key:mkey(p[2],enc)});
+    const playerName = (p[1] || '').trim().toLowerCase();
+    acc.push({ player: playerName, item_name: p[2], enc, quantity: parseInt(p[5])||1, _key: mkey(p[2],enc) });
     return acc;
   },[]);
 }
@@ -639,20 +640,36 @@ function detectGuild(rows){
   return Object.entries(f).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
 }
 
-function enrichRows(lootRows,ourGuild,chestRows){
-  const pool={};
-  chestRows.forEach(c=>{ pool[c._key]=(pool[c._key]||0)+c.quantity; });
-  const hasChest=chestRows.length>0;
-  return lootRows.map(r=>{
-    if(!ourGuild) return {...r,status:'neutral'};
-    const byUs=r.looted_by_guild===ourGuild, fromUs=r.looted_from_guild===ourGuild;
-    if(fromUs&&!byUs) return {...r,status:'lost'};
-    if(!byUs)         return {...r,status:'neutral'};
-    if(!hasChest)     return {...r,status:'looted'};
-    const key=mkey(r.item_name,encId(r.item_id));
-    if(pool[key]>0){pool[key]-=r.quantity;return {...r,status:'deposited'};}
-    return {...r,status:'pending'};
+// CORREÇÃO: Cruzando item do baú apenas com o jogador responsável
+function enrichRows(lootRows, ourGuild, chestRows){
+  const pool = {};
+  chestRows.forEach(c => {
+    const pKey = c.player + '|' + c._key;
+    pool[pKey] = (pool[pKey] || 0) + c.quantity;
   });
+  
+  const hasChest = chestRows.length > 0;
+  return lootRows.map(r => {
+    if(!ourGuild) return {...r, status:'neutral'};
+    const byUs = r.looted_by_guild === ourGuild;
+    const fromUs = r.looted_from_guild === ourGuild;
+    
+    if(fromUs && !byUs) return {...r, status:'lost'};
+    if(!byUs)           return {...r, status:'neutral'};
+    if(!hasChest)       return {...r, status:'looted'};
+    
+    const pKey = (r.looted_by_name || '').toLowerCase() + '|' + mkey(r.item_name, encId(r.item_id));
+    if(pool[pKey] >= r.quantity){
+      pool[pKey] -= r.quantity;
+      return {...r, status:'deposited'};
+    }
+    return {...r, status:'pending'};
+  });
+}
+
+// GERAÇÃO DOS AVATARES DICEBEAR
+function getPlayerAvatar(name) {
+  return `https://api.dicebear.com/8.x/adventurer/svg?seed=${encodeURIComponent(name)}&backgroundColor=1a1a20`;
 }
 
 const TIPDATA = {};
@@ -712,15 +729,48 @@ setupDZ('dz-loot','fi-loot',lootFiles,'fl-loot');
 setupDZ('dz-chest','fi-chest',chestFiles,'fl-chest');
 
 document.getElementById('btn-go').addEventListener('click',()=>{
-  const seen=new Set();
-  let lootRows=[];
-  const baseId=id=>id.replace(/@\d$/,'');
+  let tempRows = [];
   lootFiles.forEach(f=>{
-    parseLoot(f.text).forEach(r=>{
-      const key=r.looted_by_name+'|'+baseId(r.item_id)+'|'+r.looted_from_name;
-      if(!seen.has(key)){ seen.add(key); lootRows.push(r); }
-    });
+    tempRows = tempRows.concat(parseLoot(f.text));
   });
+
+  // CORREÇÃO: Ordenação 100% determinística ignorando a assincronia do upload
+  tempRows.sort((a,b) => {
+    const tA = new Date(a.timestamp).getTime() || 0;
+    const tB = new Date(b.timestamp).getTime() || 0;
+    if (tA !== tB) return tA - tB;
+    return (a.item_id || '').localeCompare(b.item_id || ''); 
+  });
+
+  const seen = [];
+  let lootRows = [];
+  const baseId = id => (id || '').replace(/@\d$/,'');
+  
+  tempRows.forEach(r => {
+    const rTime = new Date(r.timestamp).getTime() || 0;
+    const bId = baseId(r.item_id);
+    
+    // CORREÇÃO: Fuzzy Match com margem de 60 segundos
+    const isDuplicate = seen.some(s => 
+      s.looted_by === r.looted_by_name &&
+      s.item === bId &&
+      s.looted_from === r.looted_from_name &&
+      s.qty === r.quantity &&
+      Math.abs(s.time - rTime) < 60000 
+    );
+
+    if(!isDuplicate) {
+      seen.push({
+        looted_by: r.looted_by_name,
+        item: bId,
+        looted_from: r.looted_from_name,
+        qty: r.quantity,
+        time: rTime
+      });
+      lootRows.push(r);
+    }
+  });
+
   if(!lootRows.length){ alert('Could not parse any loot rows. Check file formats.'); return; }
 
   let chestRows=[];
@@ -841,7 +891,10 @@ function renderCards(){
     const pct=tot>0?Math.round(dep/tot*100):0;
     const init=(g.name||'?').charAt(0).toUpperCase();
 
-    // Lógica de agrupamento visual no site
+    // Inserção do Avatar
+    const avatarUrl = getPlayerAvatar(g.name);
+    const avatarHtml = `<img class="avatar" src="${avatarUrl}" alt="${init}" onerror="this.outerHTML='<div class=\\'avatar\\'>${init}</div>'"/>`;
+
     const groupedItems = Object.values(g.items.reduce((acc, r) => {
       const key = r.item_id + '|' + r.status;
       if (!acc[key]) acc[key] = { ...r, displayQty: 0 };
@@ -873,7 +926,7 @@ function renderCards(){
 
     return `<div class="pcard s-${g.overall}">
       <div class="ch">
-        <div class="avatar">${init}</div>
+        ${avatarHtml}
         <div class="ci">
           <div class="ci-name">${esc(g.name)}</div>
           ${g.guild?`<div class="ci-guild">🏰 ${esc(g.guild)}</div>`:''}
