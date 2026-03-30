@@ -1,2108 +1,1303 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Squirtle Squad — Guild Control Center</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Log Viewer</title>
+
+<link rel="icon" href="logo.png" type="image/png"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
-:root{--bg:#0a0c10;--bg2:#0f1218;--bg3:#151a22;--bg4:#1c2330;--border:#1e2738;--border2:#263044;--text:#e8edf5;--text2:#8a95a8;--text3:#5a6478;--accent:#2d6fff;--accent2:#1a4fd6;--ag:rgba(45,111,255,0.15);--green:#22c55e;--gbg:rgba(34,197,94,0.08);--red:#ef4444;--rbg:rgba(239,68,68,0.08);--yellow:#f59e0b;--ybg:rgba(245,158,11,0.08);--orange:#f97316;--obg:rgba(249,115,22,0.08);--bd:rgba(45,111,255,0.06);--sw:220px;--r:10px;--rs:6px;--fn:'DM Sans',sans-serif;--mn:'DM Mono',monospace}
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:var(--fn);background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px;line-height:1.5;overflow-x:hidden}
-.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:90;backdrop-filter:blur(2px)}.ov.open{display:block}
-.sidebar{width:var(--sw);min-width:var(--sw);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:transform .25s cubic-bezier(.4,0,.2,1)}
-.sh{padding:20px 18px 16px;border-bottom:1px solid var(--border)}
-.gl{display:flex;align-items:center;gap:10px;margin-bottom:4px}
-.gi{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#1a4fd6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
-.gname{font-size:15px;font-weight:700;letter-spacing:-.3px}.gsub{font-size:10px;color:var(--text3);font-family:var(--mn);letter-spacing:.5px;margin-top:1px}
-.sbadge{display:inline-flex;align-items:center;gap:5px;background:var(--ag);border:1px solid rgba(45,111,255,.2);color:var(--accent);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;margin-top:10px;font-family:var(--mn)}
-.sdot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.nav{flex:1;padding:10px 8px;overflow-y:auto}.ns{margin-bottom:18px}
-.nl{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:1px;text-transform:uppercase;padding:0 10px;margin-bottom:4px}
-.ni{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--rs);cursor:pointer;color:var(--text2);font-size:13.5px;font-weight:500;transition:all .15s;position:relative;user-select:none}
-.ni:hover{background:var(--bg3);color:var(--text)}.ni.active{background:var(--bd);color:var(--accent)}
-.ni.active::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;background:var(--accent);border-radius:2px}
-.nico{font-size:15px;width:18px;text-align:center}
-.nb{margin-left:auto;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;font-family:var(--mn)}.nb.r{background:var(--red);color:#fff}.nb.y{background:var(--yellow);color:#000}.nb.o{background:var(--orange);color:#fff}
-.sf{padding:12px 8px;border-top:1px solid var(--border)}
-.main{margin-left:var(--sw);flex:1;display:flex;flex-direction:column;min-height:100vh;min-width:0}
-.topbar{height:56px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:50}
-.mt{display:none;background:none;border:none;color:var(--text2);cursor:pointer;font-size:20px;padding:4px;border-radius:6px}
-.mt:hover{background:var(--bg3);color:var(--text)}
-.tt{font-size:15px;font-weight:600}.ts{font-size:12px;color:var(--text3);margin-left:2px}
-.tr{margin-left:auto;display:flex;align-items:center;gap:8px}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--rs);font-family:var(--fn);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
-.bp{background:var(--accent);color:#fff}.bp:hover{background:var(--accent2)}
-.bg2{background:transparent;color:var(--text2);border:1px solid var(--border2)}.bg2:hover{background:var(--bg3);color:var(--text)}
-.bsm{padding:5px 10px;font-size:12px}
-.content{padding:20px;flex:1}
-.page{display:none}.page.active{display:block}
-.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
-.sc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;position:relative;overflow:hidden}
-.sc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.4}
-.slbl{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
-.sv{font-size:24px;font-weight:700;letter-spacing:-1px;line-height:1;margin-bottom:4px;font-family:var(--mn)}
-.sm2{font-size:12px;color:var(--text3)}.sup{color:var(--green)}.sdn{color:var(--red)}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
-.ch{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.ct{font-size:13.5px;font-weight:600}.csub{font-size:12px;color:var(--text3);margin-left:auto}
-.cb{padding:18px}
-.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
-table{width:100%;border-collapse:collapse;min-width:480px}
-th{text-align:left;font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
-td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13.5px;color:var(--text);vertical-align:middle}
-tr:last-child td{border-bottom:none}tr:hover td{background:var(--bg3)}
-.tm{font-family:var(--mn);font-size:13px}
-.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600;font-family:var(--mn);white-space:nowrap}
-.bgn{background:var(--gbg);color:var(--green);border:1px solid rgba(34,197,94,.2)}
-.brr{background:var(--rbg);color:var(--red);border:1px solid rgba(239,68,68,.2)}
-.byy{background:var(--ybg);color:var(--yellow);border:1px solid rgba(245,158,11,.2)}
-.boo{background:var(--obg);color:var(--orange);border:1px solid rgba(249,115,22,.2)}
-.bgr{background:rgba(90,100,120,.15);color:var(--text3);border:1px solid var(--border)}
-.fg{margin-bottom:14px}.fl{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px}
-.fi,.fse,.fta{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);color:var(--text);font-family:var(--fn);font-size:13.5px;padding:9px 12px;outline:none;transition:border-color .15s}
-.fi:focus,.fse:focus,.fta:focus{border-color:var(--accent)}.fse{appearance:none;cursor:pointer}.fta{resize:vertical;min-height:100px;line-height:1.6}
-.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.pc{display:flex;align-items:center;gap:10px}
-.av{width:30px;height:30px;border-radius:6px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text2);flex-shrink:0;font-family:var(--mn);border:1px solid var(--border2)}
-.pn{font-weight:600;font-size:13.5px}.pd{font-size:11px;color:var(--text3);font-family:var(--mn)}
-.ll{list-style:none}
-.li{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);align-items:flex-start}.li:last-child{border-bottom:none}
-.ld{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
-.ldg{background:var(--green);box-shadow:0 0 6px var(--green)}.ldr{background:var(--red);box-shadow:0 0 6px var(--red)}.ldy{background:var(--yellow);box-shadow:0 0 6px var(--yellow)}.ldo{background:var(--orange);box-shadow:0 0 6px var(--orange)}
-.lb{flex:1;min-width:0}.lt{font-size:13.5px;font-weight:500}.lm{font-size:11.5px;color:var(--text3);margin-top:2px;font-family:var(--mn)}
-.la{font-family:var(--mn);font-size:13px;font-weight:600;margin-left:auto;align-self:center;white-space:nowrap;padding-left:8px}
-.al{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-radius:var(--r);margin-bottom:16px;font-size:13px}
-.al-r{background:var(--rbg);border:1px solid rgba(239,68,68,.2)}.al-y{background:var(--ybg);border:1px solid rgba(245,158,11,.2)}.al-o{background:var(--obg);border:1px solid rgba(249,115,22,.2)}
-.ai{font-size:16px;flex-shrink:0;margin-top:1px}.at{color:var(--text)}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.tabs{display:flex;gap:2px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:3px;margin-bottom:18px;width:fit-content;overflow-x:auto;max-width:100%}
-.tab{padding:7px 14px;border-radius:6px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;transition:all .15s;white-space:nowrap}
-.tab.active{background:var(--bg2);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.3)}
-.kr{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
-.kpi{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;display:flex;align-items:center;gap:10px}
-.ki{font-size:16px}.kl{font-size:11px;color:var(--text3)}.kv{font-size:15px;font-weight:700;font-family:var(--mn)}
-.sp2{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:18px}
-.sr2{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:4px}
-.stit{font-size:13px;font-weight:600}.sday{font-size:12px;color:var(--text3);font-family:var(--mn)}
-.pt{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}.pf{height:100%;background:linear-gradient(90deg,var(--accent),#60a5fa);border-radius:3px}
-.ab{display:flex;align-items:center;gap:8px}.bt{flex:1;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;min-width:50px}.bf{height:100%;border-radius:3px}.bn{font-size:12px;font-family:var(--mn);color:var(--text2);min-width:24px;text-align:right}
-.dp{background:#313338;border-radius:8px;padding:14px;border-left:4px solid var(--accent)}.dbn{font-size:12px;font-weight:700;color:#5865f2;margin-bottom:6px}.dm{font-size:13px;color:#dbdee1;line-height:1.6}.dmn{color:#5865f2;background:rgba(88,101,242,.15);padding:0 2px;border-radius:2px}
-.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:14px;margin-bottom:20px}
-.tc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color .2s}
-.tc.crit{border-color:rgba(239,68,68,.4)}.tc.warn{border-color:rgba(249,115,22,.4)}.tc.low{border-color:rgba(245,158,11,.3)}.tc.ok{border-color:rgba(34,197,94,.2)}
-.ttop{padding:14px 16px 10px;display:flex;align-items:flex-start;gap:12px}
-.ticon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-.ticon.hq{background:rgba(45,111,255,.12);border:1px solid rgba(45,111,255,.2)}.ticon.ho{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2)}
-.tinfo{flex:1;min-width:0}.tname{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ttype{font-size:11px;color:var(--text3);margin-top:2px;font-family:var(--mn)}
-.tbody{padding:0 16px 14px}.fd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.fdays{font-size:28px;font-weight:700;font-family:var(--mn);line-height:1}.flbl{font-size:11px;color:var(--text3);margin-top:2px}
-.ftrack{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-bottom:12px}.ffill{height:100%;border-radius:3px}
-.tfooter{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.tmeta{font-size:11px;color:var(--text3);font-family:var(--mn)}
-.ss{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
-.shd{padding:13px 18px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600}.sb2{padding:18px}
-.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px);padding:16px}
-.mo.open{display:flex}.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;width:440px;max-width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5);max-height:90vh;overflow-y:auto}
-.mh{padding:16px 18px;border-bottom:1px solid var(--border);font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg2);z-index:1}
-.mc{cursor:pointer;color:var(--text3);font-size:18px;padding:2px 6px;border-radius:4px}.mc:hover{background:var(--bg3);color:var(--text)}
-.mb{padding:18px}.mf{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
-.toast{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:12px 18px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.4);transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1)}
-.toast.show{transform:translateY(0);opacity:1}.toast.ok{border-left:3px solid var(--green)}.toast.err{border-left:3px solid var(--red)}
-.spinner{width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
-@keyframes spin{to{transform:rotate(360deg)}}
-.loading-overlay{display:none;position:absolute;inset:0;background:rgba(10,12,16,.6);z-index:10;align-items:center;justify-content:center;border-radius:var(--r)}.loading-overlay.show{display:flex}
-::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
-@media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.5)}.main{margin-left:0}.mt{display:flex;align-items:center;justify-content:center}.content{padding:14px}.topbar{padding:0 14px}.ts{display:none}.sg{grid-template-columns:1fr 1fr;gap:10px}.g2{grid-template-columns:1fr}.fr{grid-template-columns:1fr}.tgrid{grid-template-columns:1fr}.csub{display:none}.hm{display:none}table{min-width:540px}}
+:root {
+  --bg:        #09090b;
+  --bg1:       #0f1014;
+  --bg2:       #141418;
+  --bg3:       #1a1a20;
+  --bg4:       #222228;
+  --bg5:       #2a2a32;
+  --line:      rgba(255,255,255,.07);
+  --line2:     rgba(255,255,255,.12);
+  --line3:     rgba(255,255,255,.18);
+
+  --blue:      #3b82f6;
+  --blue-dim:  rgba(59,130,246,.15);
+  --blue-bdr:  rgba(59,130,246,.35);
+
+  --amber:     #f59e0b;
+  --amber-dim: rgba(245,158,11,.12);
+  --amber-bdr: rgba(245,158,11,.3);
+
+  --red:       #ef4444;
+  --red-dim:   rgba(239,68,68,.12);
+  --red-bdr:   rgba(239,68,68,.3);
+
+  --green:     #22c55e;
+  --green-dim: rgba(34,197,94,.1);
+  --green-bdr: rgba(34,197,94,.25);
+
+  --purple:    #a855f7;
+  --slate:     #64748b;
+
+  --t:         #e4e4e7;
+  --t2:        #a1a1aa;
+  --t3:        #52525b;
+  --t4:        #3f3f46;
+
+  --r:  10px;
+  --r2: 7px;
+  --r3: 5px;
+  --fn: 'Geist', system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  background: var(--bg);
+  color: var(--t);
+  font-family: var(--fn);
+  line-height: 1.55;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+header {
+  position: sticky; top: 0; z-index: 200;
+  height: 60px;
+  background: rgba(9,9,11,.8);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; padding: 0 24px; gap: 12px;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-sq {
+  width: 28px; height: 28px; border-radius: 6px;
+  display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0; overflow: hidden;
+}
+.logo-sq img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.logo-name { font-size: .95rem; font-weight: 600; color: var(--t); letter-spacing: -.01em; }
+.logo-name span { color: var(--t3); font-weight: 400; }
+header .divider { width: 1px; height: 20px; background: var(--line2); margin: 0 6px; }
+.guild-chip {
+  font-size: .8rem; color: var(--t2); background: var(--bg3);
+  border: 1px solid var(--line); border-radius: 6px;
+  padding: 4px 10px; display: none; align-items: center; gap: 6px;
+}
+.guild-chip.show { display: flex; }
+.guild-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
+
+.session-chip {
+  font-size: .75rem; color: var(--amber); background: var(--amber-dim);
+  border: 1px solid var(--amber-bdr); border-radius: 6px;
+  padding: 4px 12px; display: none; align-items: center; gap: 6px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.session-chip.show { display: flex; }
+
+.hright { margin-left: auto; }
+.btn-sm {
+  font-family: var(--fn); font-size: .85rem; font-weight: 500;
+  padding: 6px 14px; border-radius: var(--r3);
+  border: 1px solid var(--line2); background: var(--bg3); color: var(--t2);
+  cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-sm:hover { background: var(--bg4); color: var(--t); border-color: var(--line3); }
+
+#page-upload {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; flex: 1;
+  padding: 30px 20px; gap: 24px;
+}
+.up-hero { text-align: center; margin-bottom: 0; }
+.up-logo-large {
+  width: 160px; max-width: 50vw; height: auto; margin: 0 auto 16px auto;
+  display: block; filter: drop-shadow(0 8px 24px rgba(0,0,0,0.5));
+}
+.up-hero h1 {
+  font-size: 2.4rem; font-weight: 800; letter-spacing: 0.05em;
+  color: var(--t); line-height: 1.1; margin-bottom: 4px; text-transform: uppercase;
+}
+.up-hero h2 {
+  font-size: 0.85rem; font-weight: 600; color: var(--t3);
+  letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 16px;
+}
+.up-hero p.up-desc { font-size: 0.95rem; color: var(--t2); max-width: 480px; margin: 0 auto; }
+
+.upload-cols { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 760px; }
+.upload-col { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 260px; }
+.col-label { font-size: .8rem; font-weight: 600; color: var(--t3); text-transform: uppercase; letter-spacing: .1em; display: flex; align-items: center; gap: 8px; }
+.col-badge { background: var(--bg4); border: 1px solid var(--line); border-radius: 4px; padding: 2px 8px; font-size: .75rem; color: var(--t3); font-weight: 400; text-transform: none; letter-spacing: 0; }
+.drop-zone {
+  border: 1px dashed var(--line2); border-radius: var(--r); background: var(--bg1); padding: 20px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: all .18s; text-align: center; min-height: 90px; justify-content: center;
+}
+.drop-zone:hover, .drop-zone.over { border-color: var(--blue-bdr); background: var(--blue-dim); }
+.drop-zone-icon { font-size: 1.6rem; line-height: 1; }
+.drop-zone-text { font-size: .85rem; color: var(--t3); }
+.drop-zone-text b { color: var(--blue); font-weight: 600; }
+.file-list { display: flex; flex-direction: column; gap: 6px; max-height: 130px; overflow-y: auto; padding-right: 5px; }
+.file-pill { display: flex; align-items: center; gap: 10px; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r3); padding: 8px 12px; font-size: .85rem; }
+.fp-icon { font-size: 1rem; flex-shrink: 0; }
+.fp-name { flex: 1; min-width: 0; color: var(--t2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fp-size { color: var(--t3); flex-shrink: 0; }
+.fp-remove { width: 20px; height: 20px; border-radius: 4px; flex-shrink: 0; background: none; border: none; color: var(--t3); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: .9rem; transition: all .1s; }
+.fp-remove:hover { background: var(--red-dim); color: var(--red); }
+.go-btn {
+  font-family: var(--fn); font-size: 1rem; font-weight: 600; padding: 12px 32px; border-radius: var(--r); cursor: pointer; transition: all .15s;
+  border: 1px solid var(--blue-bdr); background: var(--blue-dim); color: var(--blue); width: 100%; max-width: 760px; letter-spacing: -.01em;
+}
+.go-btn:hover:not(:disabled) { background: rgba(59,130,246,.22); border-color: var(--blue); }
+.go-btn:disabled { opacity: .3; cursor: not-allowed; }
+input[type=file] { display: none; }
+
+#page-app { display: none; flex: 1; }
+
+.stats { display: grid; grid-template-columns: repeat(6, 1fr); border-bottom: 1px solid var(--line); background: var(--bg1); }
+@media(max-width:900px){ .stats { grid-template-columns: repeat(3,1fr); } }
+.stt { padding: 16px 20px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
+.stt:last-child { border-right: none; }
+.stt-label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--t3); display: flex; align-items: center; gap: 6px; }
+.stt-val { font-size: 1.8rem; font-weight: 700; letter-spacing: -.03em; line-height: 1; color: var(--t); }
+.stt-sub { font-size: .75rem; color: var(--t4); }
+.cv-blue  { color: var(--blue);  } .cv-amber { color: var(--amber); } .cv-red   { color: var(--red);   } .cv-slate { color: var(--slate); } .cv-green { color: var(--green); }
+
+.controls {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px 20px; background: var(--bg1); border-bottom: 1px solid var(--line); position: sticky; top: 60px; z-index: 100;
+}
+.search { display: flex; align-items: center; gap: 8px; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r2); padding: 8px 12px; flex: 1; min-width: 180px; max-width: 260px; transition: border-color .15s; }
+.search:focus-within { border-color: var(--blue-bdr); }
+.search svg { opacity: .25; flex-shrink: 0; width: 15px; height: 15px; }
+.search input { background: none; border: none; outline: none; color: var(--t); font-family: var(--fn); font-size: .95rem; width: 100%; }
+.search input::placeholder { color: var(--t3); }
+
+.seg { display: flex; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r2); padding: 3px; gap: 2px; }
+.seg-btn { font-family: var(--fn); font-size: .85rem; font-weight: 500; padding: 5px 14px; border-radius: 5px; border: none; background: none; color: var(--t3); cursor: pointer; transition: all .12s; white-space: nowrap; }
+.seg-btn:hover { color: var(--t); }
+.seg-btn.on { background: var(--bg4); color: var(--t); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+.seg-btn.on-pending { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--amber-bdr); }
+
+.cdiv { width: 1px; height: 24px; background: var(--line); flex-shrink: 0; align-self: center; }
+.ctl-lbl { font-size: .75rem; font-weight: 600; color: var(--t3); text-transform: uppercase; letter-spacing: .1em; white-space: nowrap; }
+
+select { font-family: var(--fn); font-size: .9rem; font-weight: 500; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r2); color: var(--t2); padding: 6px 12px; cursor: pointer; transition: border-color .15s; min-width: 140px; }
+select:hover, select:focus { border-color: var(--line2); outline: none; color: var(--t); }
+select option { background: var(--bg2); }
+
+.htoggles { display: flex; gap: 6px; flex-wrap: wrap; }
+.htog { font-family: var(--fn); font-size: .82rem; font-weight: 500; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--line); background: var(--bg2); color: var(--t3); cursor: pointer; transition: all .12s; display: flex; align-items: center; gap: 5px; white-space: nowrap; line-height: 1.3; }
+.htog:hover { color: var(--t); border-color: var(--line2); background: var(--bg3); }
+.htog.on[data-t="food"]   { background: rgba(245,158,11,.1);  border-color: rgba(245,158,11,.3);  color: var(--amber);  }
+.htog.on[data-t="potion"] { background: rgba(59,130,246,.1);  border-color: rgba(59,130,246,.3);  color: var(--blue);   }
+.htog.on[data-t="mount"]  { background: rgba(34,197,94,.08);  border-color: rgba(34,197,94,.25);  color: var(--green);  }
+.htog.on[data-t="trash"]  { background: rgba(168,85,247,.1);  border-color: rgba(168,85,247,.3);  color: var(--purple); }
+.htog.on[data-t="other"]  { background: rgba(100,116,139,.1); border-color: rgba(100,116,139,.3); color: var(--slate);  }
+.htog.on[data-t="untradable"] { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.3); color: var(--red); }
+
+#cards-view { padding: 16px 20px; }
+.cards-col { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 760px; margin: 0 auto; }
+.pcard { width: 100%; background: var(--bg1); border: 1px solid var(--line); border-radius: var(--r); transition: border-color .15s; overflow: visible; animation: rise .16s ease both; }
+.pcard:hover { border-color: var(--line2); }
+.pcard.s-pending   { border-top: 2px solid var(--amber); }
+.pcard.s-deposited { border-top: 2px solid var(--blue); }
+.pcard.s-lost      { border-top: 2px solid var(--red); }
+.pcard.s-looted    { border-top: 2px solid var(--green); }
+@keyframes rise { from { opacity:0; transform:translateY(5px) } to { opacity:1; transform:none } }
+
+.ch { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); background: var(--bg2); border-radius: var(--r) var(--r) 0 0; }
+.avatar { width: 44px; height: 44px; border-radius: 8px; flex-shrink: 0; background: var(--bg4); border: 1px solid var(--line2); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; color: var(--blue); text-transform: uppercase; }
+img.avatar { object-fit: cover; border: 1px solid var(--line2); }
+.ci { flex: 1; min-width: 0; }
+.ci-name { font-size: 1.05rem; font-weight: 600; color: var(--t); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.01em; }
+.ci-guild { font-size: .8rem; color: var(--t3); margin-top: 2px; }
+.cr { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.bd-looted    { background: var(--green-dim);  color: var(--green);  border: 1px solid var(--green-bdr);  }
+.bd-deposited { background: var(--blue-dim);   color: var(--blue);   border: 1px solid var(--blue-bdr);   }
+.bd-pending   { background: var(--amber-dim);  color: var(--amber);  border: 1px solid var(--amber-bdr);  }
+.bd-lost      { background: var(--red-dim);    color: var(--red);    border: 1px solid var(--red-bdr);    }
+.bd-neutral   { background: var(--bg4);        color: var(--t3);     border: 1px solid var(--line);       }
+.cr-count { font-size: .75rem; color: var(--t4); }
+.cr-silver { font-size: .75rem; color: var(--amber); font-weight: 600; }
+
+.citems { padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { position: relative; width: 64px; height: 64px; border-radius: var(--r2); background: var(--bg3); border: 1px solid var(--line); overflow: visible; flex-shrink: 0; transition: transform .12s, border-color .12s; cursor: default; }
+.chip:hover { transform: scale(1.1) translateY(-2px); border-color: var(--line3); z-index: 30; }
+.chip.dep  { border-color: var(--blue-bdr); }
+.chip.pend { border-color: var(--amber-bdr); }
+.chip img { width: 64px; height: 64px; object-fit: cover; border-radius: calc(var(--r2) - 1px); display: block; }
+.chip .noi { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+.chip-qty { position: absolute; bottom: 3px; right: 3px; background: rgba(15, 16, 20, 0.9); color: #fff; font-size: 0.75rem; font-weight: 700; padding: 1px 5px; border-radius: 4px; border: 1px solid var(--line2); z-index: 5; pointer-events: none; line-height: 1.1; }
+
+#global-tip { display: none; position: fixed; z-index: 99999; background: var(--bg3); border: 1px solid var(--line2); border-radius: var(--r); padding: 12px 14px; width: 230px; box-shadow: 0 12px 40px rgba(0,0,0,.8); pointer-events: none; font-family: var(--fn); }
+#global-tip::after { content: ''; position: absolute; top: 100%; left: var(--arrow-left, 50%); transform: translateX(-50%); border: 6px solid transparent; border-top-color: var(--line2); }
+#global-tip.tip-below::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--line2); }
+.tip-name { font-size: .95rem; font-weight: 600; color: var(--t); margin-bottom: 4px; line-height: 1.35; }
+.tip-id   { font-size: .7rem; color: var(--t3); font-family: monospace; margin-bottom: 8px; }
+.tip-row  { display: flex; justify-content: space-between; font-size: .85rem; color: var(--t2); padding: 2px 0; gap: 8px; }
+.tip-row strong { color: var(--t); font-weight: 600; }
+.tip-st { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.ts-d { color: var(--blue); } .ts-p { color: var(--amber); } .ts-l { color: var(--red); } .ts-loot { color: var(--green); }
+
+.t4{color:#60b8d8}.t5{color:#7dc850}.t6{color:#d4b030}.t7{color:#d06020}.t8{color:#a848c8}
+.enc { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 4px; vertical-align: middle; }
+.e1{background:#50d050}.e2{background:#50a8f0}.e3{background:#b850f0}.e4{background:#f07820}
+
+.cf { padding: 12px 16px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 12px; background: var(--bg2); border-radius: 0 0 var(--r) var(--r); }
+.cf-txt { font-size: .8rem; color: var(--t3); white-space: nowrap; }
+.cf-pct { font-size: .8rem; color: var(--t2); font-weight: 600; white-space: nowrap; }
+.prog { flex: 1; height: 4px; background: var(--bg5); border-radius: 2px; overflow: hidden; }
+.prog-fill { height: 4px; border-radius: 2px; background: var(--blue); transition: width .35s ease; }
+.empty-msg { text-align: center; padding: 60px 20px; color: var(--t3); font-size: .95rem; width: 100%; }
+
+.pgn { background: var(--bg1); border-top: 1px solid var(--line); padding: 14px 20px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: center; }
+.pb { min-width: 34px; height: 34px; border-radius: var(--r3); border: 1px solid var(--line); background: var(--bg2); color: var(--t3); cursor: pointer; font-family: var(--fn); font-size: .9rem; display: flex; align-items: center; justify-content: center; transition: all .1s; }
+.pb:hover:not(:disabled) { border-color: var(--line2); color: var(--t); background: var(--bg3); }
+.pb.active { background: var(--blue-dim); border-color: var(--blue-bdr); color: var(--blue); font-weight: 600; }
+.pb:disabled { opacity: .2; cursor: default; }
+.pi { font-size: .85rem; color: var(--t3); padding: 0 6px; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: 3px; }
+
+.webhook-bar{ background:var(--bg1);border-bottom:1px solid var(--line); padding:10px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center; }
+.btn-discord{ font-family:var(--fn);font-size:.9rem;font-weight:700; padding:6px 16px;border-radius:var(--r2);cursor:pointer;transition:all .15s; border:1px solid rgba(88,101,242,.4);background:rgba(88,101,242,.12);color:#7289da; display:inline-flex;align-items:center;gap:6px;white-space:nowrap; }
+.btn-discord:hover{background:rgba(88,101,242,.22);border-color:rgba(88,101,242,.7)}
+.btn-discord:disabled{opacity:.3;cursor:not-allowed}
+.btn-discord svg{flex-shrink:0}
+.card-send-btn{ font-family:var(--fn);font-size:.8rem;font-weight:700; padding:4px 12px;border-radius:5px;cursor:pointer;transition:all .15s; border:1px solid rgba(88,101,242,.35);background:rgba(88,101,242,.1);color:#7289da; display:inline-flex;align-items:center;gap:4px; }
+.card-send-btn:hover{background:rgba(88,101,242,.22);border-color:rgba(88,101,242,.6)}
+.card-send-btn.sending{opacity:.5;cursor:not-allowed}
+.card-send-btn.sent{border-color:var(--green-bdr);background:rgba(34,197,94,.1);color:var(--green)}
+.card-send-btn.failed{border-color:var(--red-bdr);background:rgba(239,68,68,.1);color:var(--red)}
+
+.wh-status{font-size:.85rem;padding:5px 12px;border-radius:5px;font-weight:600;display:none}
+.wh-status.ok {background:rgba(34,197,94,.1); color:var(--green); border:1px solid var(--green-bdr)}
+.wh-status.err{background:rgba(239,68,68,.1); color:var(--red); border:1px solid var(--red-bdr)}
+
+.site-footer { margin-top: auto; text-align: center; padding: 30px 20px; color: var(--t3); font-size: 0.85rem; letter-spacing: 0.02em; }
 </style>
 </head>
 <body>
-<div class="ov" id="ov" onclick="closeSB()"></div>
-<aside class="sidebar" id="sidebar">
-  <div class="sh">
-    <div class="gl"><div class="gi">🐢</div><div><div class="gname">Squirtle Squad</div><div class="gsub">GUILD CONTROL CENTER</div></div></div>
-    <div class="sbadge"><span class="sdot"></span><span id="season-badge-text">LOADING...</span></div>
+
+<header id="main-header" style="display: none;">
+  <div class="logo">
+    <div class="logo-sq">
+      <img src="logo.png" alt="Logo">
+    </div>
+    <span class="logo-name">Log Viewer <span>/ AO</span></span>
   </div>
-  <nav class="nav">
-    <div class="ns"><div class="nl">Overview</div><div class="ni active" onclick="goTo('overview',this)"><span class="nico">⚡</span>Dashboard</div></div>
-    <div class="ns"><div class="nl">Modules</div>
-      <div class="ni" onclick="goTo('attendance',this)"><span class="nico">📅</span>Attendance<span class="nb r" id="nb-attendance" style="display:none">0</span></div>
-      <div class="ni" onclick="goTo('siphon',this)"><span class="nico">💧</span>Siphon Energy<span class="nb y" id="nb-siphon" style="display:none">0</span></div>
-      <div class="ni" onclick="goTo('financial',this)"><span class="nico">💰</span>Financial</div>
-      <div class="ni" onclick="goTo('renters',this)"><span class="nico">🏠</span>Renters<span class="nb r" id="nb-renters" style="display:none">0</span></div>
-      <div class="ni" onclick="goTo('territories',this)"><span class="nico">🗺️</span>Territories<span class="nb o" id="nb-territories" style="display:none">0</span></div>
+  <div class="divider"></div>
+  <div class="guild-chip" id="guild-chip">
+    <span class="guild-chip-dot"></span>
+    <span id="guild-chip-name"></span>
+  </div>
+  
+  <div class="session-chip" id="session-chip">
+    <span>⏱️</span>
+    <span id="session-chip-text"></span>
+  </div>
+
+  <div class="hright">
+    <button class="btn-sm" id="btn-reload" style="display:none">
+      <svg width="12" height="12" viewBox="0 0 11 11" fill="none"><path d="M1 5.5a4.5 4.5 0 1 0 1.2-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M1 2v3.5h3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      New upload
+    </button>
+  </div>
+</header>
+
+<div id="page-upload">
+  <div class="up-hero">
+    <img src="logo.png" alt="Log Viewer Logo" class="up-logo-large">
+    <h1>LOG VIEWER</h1>
+    <h2>CREATED BY CHAKZ</h2>
+    <p class="up-desc">Upload loot logs and chest logs — combine multiple files from the same session.</p>
+  </div>
+  <div class="upload-cols">
+    <div class="upload-col">
+      <div class="col-label">📋 Loot Logs <span class="col-badge">loot-events-*.txt</span></div>
+      <div class="drop-zone" id="dz-loot" tabindex="0">
+        <div class="drop-zone-icon">↑</div>
+        <div class="drop-zone-text"><b>Click or drag</b> to add files</div>
+      </div>
+      <div class="file-list" id="fl-loot"></div>
+      <input type="file" id="fi-loot" accept=".txt,.csv" multiple/>
     </div>
-    <div class="ns"><div class="nl">Config</div><div class="ni" onclick="goTo('settings',this)"><span class="nico">⚙️</span>Settings</div></div>
-  </nav>
-  <div class="sf"><div class="ni" style="color:var(--text3);font-size:12px;pointer-events:none"><span class="nico">🌍</span>Europe Server</div></div>
-</aside>
-<div class="main">
-  <div class="topbar">
-    <button class="mt" onclick="toggleSB()">☰</button>
-    <div><span class="tt" id="ptit">Dashboard</span><span class="ts" id="psub">· Overview</span></div>
-    <div class="tr">
-      <button class="btn bg2 bsm hm" onclick="loadAll()">🔄 Sync</button>
+    <div class="upload-col">
+      <div class="col-label">📦 Chest Logs <span class="col-badge">optional</span></div>
+      <div class="drop-zone" id="dz-chest" tabindex="0">
+        <div class="drop-zone-icon">↑</div>
+        <div class="drop-zone-text"><b>Click or drag</b> to add files</div>
+      </div>
+      <div class="file-list" id="fl-chest"></div>
+      <input type="file" id="fi-chest" accept=".txt,.csv" multiple/>
     </div>
   </div>
-  <div class="content">
+  <button class="go-btn" id="btn-go" disabled>START</button>
+</div>
 
-    <div class="page active" id="page-overview">
-      <div class="sp2"><div class="sr2"><span class="stit" id="ov-season-title">🏆 Loading...</span><span class="sday" id="ov-season-days">--</span></div><div class="pt"><div class="pf" id="ov-season-bar" style="width:0%"></div></div></div>
-      <div class="sg" id="ov-stats">
-        <div class="sc"><div class="slbl">Players</div><div class="sv" id="ov-players">--</div><div class="sm2">Active roster</div></div>
-        <div class="sc"><div class="slbl">Siphon Neg.</div><div class="sv sdn" id="ov-siphon-neg">--</div><div class="sm2">Negative balances</div></div>
-        <div class="sc"><div class="slbl">Guild Balance</div><div class="sv sup" id="ov-balance">--</div><div class="sm2">Silver liquid</div></div>
-        <div class="sc"><div class="slbl">Renters Due</div><div class="sv sdn" id="ov-renters-due">--</div><div class="sm2">Payment overdue</div></div>
-        <div class="sc"><div class="slbl">Territories</div><div class="sv" id="ov-territories">--</div><div class="sm2">Total managed</div></div>
-        <div class="sc"><div class="slbl">Food Critical</div><div class="sv" id="ov-food-crit" style="color:var(--orange)">--</div><div class="sm2">Need feeding</div></div>
-      </div>
-      <div class="g2">
-        <div class="card"><div class="ch"><span>⚠️</span><span class="ct">Action Required</span></div><div class="cb" style="padding:0"><ul class="ll" id="ov-actions" style="padding:0 18px"><li class="li"><span class="ld" style="background:var(--text3)"></span><div class="lb"><div class="lt" style="color:var(--text3)">Loading...</div></div></li></ul></div></div>
-        <div class="card"><div class="ch"><span>📋</span><span class="ct">Recent Activity</span></div><div class="cb" style="padding:0"><ul class="ll" id="ov-activity" style="padding:0 18px"><li class="li"><span class="ld" style="background:var(--text3)"></span><div class="lb"><div class="lt" style="color:var(--text3)">Loading...</div></div></li></ul></div></div>
-      </div>
-    </div>
+<div id="page-app">
+  <div class="stats" id="stats"></div>
+  <div class="webhook-bar" id="webhook-bar" style="justify-content:flex-end">
+    <button class="btn-discord" id="btn-discord-config" style="background:rgba(255,255,255,.05);border-color:var(--line2);color:var(--t2)">
+      ⚙ Discord IDs
+    </button>
+    <button class="btn-discord" id="btn-send-all">
+      <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M11.5 2C10 1 8 .5 7 .5S4 1 2.5 2C1.5 2.8 1 4 1 5.5c0 1 .3 2 .8 2.7.2.3.2.7 0 1L1 11l2-.5c.3-.1.6 0 .8.2C5 11.5 6 12 7 12s2-.5 3.2-1.3c.2-.2.5-.3.8-.2l2 .5-.8-1.8c-.2-.3-.2-.7 0-1C12.7 7.5 13 6.5 13 5.5c0-1.5-.5-2.7-1.5-3.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+      Notify All Pending
+    </button>
+    <span class="wh-status" id="wh-status"></span>
+  </div>
 
-    <div class="page" id="page-attendance">
-      <div class="al al-y"><span class="ai">📅</span><div class="at" id="att-alert">Loading attendance data...</div></div>
-      <div class="kr">
-        <div class="kpi"><span class="ki">⚔️</span><div><div class="kl">Avg Battles (7d)</div><div class="kv" id="att-avg">--</div></div></div>
-        <div class="kpi"><span class="ki">📉</span><div><div class="kl">Below Threshold</div><div class="kv sdn" id="att-below">--</div></div></div>
-        <div class="kpi"><span class="ki">🏅</span><div><div class="kl">Perfect Attendance</div><div class="kv sup" id="att-perfect">--</div></div></div>
+  <div id="discord-config-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+    <div style="background:var(--bg2);border:1px solid var(--line2);border-radius:14px;padding:24px;width:480px;max-width:90vw;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:1.1rem;font-weight:700;color:var(--t)">⚙ Discord User IDs</div>
+        <button id="cfg-close" style="background:none;border:none;color:var(--t3);font-size:1.3rem;cursor:pointer;padding:0 4px">✕</button>
       </div>
-      <div class="tabs"><div class="tab active" onclick="stab(this);loadAttendance(7)">Last 7 days</div><div class="tab" onclick="stab(this);loadAttendance(14)">Last 14 days</div></div>
-      <div class="card"><div class="ch"><span>👥</span><span class="ct">Player Attendance</span><span class="csub">From Albion API</span></div>
-        <div class="tw"><table><thead><tr><th>#</th><th>Player</th><th>ZvZ Battles</th><th>Kills</th><th>Deaths</th><th>Avg IP</th><th>Last Battle</th><th>Status</th><th></th></tr></thead><tbody id="att-table"><tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">Loading...</td></tr></tbody></table></div>
+      <div style="font-size:.85rem;color:var(--t2);line-height:1.6">
+        Map in-game player names to Discord user IDs for proper @mentions.<br>
+        One per line: <code style="background:var(--bg4);padding:2px 6px;border-radius:4px;font-size:.8rem">PlayerName=123456789012345678</code>
       </div>
-    </div>
-
-    <div class="page" id="page-siphon">
-      <div class="al al-r" id="siphon-alert" style="display:none"><span class="ai">💧</span><div class="at" id="siphon-alert-text"></div></div>
-      <!-- Row 1: Import + Overview -->
-      <div class="g2">
-        <div class="card"><div class="ch"><span>📥</span><span class="ct">Import Siphon Log</span></div><div class="cb">
-          <div class="fg"><label class="fl">Cole o log exportado do Albion Online (TSV)</label><textarea class="fta" id="siphon-paste" placeholder='"Date"&#9;"Player"&#9;"Reason"&#9;"Amount"&#10;"2026-03-29 11:32:06"&#9;"PlayerName"&#9;"Deposit"&#9;"100"'></textarea></div>
-          <div style="display:flex;gap:8px"><button class="btn bp" onclick="importSiphonLog()">⬆ Import Log</button><button class="btn bg2" onclick="document.getElementById('siphon-paste').value=''">Clear</button></div>
-          <div id="siphon-import-result" style="margin-top:10px;font-size:12px;color:var(--text3)">✓ Duplicatas ignoradas · ✓ Registros permanentes</div>
-        </div></div>
-        <div class="card"><div class="ch"><span>📊</span><span class="ct">Overview</span></div><div class="cb">
-          <div class="sg" style="grid-template-columns:1fr 1fr;gap:10px;margin:0">
-            <div class="sc"><div class="slbl">Deposits</div><div class="sv sup" id="s-total-dep" style="font-size:18px">--</div><div class="sm2">Season</div></div>
-            <div class="sc"><div class="slbl">Withdrawals</div><div class="sv sdn" id="s-total-wit" style="font-size:18px">--</div><div class="sm2">Season</div></div>
-            <div class="sc"><div class="slbl">Net</div><div class="sv" id="s-net" style="font-size:18px">--</div><div class="sm2">Pool</div></div>
-            <div class="sc"><div class="slbl">Negative</div><div class="sv sdn" id="s-neg-count" style="font-size:18px">--</div><div class="sm2">Players</div></div>
-          </div>
-        </div></div>
-      </div>
-
-      <!-- Row 2: Exempt Players + Log History -->
-      <div class="g2">
-        <div class="card"><div class="ch"><span>🛡️</span><span class="ct">Exempt Players</span><span class="csub">Won't appear in Negative Balances</span></div><div class="cb">
-          <div style="display:flex;gap:8px;margin-bottom:12px">
-            <input class="fi" id="exempt-search" placeholder="Search player name..." style="flex:1" oninput="filterExemptSearch()" onkeydown="if(event.key==='Enter')addExemptFromSearch()">
-            <button class="btn bp bsm" onclick="addExemptFromSearch()">+ Add</button>
-          </div>
-          <div id="exempt-search-results" style="display:none;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);margin-bottom:10px;max-height:160px;overflow-y:auto"></div>
-          <div id="exempt-list" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px;max-height:200px;overflow-y:auto">
-            <span style="color:var(--text3);font-size:12px">Loading...</span>
-          </div>
-        </div></div>
-        <div class="card"><div class="ch"><span>📋</span><span class="ct">Log History</span><span class="csub">Imutável · append-only</span></div><div class="cb" style="padding:0 18px;max-height:260px;overflow-y:auto">
-          <ul class="ll" id="siphon-log-list"><li class="li"><span class="ld" style="background:var(--text3)"></span><div class="lb"><div class="lt" style="color:var(--text3)">Loading...</div></div></li></ul>
-        </div></div>
-      </div>
-
-      <!-- Row 3: Negative Balances full width -->
-      <div class="card"><div class="ch"><span>⚠️</span><span class="ct">Negative Balances</span><button class="btn bp bsm" id="ping-all-siphon-btn" onclick="pingAllSiphonDebtors()" style="margin-left:auto">📣 Ping All</button></div>
-        <div class="tw"><table><thead><tr><th>Player</th><th>Balance</th><th>Last Deposit</th><th>Deposited</th><th>Withdrawn</th><th></th></tr></thead><tbody id="siphon-neg-table"><tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Loading...</td></tr></tbody></table></div>
+      <textarea id="cfg-textarea" placeholder="Senpai1=123456789012345678" style="background:var(--bg3);border:1px solid var(--line);border-radius:8px;color:var(--t);font-family:monospace;font-size:.9rem;padding:12px;resize:vertical;height:180px;outline:none;width:100%"></textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button id="cfg-save" class="btn-discord" style="padding:8px 24px;font-size:.95rem">Save</button>
       </div>
     </div>
+  </div>
 
-    <div class="page" id="page-financial">
-
-      <!-- Top KPIs -->
-      <div class="sg" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
-        <div class="sc"><div class="slbl">Total Geral</div><div class="sv sup" id="fin-total-assets">--</div><div class="sm2">Tudo somado</div></div>
-        <div class="sc"><div class="slbl">Total Assets</div><div class="sv" id="fin-total-assets-only">--</div><div class="sm2">Baús + HO + Morgana</div></div>
-        <div class="sc"><div class="slbl">Weekly Change</div><div class="sv" id="fin-weekly-change">--</div><div class="sm2">vs last snapshot</div></div>
-      </div>
-
-      <!-- Main layout: summary left + tabs right -->
-      <div style="display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start">
-
-        <!-- LEFT: Summary + liquid fields -->
-        <div style="display:flex;flex-direction:column;gap:12px;position:sticky;top:72px">
-          <div class="card">
-            <div class="ch"><span>💰</span><span class="ct">Guild Summary</span>
-              <span style="margin-left:auto;font-size:10px;color:var(--text3)" id="fin-save-status"></span>
-            </div>
-            <div class="cb" style="padding:10px 16px">
-              <table style="width:100%;min-width:0;border-collapse:collapse" id="fin-summary-table">
-                <tr><td colspan="2" style="color:var(--text3);font-size:12px;padding:6px 0">Loading...</td></tr>
-              </table>
-            </div>
-          </div>
-          <button class="btn bp" onclick="saveFinancialSnapshot()" style="width:100%;justify-content:center">💾 Save Snapshot</button>
-          <button class="btn bg2" onclick="pingFinancialReport()" style="width:100%;justify-content:center;margin-top:8px">📣 Ping Report</button>
-        </div>
-
-        <!-- RIGHT: tabs + chest inputs -->
-        <div>
-          <div class="tabs" style="margin-bottom:14px;flex-wrap:wrap">
-            <div class="tab active" onclick="switchFinTab('martlock',this)">SS Martlock</div>
-            <div class="tab" onclick="switchFinTab('lymhurst',this)">SS Lymhurst</div>
-            <div class="tab" onclick="switchFinTab('thetford',this)">SS Thetford</div>
-            <div class="tab" onclick="switchFinTab('caerleon',this)">SS Caerleon</div>
-            <div class="tab" onclick="switchFinTab('fort_sterling',this)">SS Fort Sterling</div>
-            <div class="tab" onclick="switchFinTab('bridgewatch',this)">SS Bridgewatch</div>
-            <div class="tab" onclick="switchFinTab('fount_ho',this)">Fount HO</div>
-          </div>
-
-          <div class="card">
-            <div class="ch">
-              <span id="fin-tab-icon">🏰</span>
-              <span class="ct" id="fin-tab-title">SS Martlock</span>
-              <span class="csub" id="fin-tab-total">Total: --</span>
-            </div>
-            <div class="cb">
-              <div id="fin-chest-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
-            </div>
-          </div>
-
-          <div class="card" style="margin-top:14px">
-            <div class="ch"><span>📈</span><span class="ct">Snapshot History</span><span class="csub">profit/loss</span></div>
-            <div class="cb" style="padding:0 18px">
-              <ul class="ll" id="fin-history"><li class="li"><span class="ld" style="background:var(--text3)"></span><div class="lb"><div class="lt" style="color:var(--text3)">Loading...</div></div></li></ul>
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="controls">
+    <div class="search">
+      <svg viewBox="0 0 13 13" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="currentColor" stroke-width="1.4"/><line x1="8.7" y1="8.7" x2="12" y2="12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <input type="text" id="s-input" placeholder="Search item, player…"/>
     </div>
-
-    <div class="page" id="page-renters">
-      <div class="al al-r" id="renters-alert" style="display:none"><span class="ai">🏠</span><div class="at" id="renters-alert-text"></div></div>
-      <div class="kr">
-        <div class="kpi"><span class="ki">👥</span><div><div class="kl">Active Renters</div><div class="kv" id="r-count">--</div></div></div>
-        <div class="kpi"><span class="ki">💵</span><div><div class="kl">Weekly Income</div><div class="kv" id="r-income">--</div></div></div>
-        <div class="kpi"><span class="ki">✅</span><div><div class="kl">Paid This Week</div><div class="kv sup" id="r-paid">--</div></div></div>
-        <div class="kpi"><span class="ki">⏰</span><div><div class="kl">Overdue</div><div class="kv sdn" id="r-overdue">--</div></div></div>
-      </div>
-      <div class="card"><div class="ch"><span>🏠</span><span class="ct">Renters</span><button class="btn bp bsm" style="margin-left:auto" onclick="openRenterModal(null)">+ Add</button></div>
-        <div class="tw"><table><thead><tr><th>Renter</th><th>Fee</th><th>Due Day</th><th>This Week</th><th>Last Payment</th><th></th></tr></thead><tbody id="renters-table"><tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Loading...</td></tr></tbody></table></div>
-      </div>
+    
+    <div class="seg" id="status-seg">
+      <button class="seg-btn" data-s="all">All</button>
+      <button class="seg-btn on-pending" data-s="pending">Pending</button>
     </div>
-
-    <div class="page" id="page-territories">
-      <div class="al al-o" id="terr-alert" style="display:none"><span class="ai">🌾</span><div class="at" id="terr-alert-text"></div></div>
-      <div class="kr">
-        <div class="kpi"><span class="ki">🏰</span><div><div class="kl">Total Territories</div><div class="kv" id="t-total">--</div></div></div>
-        <div class="kpi"><span class="ki">✅</span><div><div class="kl">Well Fed</div><div class="kv sup" id="t-ok">--</div></div></div>
-        <div class="kpi"><span class="ki">⚠️</span><div><div class="kl">Low / Critical</div><div class="kv sdn" id="t-crit">--</div></div></div>
-        <div class="kpi"><span class="ki">🔔</span><div><div class="kl">Alert Threshold</div><div class="kv" id="t-threshold">-- days</div></div></div>
-      </div>
-      <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
-        <button class="btn bp" id="ping-all-btn" onclick="pingAllTerritories()" style="display:none">📣 Ping All Critical</button>
-      </div>
-      <div class="tgrid" id="territory-grid">
-        <div class="tc" style="border-style:dashed;cursor:pointer;display:flex;align-items:center;justify-content:center;min-height:180px;opacity:.5;transition:opacity .2s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='.5'" onclick="openTerritoryModal(null)"><div style="text-align:center;color:var(--text3)"><div style="font-size:28px;margin-bottom:8px">+</div><div style="font-size:13px;font-weight:600">Add Terry/HO</div></div></div>
-      </div>
-      <div class="card"><div class="ch"><span>📋</span><span class="ct">Food Update History</span></div><div class="cb" style="padding:0 18px">
-        <ul class="ll" id="terr-history"><li class="li"><span class="ld" style="background:var(--text3)"></span><div class="lb"><div class="lt" style="color:var(--text3)">Loading...</div></div></li></ul>
-      </div></div>
+    
+    <div class="cdiv"></div>
+    <span class="ctl-lbl">Guild</span>
+    <select id="f-guild"><option value="">All guilds</option></select>
+    <div class="cdiv"></div>
+    <span class="ctl-lbl">Hide</span>
+    <div class="htoggles">
+      <div class="htog on" data-t="food">🍖 Food</div>
+      <div class="htog on" data-t="potion">🧪 Potions</div>
+      <div class="htog on" data-t="mount">🐴 Mounts</div>
+      <div class="htog on" data-t="trash">🗑 Trash</div>
+      <div class="htog on" data-t="other">🪨 Others</div>
+      <div class="htog on" data-t="untradable">🚫 PvE / Untradable</div>
     </div>
-
-    <div class="page" id="page-settings">
-      <div class="ss"><div class="shd">🏆 Season Management</div><div class="sb2">
-        <div class="fr"><div class="fg"><label class="fl">Season Name</label><input class="fi" id="set-season-name" placeholder="Pre-Season 1"></div><div class="fg"><label class="fl">Type</label><select class="fse" id="set-season-type"><option value="preseason">Pre-Season (12 days)</option><option value="season">Season (60 days)</option></select></div></div>
-        <div class="fr"><div class="fg"><label class="fl">Start Date</label><input class="fi" type="date" id="set-season-start"></div><div class="fg"><label class="fl">End Date</label><input class="fi" type="date" id="set-season-end"></div></div>
-        <button class="btn bp bsm" onclick="saveSetting('season')">Save Season</button>
-      </div></div>
-      <div class="ss"><div class="shd">📅 Attendance Settings</div><div class="sb2">
-        <div class="fr"><div class="fg"><label class="fl">Minimum Battles / Week</label><input class="fi" type="number" id="set-att-min" value="4"></div><div class="fg"><label class="fl">Weekly Report Day</label><select class="fse" id="set-att-day"><option value="1">Monday</option><option value="0">Sunday</option></select></div></div>
-        <button class="btn bp bsm" onclick="saveSetting('attendance')">Save</button>
-      </div></div>
-      <div class="ss"><div class="shd">🌾 Territory Food Settings</div><div class="sb2">
-        <div class="fr"><div class="fg"><label class="fl">Alert Threshold (days)</label><input class="fi" type="number" id="set-food-threshold" value="3" min="1" max="30"><div style="font-size:11px;color:var(--text3);margin-top:4px">Ping quando a comida chegar nesse valor ou abaixo</div></div><div class="fg"><label class="fl">Daily Check Time</label><input class="fi" type="time" id="set-food-time" value="08:00"></div></div>
-        <button class="btn bp bsm" onclick="saveSetting('food')">Save</button>
-      </div></div>
-      <div class="ss"><div class="shd">🔔 Discord Webhooks</div><div class="sb2">
-        <div class="fg"><label class="fl">Attendance</label><input class="fi" id="set-wh-attendance" placeholder="https://discord.com/api/webhooks/..." style="font-family:var(--mn);font-size:12px"></div>
-        <div class="fg"><label class="fl">Siphon</label><input class="fi" id="set-wh-siphon" placeholder="https://discord.com/api/webhooks/..." style="font-family:var(--mn);font-size:12px"></div>
-        <div class="fg"><label class="fl">Renters</label><input class="fi" id="set-wh-renters" placeholder="https://discord.com/api/webhooks/..." style="font-family:var(--mn);font-size:12px"></div>
-        <div class="fg"><label class="fl">Territories</label><input class="fi" id="set-wh-territories" placeholder="https://discord.com/api/webhooks/..." style="font-family:var(--mn);font-size:12px"></div>
-        <div class="fg"><label class="fl">Managers (private)</label><input class="fi" id="set-wh-managers" placeholder="https://discord.com/api/webhooks/..." style="font-family:var(--mn);font-size:12px"></div>
-        <button class="btn bp bsm" onclick="saveSetting('webhooks')">Save Webhooks</button>
-      </div></div>
-      <div class="ss"><div class="shd">💬 Discord Message Templates</div><div class="sb2">
-        <div class="tabs" style="margin-bottom:14px"><div class="tab active" onclick="stab(this);showTemplate('attendance')">Attendance</div><div class="tab" onclick="stab(this);showTemplate('siphon')">Siphon</div><div class="tab" onclick="stab(this);showTemplate('renters')">Renters</div><div class="tab" onclick="stab(this);showTemplate('territories')">Territories</div></div>
-        <div class="fg"><label class="fl">Message Template</label><textarea class="fta" id="set-template" style="min-height:80px"></textarea></div>
-        <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Variables: {mention} {attendance} {player_name} {balance} {days} {territory} {territories_list}</div>
-        <button class="btn bp bsm" onclick="saveTemplate()">Save Template</button>
-      </div></div>
-    </div>
-
+    <div class="cdiv"></div>
+    <select id="f-per">
+      <option value="20">20 / page</option>
+      <option value="40" selected>40 / page</option>
+      <option value="80">80 / page</option>
+    </select>
+  </div>
+  <div id="cards-view">
+    <div class="cards-col" id="cards-col"></div>
+    <div class="pgn" id="pgn"></div>
   </div>
 </div>
 
-<div class="mo" id="food-modal"><div class="modal">
-  <div class="mh"><span>🌾 Update Food — <span id="fm-n"></span></span><span class="mc" onclick="closeM('food-modal')">✕</span></div>
-  <div class="mb">
-    <input type="hidden" id="fm-id">
-    <div class="fg"><label class="fl">Days of Food Remaining</label><input class="fi" type="number" id="fm-d" min="0" max="30" placeholder="e.g. 10"><div style="font-size:11px;color:var(--text3);margin-top:4px">Número de dias mostrado no jogo</div></div>
-    <div class="fg"><label class="fl">Notes (optional)</label><input class="fi" id="fm-notes" placeholder="e.g. Just fed, full capacity"></div>
-  </div>
-  <div class="mf"><button class="btn bg2" onclick="closeM('food-modal')">Cancel</button><button class="btn bp" onclick="saveFoodUpdate()">💾 Save</button></div>
-</div></div>
+<footer class="site-footer">
+  Log Viewer &copy; 2026 &middot; Made by Chakz
+</footer>
 
-<div class="mo" id="territory-modal"><div class="modal">
-  <div class="mh"><span id="tm-title">🗺️ Manage Location</span><span class="mc" onclick="closeM('territory-modal')">✕</span></div>
-  <div class="mb">
-    <input type="hidden" id="tm-id">
-    <div class="fg">
-      <label class="fl">Map / Location Name</label>
-      <input class="fi" id="tm-name" placeholder="e.g. Rivercopse Fount">
-    </div>
-    <div class="fr">
-      <div class="fg">
-        <label class="fl">Type</label>
-        <select class="fse" id="tm-type" onchange="toggleLevelField()">
-          <option value="Terry">Territory</option>
-          <option value="HO">Hideout</option>
-          <option value="HQ">Headquarter (HQ)</option>
-        </select>
-      </div>
-      <div id="tm-level-container" class="fg">
-        <label class="fl">Level (HO/HQ Only)</label>
-        <select class="fse" id="tm-level">
-          <option value="Level 1">Level 1</option>
-          <option value="Level 2">Level 2</option>
-          <option value="Level 3" selected>Level 3</option>
-        </select>
-      </div>
-    </div>
-    <div class="fg">
-      <label class="fl">Current Food Days</label>
-      <input class="fi" type="number" id="tm-food" min="0" max="30" placeholder="e.g. 10">
-    </div>
-  </div>
-  <div class="mf">
-    <button class="btn bg2" onclick="closeM('territory-modal')">Cancel</button>
-    <button class="btn bp" onclick="saveTerritoryModal()">💾 Save Changes</button>
-  </div>
-</div></div>
-
-<div class="mo" id="renter-modal"><div class="modal">
-  <div class="mh"><span id="rm-title">🏠 Manage Renter Guild</span><span class="mc" onclick="closeM('renter-modal')">✕</span></div>
-  <div class="mb">
-    <input type="hidden" id="rm-id">
-    
-    <div class="fg">
-      <label class="fl">Renter Guild Name</label>
-      <input class="fi" id="rm-name" placeholder="e.g. Blue Army">
-    </div>
-
-    <div class="fg">
-      <label class="fl">Responsible Person (Discord ID)</label>
-      <input class="fi" id="rm-discord" placeholder="123456789012345678" style="font-family:var(--mn)">
-      <small style="color:var(--text3); font-size:10px;">Used for automatic Discord pings</small>
-    </div>
-
-    <div class="fr">
-      <div class="fg">
-        <label class="fl">Weekly Fee (Silver)</label>
-        <input class="fi" type="number" id="rm-fee" placeholder="e.g. 5000000">
-      </div>
-      <div class="fg">
-        <label class="fl">Payment Due Day</label>
-        <select class="fse" id="rm-day">
-          <option value="Monday">Monday</option>
-          <option value="Tuesday">Tuesday</option>
-          <option value="Wednesday">Wednesday</option>
-          <option value="Thursday">Thursday</option>
-          <option value="Friday">Friday</option>
-          <option value="Saturday">Saturday</option>
-          <option value="Sunday">Sunday</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="fg">
-      <label class="fl">Discord Webhook URL</label>
-      <input class="fi" id="rm-webhook" placeholder="https://discord.com/api/webhooks/..." style="font-family:var(--mn);font-size:12px">
-      <small style="color:var(--text3); font-size:10px;">Payment reminders will be sent to this channel</small>
-    </div>
-  </div>
-  <div class="mf">
-    <button class="btn bg2" id="rm-delete-btn" style="margin-right:auto;display:none;color:var(--red);" onclick="deleteRenter()">Delete</button>
-    <button class="btn bg2" onclick="closeM('renter-modal')">Cancel</button>
-    <button class="btn bp" onclick="saveRenterModal()">💾 Save Renter</button>
-  </div>
-</div></div>
-
-<div class="mo" id="confirm-payment-modal"><div class="modal">
-  <div class="mh"><span>✅ Confirm Payment</span><span class="mc" onclick="closeM('confirm-payment-modal')">✕</span></div>
-  <div class="mb">
-    <p style="color:var(--text2);font-size:13px;margin-bottom:12px">Confirmar pagamento de <strong id="cp-name" style="color:var(--text)"></strong>?</p>
-    <div class="fg"><label class="fl">Amount Paid</label><input class="fi" type="number" id="cp-amount" placeholder="e.g. 800"></div>
-    <div class="fg"><label class="fl">Notes</label><input class="fi" id="cp-notes" placeholder="Optional"></div>
-    <input type="hidden" id="cp-renter-id">
-    <input type="hidden" id="cp-due-day">
-  </div>
-  <div class="mf"><button class="btn bg2" onclick="closeM('confirm-payment-modal')">Cancel</button><button class="btn bp" onclick="confirmPayment()">✅ Confirm</button></div>
-</div></div>
-
-<div class="toast" id="toast"></div>
+<div id="global-tip"></div>
 
 <script>
-const SB_URL = "https://vztmfpgxhsikiiyseocs.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6dG1mcGd4aHNpa2lpeXNlb2NzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3ODE0NTEsImV4cCI6MjA5MDM1NzQ1MX0.uTmI1t3rovVPlBHlxgDwjdD-qO3W9npuobFsEovOqvs";
+const esc   = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const fmtT  = ts => { try{ const d=new Date(ts.replace(/\.\d+Z$/,'Z').replace(/\.\d+$/,'')); if(isNaN(d))return ts; return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }catch{return ts;} };
+const fmtSz = b  => b>1e6?`${(b/1e6).toFixed(1)}mb`:b>1e3?`${(b/1e3).toFixed(0)}kb`:`${b}b`;
+const encId = id => { const m=(id||'').match(/@(\d)$/); return m?+m[1]:0; };
+const tierId= id => { const m=(id||'').match(/^T(\d)/); return m?+m[1]:0; };
+const tCls  = t  => ['','','','','t4','t5','t6','t7','t8'][t]||'';
+const imgUrl= id => `https://render.albiononline.com/v1/item/${encodeURIComponent(id)}.png?size=64&quality=2`;
+const mkey  = (name,enc) => (name||'').toLowerCase().trim()+'@@'+(enc||0);
 
-// ── SUPABASE CLIENT ──────────────────────────────
-async function sb(table, method='GET', body=null, query='', extraHeaders={}) {
-  const url = `${SB_URL}/rest/v1/${table}${query}`;
-  const headers = {'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':'return=representation',...extraHeaders};
-  const r = await fetch(url, {method, headers, body: body ? JSON.stringify(body) : null});
-  if (!r.ok) { const e = await r.text(); throw new Error(e); }
-  const t = await r.text();
-  return t ? JSON.parse(t) : [];
-}
+const fmtSilver = v => {
+  if (v >= 1e6) return (v / 1e6).toFixed(2) + 'm';
+  if (v >= 1e3) return (v / 1e3).toFixed(1) + 'k';
+  return v.toLocaleString();
+};
 
-// ── TOAST ────────────────────────────────────────
-function toast(msg, ok=true) {
-  const t = document.getElementById('toast');
-  t.className = `toast ${ok?'ok':'err'}`;
-  t.innerHTML = `<span>${ok?'✓':'✗'}</span> ${msg}`;
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 3000);
-}
-
-// ── NAV ──────────────────────────────────────────
-const PG={overview:{t:'Dashboard',s:'Overview'},attendance:{t:'Attendance',s:'Player Activity'},siphon:{t:'Siphon Energy',s:'Deposits & Withdrawals'},financial:{t:'Financial',s:'Guild Balance'},renters:{t:'Renters',s:'Payment Tracking'},territories:{t:'Territories',s:'Food & Status'},settings:{t:'Settings',s:'Configuration'}}
-function goTo(id,el){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  el.classList.add('active');
-  document.getElementById('ptit').textContent=PG[id].t;
-  document.getElementById('psub').textContent='· '+PG[id].s;
-  closeSB();
-  if(id==='territories') loadTerritories();
-  if(id==='renters') loadRenters();
-  if(id==='siphon') loadSiphon();
-  if(id==='financial') loadFinancial();
-  if(id==='settings') loadSettings();
-  if(id==='attendance') loadAttendance(7);
-}
-function stab(el){el.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');}
-function toggleSB(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('ov').classList.toggle('open');}
-function closeSB(){document.getElementById('sidebar').classList.remove('open');document.getElementById('ov').classList.remove('open');}
-function openM(id){document.getElementById(id).classList.add('open');}
-function closeM(id){document.getElementById(id).classList.remove('open');}
-document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
-
-// ── SETTINGS ─────────────────────────────────────
-let SETTINGS = {};
-let currentTemplateKey = 'attendance';
-
-async function loadSettings() {
-  try {
-    const rows = await sb('settings','GET',null,'?select=*');
-    SETTINGS = {};
-    rows.forEach(r => SETTINGS[r.key] = r.value);
-    // Season
-    if(SETTINGS.season_name) document.getElementById('set-season-name').value = SETTINGS.season_name;
-    if(SETTINGS.season_type) document.getElementById('set-season-type').value = SETTINGS.season_type;
-    if(SETTINGS.season_start) document.getElementById('set-season-start').value = SETTINGS.season_start;
-    if(SETTINGS.season_end) document.getElementById('set-season-end').value = SETTINGS.season_end;
-    // Attendance
-    if(SETTINGS.attendance_min) document.getElementById('set-att-min').value = SETTINGS.attendance_min;
-    if(SETTINGS.attendance_report_day) document.getElementById('set-att-day').value = SETTINGS.attendance_report_day;
-    // Food
-    if(SETTINGS.food_threshold) document.getElementById('set-food-threshold').value = SETTINGS.food_threshold;
-    if(SETTINGS.food_check_time) document.getElementById('set-food-time').value = SETTINGS.food_check_time;
-    // Webhooks
-    ['attendance','siphon','renters','territories','managers'].forEach(k => {
-      const el = document.getElementById('set-wh-'+k);
-      if(el && SETTINGS['webhook_'+k]) el.value = SETTINGS['webhook_'+k];
-    });
-    // Template default
-    showTemplate('attendance');
-    updateSeasonBadge();
-  } catch(e) { toast('Failed to load settings: '+e.message, false); }
-}
-
-async function saveSetting(section) {
-  try {
-    const updates = {};
-    if(section==='season') {
-      updates.season_name = document.getElementById('set-season-name').value;
-      updates.season_type = document.getElementById('set-season-type').value;
-      updates.season_start = document.getElementById('set-season-start').value;
-      updates.season_end = document.getElementById('set-season-end').value;
-    } else if(section==='attendance') {
-      updates.attendance_min = document.getElementById('set-att-min').value;
-      updates.attendance_report_day = document.getElementById('set-att-day').value;
-    } else if(section==='food') {
-      updates.food_threshold = document.getElementById('set-food-threshold').value;
-      updates.food_check_time = document.getElementById('set-food-time').value;
-    } else if(section==='webhooks') {
-      ['attendance','siphon','renters','territories','managers'].forEach(k => {
-        const el = document.getElementById('set-wh-'+k);
-        if(el) updates['webhook_'+k] = el.value;
-      });
-    }
-    for(const [key, value] of Object.entries(updates)) {
-      await sb('settings','POST',{key,value},'?on_conflict=key',{'Prefer':'return=representation,resolution=merge-duplicates'});
-      SETTINGS[key] = value;
-    }
-    toast('Settings saved!');
-    updateSeasonBadge();
-  } catch(e) { toast('Error: '+e.message, false); }
-}
-
-function showTemplate(key) {
-  currentTemplateKey = key;
-  const defaults = {
-    attendance: 'Hey {mention}, you have only {attendance} attendances in the last 7 days.\n\nIf you don\'t improve your attendance in the next few days we gonna remove you from the guild.',
-    siphon: 'Hey {mention}, your Siphon balance is {balance}.\n\nDeposit +100 or more to keep your permissions in the next 24 hours.',
-    renters: 'Hey {mention}, today is your payment day.\n\nIf you don\'t pay within the next 24 hours we\'ll remind you again.',
-    territories: '{territory} has only {days} days of food remaining.\n\nPlease feed it as soon as possible!'
-  };
-  const val = SETTINGS['template_'+key] || defaults[key] || '';
-  document.getElementById('set-template').value = val;
-}
-
-async function saveTemplate() {
-  try {
-    const value = document.getElementById('set-template').value;
-    const key = 'template_'+currentTemplateKey;
-    await sb('settings','POST',{key,value},'?on_conflict=key',{'Prefer':'return=representation,resolution=merge-duplicates'});
-    SETTINGS[key] = value;
-    toast('Template saved!');
-  } catch(e) { toast('Error: '+e.message, false); }
-}
-
-function updateSeasonBadge() {
-  const start = SETTINGS.season_start ? new Date(SETTINGS.season_start) : null;
-  const end = SETTINGS.season_end ? new Date(SETTINGS.season_end) : null;
-  const name = SETTINGS.season_name || 'Season';
-  if(start && end) {
-    const now = new Date();
-    const day = Math.max(1, Math.floor((now - start)/(86400000))+1);
-    const total = Math.floor((end - start)/(86400000))+1;
-    document.getElementById('season-badge-text').textContent = `${name.toUpperCase()} · DAY ${day}`;
-    document.getElementById('ov-season-title').textContent = '🏆 ' + name;
-    document.getElementById('ov-season-days').textContent = `${day} / ${total} days`;
-    document.getElementById('ov-season-bar').style.width = Math.min(100, (day/total*100))+'%';
-  } else {
-    document.getElementById('season-badge-text').textContent = name.toUpperCase();
-  }
-}
-
-// ── TERRITORIES ───────────────────────────────────
-let territories = [];
-
-async function loadTerritories() {
-  try {
-    territories = await sb('territories','GET',null,'?select=*&order=created_at.asc');
-    const threshold = parseInt(SETTINGS.food_threshold||'3');
-    document.getElementById('t-threshold').textContent = threshold+' days';
-    renderTerritories(territories, threshold);
-    await loadTerritoryHistory();
-    updateTerritorySidebar(territories, threshold);
-  } catch(e) { toast('Failed to load territories: '+e.message, false); }
-}
-
-function renderTerritories(list, threshold) {
-  const grid = document.getElementById('territory-grid');
-  // Keep the add button
-  const addBtn = grid.lastElementChild;
-  grid.innerHTML = '';
-  
-  const critList = [];
-  let okCount = 0, critCount = 0;
-  
-  list.forEach(t => {
-    // Calculate days remaining based on when food was last updated
-    const updated = new Date(t.food_updated_at || t.updated_at || t.created_at);
-    const daysSince = Math.floor((Date.now() - updated.getTime()) / 86400000);
-    const daysLeft = Math.max(0, (t.food_days || 0) - daysSince);
-    
-    let cls, badgeCls, badgeTxt, color;
-    if(daysLeft <= 0) { cls='crit'; badgeCls='brr'; badgeTxt='EMPTY'; color='var(--red)'; critCount++; critList.push(t.name+' (0d)'); }
-    else if(daysLeft <= threshold) { cls='crit'; badgeCls='brr'; badgeTxt='CRITICAL'; color='var(--red)'; critCount++; critList.push(t.name+' ('+daysLeft+'d)'); }
-    else if(daysLeft <= threshold+2) { cls='low'; badgeCls='byy'; badgeTxt='LOW'; color='var(--yellow)'; critCount++; }
-    else { cls='ok'; badgeCls='bgn'; badgeTxt='OK'; color='var(--green)'; okCount++; }
-    
-    const pct = Math.min(100, (daysLeft/14)*100);
-    const icon = t.type==='HQ' ? '🏛️' : '🏚️';
-    const iconCls = t.type==='HQ' ? 'hq' : 'ho';
-    const expiryDate = new Date(updated.getTime() + (t.food_days||0)*86400000);
-    const expiryStr = expiryDate.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-    const updatedStr = formatRelative(updated);
-
-    const card = document.createElement('div');
-    card.className = `tc ${cls}`;
-    card.innerHTML = `
-      <div class="ttop">
-        <div class="ticon ${iconCls}">${icon}</div>
-        <div class="tinfo"><div class="tname">${t.name}</div><div class="ttype">${t.type} · ${t.level||'Level 3'}</div></div>
-        <span class="badge ${badgeCls}">${badgeTxt}</span>
-      </div>
-      <div class="tbody">
-        <div class="fd">
-          <div><div class="fdays" style="color:${color}">${daysLeft}</div><div class="flbl">days of food</div></div>
-          <div style="text-align:right"><div style="font-size:12px;color:var(--text3);font-family:var(--mn)">Runs out</div><div style="font-size:13px;font-weight:600;color:${daysLeft<=threshold?color:'var(--text)'};font-family:var(--mn)">${expiryStr}</div></div>
-        </div>
-        <div class="ftrack"><div class="ffill" style="width:${pct}%;background:${color}"></div></div>
-        <div class="tfooter">
-          <span class="tmeta">Updated ${updatedStr}</span>
-          <div style="display:flex;gap:6px">
-            <button class="btn bg2 bsm" onclick="openFoodModal(${t.id},'${t.name}',${daysLeft})">🌾 Update</button>
-            <button class="btn bg2 bsm" onclick="openTerritoryModal(${t.id})">✏️</button>
-            <button class="btn bg2 bsm" onclick="deleteTerritory(${t.id},'${t.name}')" style="color:var(--red)">🗑️</button>
-          </div>
-        </div>
-      </div>`;
-    grid.appendChild(card);
-  });
-  
-  // Re-add the add button
-  grid.appendChild(addBtn);
-  
-  document.getElementById('t-total').textContent = list.length;
-  document.getElementById('t-ok').textContent = okCount;
-  document.getElementById('t-crit').textContent = critCount;
-  const pingAllBtn = document.getElementById('ping-all-btn');
-  if(pingAllBtn) pingAllBtn.style.display = critCount > 0 ? '' : 'none';
-  
-  // Alert
-  if(critList.length > 0) {
-    document.getElementById('terr-alert').style.display='flex';
-    document.getElementById('terr-alert-text').innerHTML = `<strong>${critList.join(', ')}</strong> need feeding!`;
-  } else {
-    document.getElementById('terr-alert').style.display='none';
-  }
-}
-
-function updateTerritorySidebar(list, threshold) {
-  const updated = new Date();
-  let critCount = 0;
-  list.forEach(t => {
-    const upd = new Date(t.food_updated_at || t.updated_at || t.created_at);
-    const days = Math.floor((Date.now() - upd.getTime()) / 86400000);
-    const left = Math.max(0, (t.food_days||0) - days);
-    if(left <= threshold) critCount++;
-  });
-  const nb = document.getElementById('nb-territories');
-  if(critCount > 0) { nb.textContent = critCount; nb.style.display=''; } 
-  else { nb.style.display='none'; }
-}
-
-async function loadTerritoryHistory() {
-  try {
-    const rows = await sb('territories','GET',null,'?select=id,name,food_days,food_updated_at,food_notes&order=food_updated_at.desc&limit=10');
-    const list = document.getElementById('terr-history');
-    if(!rows.length) { list.innerHTML='<li class="li"><div class="lb"><div class="lt" style="color:var(--text3)">No updates yet</div></div></li>'; return; }
-    list.innerHTML = rows.filter(r=>r.food_updated_at).map(r => {
-      const d = new Date(r.food_updated_at);
-      const color = (r.food_days||0) <= 3 ? 'var(--red)' : (r.food_days||0) <= 5 ? 'var(--yellow)' : 'var(--green)';
-      return `<li class="li"><span class="ld" style="background:${color};box-shadow:0 0 6px ${color}"></span><div class="lb"><div class="lt">${r.name} — food updated</div><div class="lm">${d.toLocaleDateString()} · ${d.toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'})}${r.food_notes?' · '+r.food_notes:''}</div></div><span class="la" style="color:${color}">${r.food_days}d</span></li>`;
-    }).join('');
-  } catch(e) {}
-}
-
-function openFoodModal(id, name, days) {
-  document.getElementById('fm-id').value = id;
-  document.getElementById('fm-n').textContent = name;
-  document.getElementById('fm-d').value = days;
-  document.getElementById('fm-notes').value = '';
-  openM('food-modal');
-}
-
-async function saveFoodUpdate() {
-  const id = document.getElementById('fm-id').value;
-  const days = parseInt(document.getElementById('fm-d').value);
-  const notes = document.getElementById('fm-notes').value;
-  if(isNaN(days)) { toast('Enter the number of days', false); return; }
-  try {
-    await sb('territories','PATCH',{food_days:days, food_updated_at: new Date().toISOString(), food_notes:notes},`?id=eq.${id}`);
-    closeM('food-modal');
-    toast('Food updated!');
-    loadTerritories();
-  } catch(e) { toast('Error: '+e.message, false); }
-}
-
-// Function to handle the opening of the modal
-async function deleteTerritory(id, name) {
-  if(!confirm('Delete "' + name + '"? This cannot be undone.')) return;
-  try {
-    await sb('territories','DELETE',null,'?id=eq.'+id);
-    toast(name + ' deleted!');
-    loadTerritories();
-  } catch(e) { toast('Error: '+e.message, false); }
-}
-
-function openTerritoryModal(id) {
-  document.getElementById('tm-id').value = id || '';
-  if(id) {
-    const t = territories.find(x => x.id == id);
-    if(t) {
-      document.getElementById('tm-title').textContent = '✏️ Edit Location';
-      document.getElementById('tm-name').value = t.name;
-      document.getElementById('tm-type').value = t.type || 'Terry';
-      document.getElementById('tm-level').value = t.level || 'Level 3';
-      document.getElementById('tm-food').value = t.food_days || 0;
-    }
-  } else {
-    document.getElementById('tm-title').textContent = '🗺️ Add New Location';
-    document.getElementById('tm-name').value = '';
-    document.getElementById('tm-type').value = 'Terry';
-    document.getElementById('tm-level').value = 'Level 3';
-    document.getElementById('tm-food').value = '';
-  }
-  
-  // This part checks if the "Level" field should be visible
-  try { toggleLevelField(); } catch(e) { console.error("Error toggling field:", e); }
-  
-  openM('territory-modal');
-}
-
-// Logic to show or hide the Level field
-function toggleLevelField() {
-  const typeEl = document.getElementById('tm-type');
-  const containerEl = document.getElementById('tm-level-container');
-  if (typeEl && containerEl) {
-    // If it's a Territory, hide the Level. Otherwise, show it.
-    containerEl.style.display = (typeEl.value === 'Terry') ? 'none' : 'block';
-  }
-}
-
-// Function to save the data to your Supabase database
-async function saveTerritoryModal() {
-  const id = document.getElementById('tm-id').value;
-  const name = document.getElementById('tm-name').value.trim();
-  const type = document.getElementById('tm-type').value;
-  // If it's a Terry, we save Level as N/A automatically
-  const level = type === 'Terry' ? 'N/A' : document.getElementById('tm-level').value;
-  const food = parseInt(document.getElementById('tm-food').value) || 0;
-
-  if(!name) { toast('Please enter the location name!', false); return; }
-
-  try {
-    const data = {
-      name: name, 
-      type: type, 
-      level: level, 
-      food_days: food, 
-      food_updated_at: new Date().toISOString()
-    };
-
-    if(id) {
-      await sb('territories', 'PATCH', data, `?id=eq.${id}`);
-      toast('Location updated!');
-    } else {
-      await sb('territories', 'POST', data, '');
-      toast('Location added!');
-    }
-    closeM('territory-modal');
-    loadTerritories(); // This refreshes your list
-  } catch(e) { 
-    toast('Error: ' + e.message, false); 
-  }
-}
-
-async function pingAllTerritories() {
-  const webhook = SETTINGS.webhook_territories;
-  if(!webhook) { toast('Set territory webhook in Settings first', false); return; }
-
-  const threshold = parseInt(SETTINGS.food_threshold || '3');
-  const critical = [];
-  territories.forEach(t => {
-    const upd = new Date(t.food_updated_at || t.updated_at || t.created_at);
-    const daysSince = Math.floor((Date.now() - upd.getTime()) / 86400000);
-    const daysLeft = Math.max(0, (t.food_days || 0) - daysSince);
-    if(daysLeft <= threshold) critical.push({ name: t.name, daysLeft });
-  });
-
-  if(!critical.length) { toast('No critical territories right now!', true); return; }
-
-  // Extract mention from template
-  const template = SETTINGS.template_territories || '';
-  const mentionMatch = template.match(/<@[^>]+>/);
-  const mention = mentionMatch ? mentionMatch[0] : null;
-
-  // Color based on worst territory
-  const worstDays = Math.min(...critical.map(t => t.daysLeft));
-  const embedColor = worstDays === 0 ? 0xef4444 : worstDays === 1 ? 0xf97316 : 0xf59e0b;
-
-  // One field per critical territory
-  const fields = critical.map(t => ({
-    name: (t.daysLeft === 0 ? '🔴' : t.daysLeft === 1 ? '🟠' : '🟡') + ' **' + t.name.toUpperCase() + '**',
-    value: t.daysLeft === 0 ? '🔴 **OUT OF FOOD — FEED NOW!**' : '**' + t.daysLeft + '** day' + (t.daysLeft === 1 ? '' : 's') + ' remaining',
-    inline: true
-  }));
-
-  const description = critical.length === 1
-    ? '**' + critical[0].name.toUpperCase() + '** needs food urgently!'
-    : '**' + critical.length + ' territories** need attention!';
-
-  try {
-    const btn = document.getElementById('ping-all-btn');
-    if(btn) { btn.disabled = true; btn.textContent = '⏳ Sending...'; }
-    await fetch(webhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        content: mention || null,
-        allowed_mentions: { parse: ['roles','users','everyone'] },
-        embeds: [{
-          color: embedColor,
-          title: '🗺️ Territory Food Alert',
-          description,
-          fields,
-          footer: { text: 'Squirtle Squad · Territory System' },
-          timestamp: new Date().toISOString()
-        }]
-      })
-    });
-    toast('📣 Ping sent for ' + critical.length + ' territory(ies)!');
-    if(btn) { btn.disabled = false; btn.textContent = '📣 Ping All Critical'; }
-  } catch(e) {
-    toast('Failed to send ping', false);
-    const btn = document.getElementById('ping-all-btn');
-    if(btn) { btn.disabled = false; btn.textContent = '📣 Ping All Critical'; }
-  }
-}
-
-// ── RENTERS ───────────────────────────────────────
-// ── RENTERS ───────────────────────────────────────
-let renters = [];
-
-async function loadRenters() {
-  try {
-    // Usando confirmed_at para a tabela de pagamentos
-    renters = await sb('renters','GET',null,'?select=*,renter_payments(id,amount,confirmed_at,week_reference)&order=created_at.asc');
-    renderRenters(renters);
-  } catch(e) { toast('Failed to load renters: '+e.message, false); }
-}
-
-function renderRenters(list) {
-  const tbody = document.getElementById('renters-table');
-  let total=0, paid=0, overdue=0, overdueNames=[];
-  
-  if(!list.length) { tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">No renters yet. Click + Add to add one.</td></tr>'; return; }
-  
-  tbody.innerHTML = list.map(r => {
-    total++;
-    const payments = r.renter_payments || [];
-    
-    // --- 1. LÓGICA DA SEGUNDA-FEIRA (Para saber a semana atual) ---
-    const now = new Date();
-    const day = now.getDay();
-    const diff = now.getDate() - day + (day === 0 ? -6 : 1); 
-    const weekStart = new Date(now.setDate(diff));
-    weekStart.setHours(0,0,0,0);
-
-    const thisWeekPmts = payments.filter(p => new Date(p.confirmed_at) >= weekStart);
-    const isPaid = thisWeekPmts.length > 0;
-    const lastPmt = payments.sort((a,b) => new Date(b.confirmed_at)-new Date(a.confirmed_at))[0];
-    
-    // --- 2. LÓGICA INDIVIDUAL DE VENCIMENTO (Usando seu campo due_day) ---
-    const dayMap = { 'Monday':1, 'Tuesday':2, 'Wednesday':3, 'Thursday':4, 'Friday':5, 'Saturday':6, 'Sunday':7 };
-    let todayNum = new Date().getDay();
-    if(todayNum === 0) todayNum = 7; // Ajusta Domingo para ser o dia 7
-    const dueNum = dayMap[r.due_day] || 1; // Puxa o dia exato de pagamento desta guilda
-    
-    let statusBadge = '';
-    
-    if(isPaid) {
-      paid++;
-      statusBadge = '<span class="badge bgn">✓ Paid</span>';
-    } else {
-      if (todayNum > dueNum) {
-        // Já passou do dia de pagamento na semana
-        overdue++;
-        overdueNames.push(r.player_name);
-        statusBadge = '<span class="badge brr">✗ Overdue</span>';
-      } else if (todayNum === dueNum) {
-        // Vence EXATAMENTE hoje
-        overdue++;
-        overdueNames.push(r.player_name);
-        statusBadge = '<span class="badge boo">⚠️ Due Today</span>';
-      } else {
-        // A semana começou, mas o dia de pagamento ainda não chegou
-        statusBadge = '<span class="badge bgr">⏳ Pending</span>';
-      }
-    }
-    
-    const lastStr = lastPmt ? formatRelative(new Date(lastPmt.confirmed_at)) : 'Never';
-    
-    return `<tr>
-      <td><div class="pc"><div class="av">${r.ingame_name.slice(0,2).toUpperCase()}</div><div><div class="pn">${r.ingame_name}</div><div class="pd">#${(r.discord_id||'').slice(-4)||'????'}</div></div></div></td>
-      <td class="tm">${(r.weekly_fee||0).toLocaleString()}</td>
-      <td><span class="badge bgr">${r.due_day}</span></td>
-      <td>${statusBadge}</td>
-      <td class="tm" style="color:var(--text3)">${lastStr}</td>
-      <td><div style="display:flex;gap:6px">
-        ${!isPaid?`<button class="btn bp bsm" onclick="openConfirmPayment('${r.id}','${r.ingame_name}',${r.weekly_fee||0},'${r.due_day}')">✓ Pay</button>`:''}<button class="btn bg2 bsm" onclick="openRenterModal('${r.id}')">✏️</button>
-      </div></td>
-    </tr>`;
-  }).join('');
-  
-  document.getElementById('r-count').textContent = total;
-  document.getElementById('r-income').textContent = list.reduce((a,r)=>a+(r.weekly_fee||0),0).toLocaleString();
-  document.getElementById('r-paid').textContent = paid;
-  document.getElementById('r-overdue').textContent = overdue;
-  
-  const nb = document.getElementById('nb-renters');
-  if(overdue>0){ nb.textContent=overdue; nb.style.display=''; } else nb.style.display='none';
-  
-  if(overdue>0) {
-    document.getElementById('renters-alert').style.display='flex';
-    document.getElementById('renters-alert-text').innerHTML = `<strong>${overdueNames.slice(0,3).join(', ')}</strong> ${overdue>3?'and others':''} have overdue payments!`;
-  } else { document.getElementById('renters-alert').style.display='none'; }
-}
-
-function openRenterModal(id) {
-  document.getElementById('rm-id').value = id || '';
-  const delBtn = document.getElementById('rm-delete-btn');
-  if(id) {
-    const r = renters.find(x=>x.id==id);
-    if(r) {
-      document.getElementById('rm-title').textContent = '✏️ Edit Renter';
-      document.getElementById('rm-name').value = r.ingame_name;
-      document.getElementById('rm-discord').value = r.discord_id || '';
-      document.getElementById('rm-fee').value = r.weekly_fee || '';
-      document.getElementById('rm-day').value = r.due_day || 'Monday';
-      document.getElementById('rm-webhook').value = r.webhook_url || '';
-      delBtn.style.display = '';
-    }
-  } else {
-    document.getElementById('rm-title').textContent = '🏠 Add Renter';
-    document.getElementById('rm-name').value = '';
-    document.getElementById('rm-discord').value = '';
-    document.getElementById('rm-fee').value = '';
-    document.getElementById('rm-day').value = 'Monday';
-    document.getElementById('rm-webhook').value = '';
-    delBtn.style.display = 'none';
-  }
-  openM('renter-modal');
-}
-
-async function saveRenterModal() {
-  const id = document.getElementById('rm-id').value;
-  const name = document.getElementById('rm-name').value.trim();
-  const discord_id = document.getElementById('rm-discord').value.trim();
-  const weekly_fee = parseInt(document.getElementById('rm-fee').value) || 0;
-  const due_day = document.getElementById('rm-day').value;
-  const webhook_url = document.getElementById('rm-webhook').value.trim();
-  if(!name) { toast('Enter name', false); return; }
-  try {
-    const data = {
-        ingame_name: name, 
-        discord_id: discord_id, 
-        weekly_fee: weekly_fee, 
-        due_day: due_day,
-        webhook_url: webhook_url || null
-    };
-    if(id) {
-      await sb('renters','PATCH',data,`?id=eq.${id}`);
-      toast('Renter updated!');
-    } else {
-      await sb('renters','POST',data,'');
-      toast('Renter added!');
-    }
-    closeM('renter-modal');
-    loadRenters();
-  } catch(e) { toast('Error: '+e.message, false); }
-}
-
-async function deleteRenter() {
-  const id = document.getElementById('rm-id').value;
-  if(!id) return;
-  if(!confirm('Delete this renter? This cannot be undone.')) return;
-  try {
-    await sb('renters','DELETE',null,`?id=eq.${id}`);
-    closeM('renter-modal');
-    toast('Renter deleted!');
-    loadRenters();
-  } catch(e) { toast('Error: '+e.message, false); }
-}
-
-function openConfirmPayment(renterId, name, fee, dueDay) {
-  document.getElementById('cp-renter-id').value = renterId;
-  document.getElementById('cp-due-day').value = dueDay || 'Monday';
-  document.getElementById('cp-name').textContent = name;
-  document.getElementById('cp-amount').value = fee;
-  document.getElementById('cp-notes').value = '';
-  openM('confirm-payment-modal');
-}
-
-async function confirmPayment() {
-  const renterId = document.getElementById('cp-renter-id').value;
-  const amount = parseInt(document.getElementById('cp-amount').value) || 0;
-  const dueDay = document.getElementById('cp-due-day').value;
-
-  try {
-    // Calcula a data exata do due_day na semana atual
-    const dayMap = { Monday:1, Tuesday:2, Wednesday:3, Thursday:4, Friday:5, Saturday:6, Sunday:0 };
-    const targetDay = dayMap[dueDay] ?? 1;
-    const now = new Date();
-    // Acha a segunda-feira da semana atual
-    const day = now.getDay();
-    const mondayDiff = now.getDate() - day + (day === 0 ? -6 : 1);
-    const monday = new Date(now);
-    monday.setDate(mondayDiff);
-    monday.setHours(0,0,0,0);
-    // Soma os dias necessários para chegar ao due_day (Monday=offset 0, Sunday=offset 6)
-    const dueDayOffset = targetDay === 0 ? 6 : targetDay - 1;
-    const dueDate = new Date(monday);
-    dueDate.setDate(monday.getDate() + dueDayOffset);
-    const weekReference = dueDate.toISOString().split('T')[0];
-
-    const data = {
-        renter_id: renterId,
-        amount: amount,
-        confirmed_at: new Date().toISOString(),
-        week_reference: weekReference
-    };
-    await sb('renter_payments','POST',data,'');
-    closeM('confirm-payment-modal');
-    toast('Payment confirmed!');
-    loadRenters();
-  } catch(e) { toast('Error: '+e.message, false); }
-}
-
-// ── SIPHON EXEMPT ─────────────────────────────────
-let siphonExempts = new Set();
-let allSiphonPlayers = []; // all unique player names from logs
-
-async function loadSiphonExempts() {
-  try {
-    const rows = await sb('siphon_exempt','GET',null,'?select=ingame_name&order=ingame_name.asc');
-    siphonExempts = new Set(rows.map(r => r.ingame_name));
-    renderExemptList();
-  } catch(e) { console.error('Failed to load exempts:', e); }
-}
-
-function renderExemptList() {
-  const el = document.getElementById('exempt-list');
-  if(!el) return;
-  if(!siphonExempts.size) {
-    el.innerHTML = '<span style="color:var(--text3);font-size:12px">No exempt players</span>';
-    return;
-  }
-  el.innerHTML = [...siphonExempts].sort().map(name => `
-    <span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg4);border:1px solid var(--border2);border-radius:20px;padding:4px 10px;font-size:12px;font-family:var(--mn)">
-      🛡️ ${name}
-      <span onclick="removeExempt('${name}')" style="cursor:pointer;color:var(--text3);font-size:14px;line-height:1" title="Remove">✕</span>
-    </span>`).join('');
-}
-
-function filterExemptSearch() {
-  const q = document.getElementById('exempt-search').value.trim().toLowerCase();
-  const resultsEl = document.getElementById('exempt-search-results');
-  if(!q) { resultsEl.style.display = 'none'; return; }
-  const matches = allSiphonPlayers.filter(p => p.toLowerCase().includes(q) && !siphonExempts.has(p)).slice(0, 8);
-  if(!matches.length) { resultsEl.style.display = 'none'; return; }
-  resultsEl.style.display = 'block';
-  resultsEl.innerHTML = matches.map(p => `
-    <div onclick="addExempt('${p}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)" 
-         onmouseover="this.style.background='var(--bg4)'" onmouseout="this.style.background=''">
-      ${p}
-    </div>`).join('');
-}
-
-async function addExemptFromSearch() {
-  const name = document.getElementById('exempt-search').value.trim();
-  if(!name) return;
-  await addExempt(name);
-}
-
-async function addExempt(name) {
-  if(siphonExempts.has(name)) { toast(name + ' is already exempt', false); return; }
-  try {
-    await sb('siphon_exempt','POST',{ingame_name: name},'');
-    siphonExempts.add(name);
-    renderExemptList();
-    document.getElementById('exempt-search').value = '';
-    document.getElementById('exempt-search-results').style.display = 'none';
-    toast(name + ' added to exempt list!');
-    // Re-render siphon to hide from negative balances
-    renderSiphon(window._siphonRows || []);
-  } catch(e) { toast('Error: ' + e.message, false); }
-}
-
-async function removeExempt(name) {
-  try {
-    await sb('siphon_exempt','DELETE',null,'?ingame_name=eq.'+encodeURIComponent(name));
-    siphonExempts.delete(name);
-    renderExemptList();
-    toast(name + ' removed from exempt list!');
-    renderSiphon(window._siphonRows || []);
-  } catch(e) { toast('Error: ' + e.message, false); }
-}
-
-async function loadSiphon() {
-  try {
-    // Busca em páginas de 1000 para garantir todos os registros
-    let allRows = [];
-    let offset = 0;
-    const pageSize = 1000;
-    while(true) {
-      const page = await sb('siphon_logs','GET',null,`?select=ingame_name,amount,logged_at,type&order=logged_at.desc&limit=${pageSize}&offset=${offset}`);
-      allRows = allRows.concat(page);
-      if(page.length < pageSize) break;
-      offset += pageSize;
-    }
-    // Collect unique player names for search
-    allSiphonPlayers = [...new Set(allRows.map(r => r.ingame_name))].sort();
-    window._siphonRows = allRows;
-    // Load exempts and render
-    await loadSiphonExempts();
-    renderSiphon(allRows);
-  } catch(e) { toast('Failed to load siphon: '+e.message, false); }
-}
-
-function renderSiphon(rows) {
-  // Calculate player balances
-  const balances = {};
-  const lastDeposit = {};
-  const totalDeposited = {};
-  const totalWithdrawn = {};
-  
+// ─── calcSilver ────────────────────────────────────────────────────────────────
+// Calcula o valor estimado de prata de um array de rows.
+// Só soma itens com status === targetStatus (default: 'pending').
+function calcSilver(rows, targetStatus = 'pending') {
+  let total = 0;
   rows.forEach(r => {
-    const p = r.ingame_name;
-    if(!balances[p]) { balances[p]=0; totalDeposited[p]=0; totalWithdrawn[p]=0; }
-    balances[p] += r.amount;
-    if(r.amount > 0) { totalDeposited[p] += r.amount; if(!lastDeposit[p]) lastDeposit[p]=r.logged_at; }
-    else { totalWithdrawn[p] += Math.abs(r.amount); }
+    if (r.status === targetStatus) {
+      total += (PRICE_MAP[r.item_id] || 0) * r.quantity;
+    }
   });
-  
-  let totalDep=0, totalWit=0;
-  rows.forEach(r => { if(r.amount>0) totalDep+=r.amount; else totalWit+=Math.abs(r.amount); });
-  
-  document.getElementById('s-total-dep').textContent = totalDep.toLocaleString();
-  document.getElementById('s-total-wit').textContent = '-'+totalWit.toLocaleString();
-  const net = totalDep - totalWit;
-  const netEl = document.getElementById('s-net');
-  netEl.textContent = (net>=0?'+':'')+net.toLocaleString();
-  netEl.style.color = net>=0?'var(--green)':'var(--red)';
-  
-  // Negative balances — exclude exempt players
-  const negPlayers = Object.entries(balances).filter(([p,b])=>b<0 && !siphonExempts.has(p)).sort((a,b)=>a[1]-b[1]);
-  document.getElementById('s-neg-count').textContent = negPlayers.length;
-  
-  const negTable = document.getElementById('siphon-neg-table');
-  if(!negPlayers.length) {
-    negTable.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">No negative balances 🎉</td></tr>';
-  } else {
-    negTable.innerHTML = negPlayers.map(([p,b]) => `
-      <tr data-player="${p}" data-balance="${b}" data-discord="">
-        <td><div class="pc"><div class="av">${p.slice(0,2).toUpperCase()}</div><div><div class="pn">${p}</div></div></div></td>
-        <td><span class="badge brr tm">${b}</span></td>
-        <td class="tm" style="color:var(--text3)">${lastDeposit[p] ? formatRelative(new Date(lastDeposit[p])) : 'Never'}</td>
-        <td class="tm">${(totalDeposited[p]||0).toLocaleString()}</td>
-        <td class="tm">${(totalWithdrawn[p]||0).toLocaleString()}</td>
-        <td><button class="btn bp bsm" onclick="pingSiphonPlayer('${p}',${b})">📣 Ping</button></td>
-      </tr>`).join('');
-  }
-  
-  const nb = document.getElementById('nb-siphon');
-  if(negPlayers.length>0){nb.textContent=negPlayers.length;nb.style.display='';} else nb.style.display='none';
-  
-  // Alert
-  if(negPlayers.length>0) {
-    document.getElementById('siphon-alert').style.display='flex';
-    document.getElementById('siphon-alert-text').innerHTML=`<strong>${negPlayers.length} player(s)</strong> with negative Siphon balance. Permissions at risk.`;
-  } else {document.getElementById('siphon-alert').style.display='none';}
-  
-  // Log history
-  const logList = document.getElementById('siphon-log-list');
-  logList.innerHTML = rows.slice(0,30).map(r => {
-    const isPos = r.amount > 0;
-    const color = isPos ? 'var(--green)' : 'var(--red)';
-    return `<li class="li"><span class="ld" style="background:${color};box-shadow:0 0 6px ${color}"></span><div class="lb"><div class="lt">${r.ingame_name} ${isPos?'deposited':'withdrew'}</div><div class="lm">${new Date(r.logged_at).toLocaleString()}</div></div><span class="la" style="color:${color}">${isPos?'+':''}${r.amount}</span></li>`;
-  }).join('');
-}
-
-async function importSiphonLog() {
-  const text = document.getElementById('siphon-paste').value.trim();
-  if(!text) { toast('Paste the log first', false); return; }
-  
-  const lines = text.split('\n').filter(l=>l.trim());
-  const records = [];
-  const skipped = [];
-  
-  // Parse TSV format: "Date"	"Player"	"Reason"	"Amount"
-  for(const line of lines) {
-    if(line.startsWith('"Date"') || !line.includes('\t')) continue;
-    const parts = line.split('\t').map(p => p.replace(/^"|"$/g,'').trim());
-    if(parts.length < 4) continue;
-    const [dateStr, player, reason, amountStr] = parts;
-    if(!player || !dateStr || !reason) continue;
-    // Normalize type: Deposit/deposit → 'deposit', Withdrawal/withdrawal → 'withdrawal'
-    const type = reason.toLowerCase().includes('deposit') ? 'deposit' : 'withdrawal';
-    // Amount: deposits are positive, withdrawals are negative
-    let amount = parseInt(amountStr);
-    if(isNaN(amount)) continue;
-    if(type === 'withdrawal' && amount > 0) amount = -amount;
-    if(type === 'deposit' && amount < 0) amount = Math.abs(amount);
-    records.push({ingame_name: player, type, amount, logged_at: new Date(dateStr).toISOString()});
-  }
-  
-  if(!records.length) { toast('No valid records found in log', false); return; }
-  
-  let inserted = 0, dup = 0;
-  const resultEl = document.getElementById('siphon-import-result');
-
-  // Show progress bar
-  resultEl.innerHTML = `
-    <div style="margin-bottom:6px">⏳ Checking duplicates...</div>
-    <div style="height:6px;background:var(--bg4);border-radius:3px;overflow:hidden">
-      <div id="siphon-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#60a5fa);border-radius:3px;transition:width .2s"></div>
-    </div>`;
-
-  // Get existing logs to detect duplicates
-  const existing = await sb('siphon_logs','GET',null,'?select=ingame_name,amount,logged_at&order=logged_at.desc&limit=5000');
-  const existingKeys = new Set(existing.map(r => `${r.ingame_name}|${r.amount}|${new Date(r.logged_at).toISOString().slice(0,16)}`));
-  
-  const toInsert = [];
-  records.forEach(r => {
-    const key = `${r.ingame_name}|${r.amount}|${new Date(r.logged_at).toISOString().slice(0,16)}`;
-    if(existingKeys.has(key)) dup++;
-    else toInsert.push(r);
-  });
-
-  if(toInsert.length === 0) {
-    resultEl.innerHTML = `✓ <strong>0</strong> new entries · ${dup} duplicates ignored (all already imported)`;
-    toast('Nothing new to import!');
-    return;
-  }
-
-  // Insert in batches of 200 with progress update
-  const BATCH = 200;
-  const bar = document.getElementById('siphon-progress-bar');
-  for(let i = 0; i < toInsert.length; i += BATCH) {
-    const batch = toInsert.slice(i, i + BATCH);
-    try {
-      await sb('siphon_logs','POST',batch,'');
-      inserted += batch.length;
-    } catch(e) { toast('Import error: '+e.message, false); return; }
-    const pct = Math.round((inserted / toInsert.length) * 100);
-    if(bar) bar.style.width = pct + '%';
-    resultEl.querySelector('div').textContent = `⏳ Inserting... ${inserted} / ${toInsert.length}`;
-  }
-  
-  document.getElementById('siphon-paste').value = '';
-  resultEl.innerHTML = `✓ <strong>${inserted}</strong> new entries · ${dup} duplicates ignored`;
-  toast(`Imported ${inserted} entries!`);
-  loadSiphon();
-}
-
-async function pingAllSiphonDebtors() {
-  const webhook = SETTINGS.webhook_siphon;
-  if(!webhook) { toast('Set siphon webhook in Settings first', false); return; }
-  const template = SETTINGS.template_siphon || 'Hey {mention}, your Siphon balance is {balance}. Deposit +100 or more!';
-
-  // Get current negative players from table
-  const rows = document.querySelectorAll('#siphon-neg-table tr[data-player]');
-  if(!rows.length) { toast('No debtors to ping!', false); return; }
-
-  const btn = document.getElementById('ping-all-siphon-btn');
-  if(btn) { btn.disabled = true; btn.textContent = '⏳ Sending...'; }
-
-  let sent = 0;
-  for(const row of rows) {
-    const player = row.dataset.player;
-    const balance = row.dataset.balance;
-    const discordId = row.dataset.discord;
-    const mention = discordId ? `<@${discordId}>` : `**${player}**`;
-    const msg = template
-      .replace(/\{mention\}/g, mention)
-      .replace(/\{player_name\}/g, player)
-      .replace(/\{balance\}/g, balance);
-    try {
-      await fetch(webhook, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: msg, allowed_mentions: { parse: ['roles','users','everyone'] } })
-      });
-      sent++;
-    } catch(e) { console.error('Failed to ping', player, e); }
-    // Delay to avoid Discord rate limit
-    await new Promise(r => setTimeout(r, 600));
-  }
-
-  if(btn) { btn.disabled = false; btn.textContent = '📣 Ping All'; }
-  toast(`📣 Pinged ${sent} player(s)!`);
-}
-
-async function pingSiphonPlayer(player, balance) {
-  const webhook = SETTINGS.webhook_siphon;
-  if(!webhook) { toast('Set siphon webhook in Settings first', false); return; }
-  const template = SETTINGS.template_siphon || 'Hey {mention}, your Siphon balance is {balance}. Deposit +100 or more!';
-  const msg = template.replace(/\{mention}/g,'@'+player).replace(/\{player_name}/g,player).replace(/\{balance}/g,balance);
-  try {
-    await fetch(webhook, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:msg,allowed_mentions:{parse:['roles','users','everyone']}})});
-    toast(`Ping sent to ${player}!`);
-  } catch(e) { toast('Failed to send ping', false); }
-}
-
-// ── FINANCIAL ─────────────────────────────────────
-// ── FINANCIAL (GUILD CHESTS) ──────────────────────
-const FIN_ISLANDS = [
-  { key: 'martlock',      label: 'SS Martlock',      icon: '🏰', chests: 12 },
-  { key: 'lymhurst',      label: 'SS Lymhurst',      icon: '🌿', chests: 12 },
-  { key: 'thetford',      label: 'SS Thetford',      icon: '🌑', chests: 12 },
-  { key: 'caerleon',      label: 'SS Caerleon',      icon: '🌊', chests: 12 },
-  { key: 'fort_sterling', label: 'SS Fort Sterling',  icon: '❄️', chests: 12 },
-  { key: 'bridgewatch',   label: 'SS Bridgewatch',   icon: '🏜️', chests: 12 },
-  { key: 'fount_ho',      label: 'Fount HO',         icon: '⚗️', chests: 15 },
-];
-
-// Liquid fields (editable, left panel)
-const FIN_LIQUID_FIELDS = [
-  { key: 'ins',               label: 'Ins' },
-  { key: 'silver_guild_bank', label: 'Silver Guild Bank' },
-  { key: 'renter_guild_bank', label: 'Renter Guild Bank' },
-  { key: 'bank',              label: '/bank' },
-];
-
-let finData = {};         // { island: { chest: valueMil } }
-let finLiquid = {};       // { key: valueMil }
-let finMorgana = 0;       // Morgana Crates value
-let finCurrentIsland = 'martlock';
-let finSaveTimer = null;
-let finSnapshotHistory = [];
-
-function parseFinValue(str) {
-  if(!str || str === '') return 0;
-  str = str.toString().trim().toLowerCase().replace(/,/g, '');
-  if(str.endsWith('b')) return Math.round(parseFloat(str) * 1000);
-  if(str.endsWith('m')) return Math.round(parseFloat(str));
-  const val = parseFloat(str);
-  if(isNaN(val)) return 0;
-  return str.includes('.') ? Math.round(val * 1000) : Math.round(val);
-}
-
-function fmtMil(mil) {
-  if(mil === 0) return '0';
-  if(mil >= 1000) return (mil/1000).toFixed(2).replace(/\.?0+$/, '') + 'B';
-  return mil.toLocaleString() + 'M';
-}
-
-function getIslandTotal(key) {
-  const d = finData[key] || {};
-  let total = Object.values(d).reduce((a,b) => a+b, 0);
-  // Include HO bank and Morgana in fount_ho total
-  if(key === 'fount_ho') {
-    total += (finData['fount_ho_bank'] || 0) + finMorgana;
-  }
   return total;
 }
+// ───────────────────────────────────────────────────────────────────────────────
 
-function getAssetsTotal() {
-  // Islands + HO + all liquid fields except /bank (which is debt)
-  const islandsTotal = FIN_ISLANDS.reduce((a, isl) => a + getIslandTotal(isl.key), 0);
-  const liquidAssets = FIN_LIQUID_FIELDS.reduce((a, f) => {
-    return f.key === 'bank' ? a : a + (finLiquid[f.key] || 0);
-  }, 0);
-  return islandsTotal + liquidAssets;
-}
+let currentSessionTime = '';
+const PRICE_MAP = {}; 
 
-function getGrandTotal() {
-  // ASSETS - /bank debt
-  return getAssetsTotal() - (finLiquid['bank'] || 0);
-}
-
-async function loadFinancial() {
-  try {
-    // Load chest values
-    const rows = await sb('guild_chests','GET',null,'?select=island,chest,value,recorded_at&order=recorded_at.desc&limit=1000');
-    finData = {};
-    const seen = new Set();
-    for(const r of rows) {
-      const k = r.island + '|' + r.chest;
-      if(!seen.has(k)) {
-        seen.add(k);
-        if(!finData[r.island]) finData[r.island] = {};
-        finData[r.island][r.chest] = r.value;
-      }
-    }
-
-    // Load liquid fields + morgana from settings
-    for(const f of FIN_LIQUID_FIELDS) {
-      const val = await getSetting('fin_' + f.key);
-      finLiquid[f.key] = val ? parseInt(val) : 0;
-    }
-    const morgana = await getSetting('fin_morgana');
-    finMorgana = morgana ? parseInt(morgana) : 0;
-    const hoBank = await getSetting('fin_ho_bank');
-    finData['fount_ho_bank'] = hoBank ? parseInt(hoBank) : 0;
-
-    // Load snapshot history
-    const snapRows = await sb('guild_chests','GET',null,'?select=island,chest,value,recorded_at&order=recorded_at.desc&limit=3000');
-    const snapshots = {};
-    for(const r of snapRows) {
-      const key = Math.floor(new Date(r.recorded_at).getTime() / 10000) * 10000;
-      if(!snapshots[key]) snapshots[key] = { at: new Date(r.recorded_at), total: 0 };
-      snapshots[key].total += r.value;
-    }
-    finSnapshotHistory = Object.values(snapshots).sort((a,b) => b.at - a.at).slice(0, 20);
-
-    renderFinancialSummary();
-    renderFinancialChests();
-    renderFinancialHistory();
-  } catch(e) { toast('Failed to load financial: '+e.message, false); }
-}
-
-async function getSetting(key) {
-  try {
-    const rows = await sb('settings','GET',null,'?key=eq.'+key+'&select=value');
-    return rows[0]?.value ?? null;
-  } catch(e) { return null; }
-}
-
-async function saveSetting(key, value) {
-  await sb('settings','POST',{key, value},'?on_conflict=key',{'Prefer':'return=representation,resolution=merge-duplicates'});
-}
-
-function renderFinancialSummary() {
-  const tbody = document.getElementById('fin-summary-table');
-  if(!tbody) return;
-
-  const assetsTotal = getAssetsTotal();
-  const grandTotal = getGrandTotal();
-
-  let rows = '';
-
-  // Liquid fields
-  for(const f of FIN_LIQUID_FIELDS) {
-    const val = finLiquid[f.key] || 0;
-    const display = val >= 1000 ? (val/1000).toFixed(2).replace(/\.?0+$/,'') : (val || '');
-    const isDebt = f.key === 'bank';
-    const labelColor = isDebt ? 'var(--red)' : 'var(--text2)';
-    const valColor = isDebt ? 'var(--red)' : 'var(--text3)';
-    const prefix = isDebt ? '-' : '';
-    rows += `<tr>
-      <td style="font-size:12px;color:${labelColor};padding:4px 0;white-space:nowrap">${f.label}${isDebt ? ' <span style="font-size:10px">(debt)</span>' : ''}</td>
-      <td style="padding:4px 0 4px 8px">
-        <input style="background:transparent;border:none;border-bottom:1px solid var(--border2);color:var(--text);font-family:var(--mn);font-size:12px;width:80px;text-align:right;outline:none;padding:2px 4px"
-          value="${display}" placeholder="0"
-          oninput="onFinLiquidInput('${f.key}',this.value)"
-          onfocus="this.select()">
-      </td>
-      <td style="font-size:11px;color:${valColor};padding:4px 0 4px 6px;font-family:var(--mn);text-align:right">${val > 0 ? prefix+fmtMil(val) : ''}</td>
-    </tr>`;
-  }
-
-  // Divider
-  rows += `<tr><td colspan="3"><div style="border-top:1px dashed var(--border);margin:6px 0"></div></td></tr>`;
-
-  // Island totals (auto-calculated)
-  for(const isl of FIN_ISLANDS) {
-    const t = getIslandTotal(isl.key);
-    rows += `<tr>
-      <td style="font-size:12px;color:var(--text2);padding:4px 0">${isl.icon} ${isl.label}</td>
-      <td colspan="2" style="font-size:12px;font-family:var(--mn);text-align:right;padding:4px 0;color:${t>0?'var(--text)':'var(--text3)'}">${fmtMil(t)}</td>
-    </tr>`;
-  }
-
-  // Morgana Crates
-  const morganaDisplay = finMorgana >= 1000 ? (finMorgana/1000).toFixed(2).replace(/\.?0+$/,'') : (finMorgana || '');
-  rows += `<tr>
-    <td style="font-size:12px;color:var(--text2);padding:4px 0">🦑 Morgana Crates</td>
-    <td style="padding:4px 0 4px 8px">
-      <input style="background:transparent;border:none;border-bottom:1px solid var(--border2);color:var(--text);font-family:var(--mn);font-size:12px;width:80px;text-align:right;outline:none;padding:2px 4px"
-        value="${morganaDisplay}" placeholder="0"
-        oninput="onFinMorganaInput(this.value)"
-        onfocus="this.select()">
-    </td>
-    <td style="font-size:11px;color:var(--text3);padding:4px 0 4px 6px;font-family:var(--mn);text-align:right">${finMorgana > 0 ? fmtMil(finMorgana) : ''}</td>
-  </tr>`;
-
-  // Assets subtotal
-  rows += `<tr><td colspan="3"><div style="border-top:1px solid var(--border);margin:6px 0"></div></td></tr>`;
-  rows += `<tr>
-    <td style="font-size:12px;font-weight:700;color:var(--text2);padding:4px 0">ASSETS</td>
-    <td colspan="2" style="font-size:12px;font-family:var(--mn);font-weight:700;text-align:right;padding:4px 0;color:var(--accent)">${fmtMil(assetsTotal)}</td>
-  </tr>`;
-
-  // Grand total
-  rows += `<tr><td colspan="3"><div style="border-top:2px solid var(--border2);margin:6px 0"></div></td></tr>`;
-  rows += `<tr>
-    <td style="font-size:13px;font-weight:700;padding:4px 0">TOTAL</td>
-    <td colspan="2" style="font-size:13px;font-family:var(--mn);font-weight:700;text-align:right;padding:4px 0;color:var(--green)">${fmtMil(grandTotal)}</td>
-  </tr>`;
-
-  tbody.innerHTML = rows;
-
-  // Update KPIs
-  const el = document.getElementById('fin-total-assets');
-  if(el) el.textContent = fmtMil(grandTotal);
-  const el2 = document.getElementById('fin-total-assets-only');
-  if(el2) el2.textContent = fmtMil(assetsTotal);
-
-  // Weekly change
-  if(finSnapshotHistory.length >= 2) {
-    const diff = finSnapshotHistory[0].total - finSnapshotHistory[1].total;
-    const wc = document.getElementById('fin-weekly-change');
-    if(wc) { wc.textContent = (diff>=0?'+':'')+fmtMil(diff); wc.style.color = diff>=0?'var(--green)':'var(--red)'; }
-  }
-}
-
-function onFinLiquidInput(key, rawVal) {
-  finLiquid[key] = parseFinValue(rawVal);
-  // Only update totals, don't re-render the whole table (would reset cursor)
-  updateFinTotals();
-  clearTimeout(finSaveTimer);
-  setFinStatus('⏳');
-  finSaveTimer = setTimeout(async () => {
-    await saveSetting('fin_' + key, String(finLiquid[key]));
-    setFinStatus('✓ Saved');
-    setTimeout(() => setFinStatus(''), 2000);
-  }, 1500);
-}
-
-function onFinMorganaInput(rawVal) {
-  finMorgana = parseFinValue(rawVal);
-  updateFinTotals();
-  clearTimeout(finSaveTimer);
-  setFinStatus('⏳');
-  finSaveTimer = setTimeout(async () => {
-    await saveSetting('fin_morgana', String(finMorgana));
-    setFinStatus('✓ Saved');
-    setTimeout(() => setFinStatus(''), 2000);
-  }, 1500);
-}
-
-function updateFinTotals() {
-  const assetsTotal = getAssetsTotal();
-  const grandTotal = getGrandTotal();
-  const el = document.getElementById('fin-total-assets');
-  if(el) el.textContent = fmtMil(grandTotal);
-  const el2 = document.getElementById('fin-total-assets-only');
-  if(el2) el2.textContent = fmtMil(assetsTotal);
-  const grandEl = document.querySelector('#fin-summary-table tr:last-child td:last-child');
-  if(grandEl) grandEl.textContent = fmtMil(grandTotal);
-  // Update assets row
-  const rows = document.querySelectorAll('#fin-summary-table tr');
-  rows.forEach(row => {
-    const label = row.querySelector('td:first-child');
-    if(label && label.textContent.trim() === 'ASSETS') {
-      const val = row.querySelector('td:last-child');
-      if(val) val.textContent = fmtMil(assetsTotal);
-    }
-    if(label && label.textContent.trim() === 'TOTAL') {
-      const val = row.querySelector('td:last-child');
-      if(val) val.textContent = fmtMil(grandTotal);
-    }
-  });
-  if(finSnapshotHistory.length >= 2) {
-    const diff = finSnapshotHistory[0].total - finSnapshotHistory[1].total;
-    const wc = document.getElementById('fin-weekly-change');
-    if(wc) { wc.textContent = (diff>=0?'+':'')+fmtMil(diff); wc.style.color = diff>=0?'var(--green)':'var(--red)'; }
-  }
-}
-
-function setFinStatus(msg) {
-  const el = document.getElementById('fin-save-status');
-  if(el) el.textContent = msg;
-}
-
-function switchFinTab(island, el) {
-  finCurrentIsland = island;
-  document.querySelectorAll('#page-financial .tabs .tab').forEach(t => t.classList.remove('active'));
-  if(el) el.classList.add('active');
-  renderFinancialChests();
-}
-
-function renderFinancialChests() {
-  const isl = FIN_ISLANDS.find(i => i.key === finCurrentIsland);
-  if(!isl) return;
-  document.getElementById('fin-tab-icon').textContent = isl.icon;
-  document.getElementById('fin-tab-title').textContent = isl.label;
-
-  const islandData = finData[isl.key] || {};
-  const chestTotal = Object.values(islandData).reduce((a,b) => a+b, 0);
-  const isFountHO = isl.key === 'fount_ho';
-  const displayTotal = isFountHO ? chestTotal + finMorgana + (finData['fount_ho_bank'] || 0) : chestTotal;
-  document.getElementById('fin-tab-total').textContent = 'Total: ' + fmtMil(displayTotal);
-
-  const grid = document.getElementById('fin-chest-grid');
-
-  // Build chest inputs
-  let html = '';
-
-  // Fount HO: Bank field at top
-  if(isFountHO) {
-    const bankVal = finData['fount_ho_bank'] || 0;
-    const bankDisplay = bankVal > 0 ? (bankVal >= 1000 ? (bankVal/1000).toFixed(2).replace(/\.?0+$/,'') : bankVal.toString()) : '';
-    html += `<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;background:var(--ag);border:1px solid rgba(45,111,255,.2);border-radius:var(--rs);padding:8px 10px">
-      <span style="font-size:11px;color:var(--accent);font-family:var(--mn);min-width:40px">Bank</span>
-      <input
-        class="fi"
-        style="padding:4px 6px;font-size:13px;font-family:var(--mn);background:transparent;border:none;border-bottom:1px solid var(--border2);border-radius:0;flex:1"
-        placeholder="0" value="${bankDisplay}"
-        oninput="onFinHOBankInput(this.value)"
-        onfocus="this.select()">
-      <span style="font-size:11px;color:var(--text3);min-width:36px;text-align:right;font-family:var(--mn)">${bankVal > 0 ? fmtMil(bankVal) : ''}</span>
-    </div>`;
-  }
-
-  // Chest inputs
-  html += Array.from({length: isl.chests}, (_, i) => {
-    const chest = i + 1;
-    const val = islandData[chest] || 0;
-    const display = val > 0 ? (val >= 1000 ? (val/1000).toFixed(2).replace(/\.?0+$/,'') : val.toString()) : '';
-    return `<div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:8px 10px">
-      <span style="font-size:11px;color:var(--text3);font-family:var(--mn);min-width:22px">#${chest}</span>
-      <input
-        class="fi"
-        style="padding:4px 6px;font-size:13px;font-family:var(--mn);background:transparent;border:none;border-bottom:1px solid var(--border2);border-radius:0;flex:1"
-        placeholder="0" value="${display}"
-        oninput="onFinChestInput(${chest},this.value)"
-        onfocus="this.select()"
-        data-chest="${chest}">
-      <span style="font-size:11px;color:var(--text3);min-width:36px;text-align:right;font-family:var(--mn)">${val > 0 ? fmtMil(val) : ''}</span>
-    </div>`;
-  }).join('');
-
-  // Fount HO: Morgana Crates at bottom
-  if(isFountHO) {
-    const morganaDisplay = finMorgana > 0 ? (finMorgana >= 1000 ? (finMorgana/1000).toFixed(2).replace(/\.?0+$/,'') : finMorgana.toString()) : '';
-    html += `<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;background:var(--obg);border:1px solid rgba(249,115,22,.2);border-radius:var(--rs);padding:8px 10px">
-      <span style="font-size:11px;color:var(--orange);font-family:var(--mn);min-width:40px;white-space:nowrap">🦑 Morgana</span>
-      <input
-        class="fi"
-        style="padding:4px 6px;font-size:13px;font-family:var(--mn);background:transparent;border:none;border-bottom:1px solid var(--border2);border-radius:0;flex:1"
-        placeholder="0" value="${morganaDisplay}"
-        oninput="onFinMorganaInput(this.value)"
-        onfocus="this.select()">
-      <span style="font-size:11px;color:var(--text3);min-width:36px;text-align:right;font-family:var(--mn)">${finMorgana > 0 ? fmtMil(finMorgana) : ''}</span>
-    </div>`;
-  }
-
-  grid.innerHTML = html;
-}
-
-function onFinHOBankInput(rawVal) {
-  finData['fount_ho_bank'] = parseFinValue(rawVal);
-  updateFinTotals();
-  clearTimeout(finSaveTimer);
-  setFinStatus('⏳');
-  finSaveTimer = setTimeout(async () => {
-    await saveSetting('fin_ho_bank', String(finData['fount_ho_bank']));
-    setFinStatus('✓ Saved');
-    setTimeout(() => setFinStatus(''), 2000);
-  }, 1500);
-}
-
-function onFinChestInput(chest, rawVal) {
-  const val = parseFinValue(rawVal);
-  if(!finData[finCurrentIsland]) finData[finCurrentIsland] = {};
-  finData[finCurrentIsland][chest] = val;
-
-  const isl = FIN_ISLANDS.find(i => i.key === finCurrentIsland);
-  const islandTotal = Object.values(finData[finCurrentIsland]).reduce((a,b) => a+b, 0);
-  document.getElementById('fin-tab-total').textContent = 'Total: ' + fmtMil(islandTotal);
-  updateFinTotals();
-
-  // Update formatted display next to input only (no full re-render)
-  const inputs = document.querySelectorAll('#fin-chest-grid [data-chest]');
-  inputs.forEach(inp => {
-    if(parseInt(inp.dataset.chest) === chest) {
-      const span = inp.nextElementSibling;
-      if(span) span.textContent = val > 0 ? fmtMil(val) : '';
-    }
-  });
-
-  // Update island row in summary
-  if(isl) {
-    document.querySelectorAll('#fin-summary-table tr').forEach(row => {
-      const label = row.querySelector('td:first-child');
-      if(label && label.textContent.includes(isl.label)) {
-        const valCell = row.querySelector('td:last-child');
-        if(valCell) valCell.textContent = fmtMil(islandTotal);
-      }
-    });
-  }
-
-  clearTimeout(finSaveTimer);
-  setFinStatus('⏳');
-  finSaveTimer = setTimeout(() => autoSaveChest(chest, val), 1500);
-}
-
-async function autoSaveChest(chest, val) {
-  try {
-    await sb('guild_chests','POST',{
-      island: finCurrentIsland,
-      chest: chest,
-      value: val,
-      recorded_at: new Date().toISOString()
-    },'');
-    setFinStatus('✓ Saved');
-    setTimeout(() => setFinStatus(''), 2000);
-  } catch(e) {
-    setFinStatus('✗ Error');
-    console.error('Auto-save error:', e);
-  }
-}
-
-async function saveFinancialSnapshot() {
-  const btn = document.querySelector('[onclick="saveFinancialSnapshot()"]');
-  if(btn) { btn.disabled = true; btn.textContent = '⏳ Saving...'; }
-  try {
-    const now = new Date().toISOString();
-    const records = [];
-    for(const isl of FIN_ISLANDS) {
-      const islandData = finData[isl.key] || {};
-      for(let c = 1; c <= isl.chests; c++) {
-        records.push({ island: isl.key, chest: c, value: islandData[c] || 0, recorded_at: now });
-      }
-    }
-    for(let i = 0; i < records.length; i += 100) {
-      await sb('guild_chests','POST',records.slice(i,i+100),'');
-    }
-    toast('Snapshot saved!');
-    loadFinancial();
-  } catch(e) { toast('Error: '+e.message, false); }
-  finally { if(btn) { btn.disabled = false; btn.textContent = '💾 Save Snapshot'; } }
-}
-
-function renderFinancialHistory() {
-  const hist = document.getElementById('fin-history');
-  if(!hist) return;
-  if(!finSnapshotHistory.length) {
-    hist.innerHTML = '<li class="li"><div class="lb"><div class="lt" style="color:var(--text3)">No snapshots yet</div></div></li>';
-    return;
-  }
-  hist.innerHTML = finSnapshotHistory.map((s,i) => {
-    const prev = finSnapshotHistory[i+1];
-    const diff = prev ? s.total - prev.total : null;
-    const color = diff===null?'var(--text3)':diff>=0?'var(--green)':'var(--red)';
-    return `<li class="li">
-      <span class="ld" style="background:${color};box-shadow:0 0 6px ${color}"></span>
-      <div class="lb">
-        <div class="lt">Snapshot — ${fmtMil(s.total)}</div>
-        <div class="lm">${formatRelative(s.at)}</div>
-      </div>
-      <span class="la" style="color:${color}">${diff!==null?(diff>=0?'+':'')+fmtMil(diff):''}</span>
-    </li>`;
-  }).join('');
-}
-
-async function pingFinancialReport() {
-  const webhookUrl = 'https://discord.com/api/webhooks/1487767482344276098/sBa1RfsSE2vtSQGdNMM1yJ_fhQapadcBK1lAe05aWvXxzjGOWu5g5z_mj15jOt3KBYy1';
+function itemType(r){
+  const id=(r.item_id||'').toUpperCase(), nm=(r.item_name||'').toLowerCase();
+  const from=(r.looted_from_name||'');
   
-  const assetsTotal = getAssetsTotal();
-  const grandTotal = getGrandTotal();
-  const bank = finLiquid['bank'] || 0;
+  if(id.includes('NONTRADABLE') || id.includes('SILVERBAG') || from.startsWith('@')) return 'untradable';
+  if(/_TRASH/.test(id)||nm==='trash') return 'trash';
+  if(/_POTION/.test(id)||/\bpotion\b/.test(nm)) return 'potion';
+  if(/^T\d_MOUNT_/.test(id)||/^T\d_FARM_/.test(id)) return 'mount';
+  if(/_MEAL_/.test(id)||/_STEW/.test(id)||/_PIE/.test(id)||/_OMELETTE/.test(id)||/_SANDWICH/.test(id)||/\b(stew|pie|omelette|sandwich|meal|beef |pork |soup)\b/.test(nm)) return 'food';
+  if(/^T\d_(ORE|FIBER|HIDE|ROCK|WOOD|STONE|METAL|CLOTH|LEATHER)/.test(id)) return 'other';
+  if(/_(RUNE|SOUL|RELIC|ESSENCE|SHARD|SIGIL|FRAGMENT|ARTEFACT_RUNE)/.test(id)) return 'other';
+  if(/^(TREASURE_|UNIQUE_GVGTOKEN|QUESTITEM_|UNIQUE_FURNITURE)/.test(id)) return 'other';
+  if(/_(LEVEL\d|LEVEL\d@)/.test(id)&&!/_ARMOR_|_HEAD_|_SHOES_|_MAIN_|_OFF_|_2H_|_BAG/.test(id)) return 'other';
+  if(/\b(rune|soul|relic|essence|shard|sigil|ore|cotton|hide|fiber|basalt|energy|coin|scroll|candle|talisman|trophy|memento|trophy)\b/.test(nm)) return 'other';
+  return 'gear';
+}
 
-  // Build fields for each island
-  const fields = FIN_ISLANDS.map(isl => ({
-    name: isl.icon + ' ' + isl.label,
-    value: fmtMil(getIslandTotal(isl.key)),
-    inline: true
+function parseLoot(raw){
+  raw = raw.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const lines = raw.trim().split('\n');
+  if(lines.length < 2) return [];
+  const hdr = lines[0].split(';').map(h=>h.trim().toLowerCase().replace(/__/g,'_'));
+  const ci  = (...ns) => { for(const n of ns){ const i=hdr.findIndex(h=>h===n||h.includes(n)); if(i>=0)return i; } return -1; };
+
+  const hasDate    = hdr.findIndex(h=>h==='date')>=0;
+  const hasUtcTime = hdr.findIndex(h=>h==='utc_time'||h==='time')>=0;
+  const iDate = hasDate ? hdr.findIndex(h=>h==='date') : -1;
+  const iTime = hasUtcTime ? hdr.findIndex(h=>h==='utc_time'||h==='time') : -1;
+  const iTs   = ci('timestamp');
+  const iByG  = ci('looted_by_guild');
+  const iByN  = ci('looted_by_name');
+  const iId   = ci('item_id');
+  const iNm   = ci('item_name');
+  const iQty  = ci('quantity');
+  const iFrG  = ci('looted_from_guild');
+  const iFrN  = ci('looted_from_name');
+
+  return lines.slice(1).map(line=>{
+    const p = line.split(';');
+    if(p.length < 8) return null;
+    const byN = (p[iByN]||'').trim();
+    const byG = (p[iByG]||'').trim();
+    if(!byN && !byG) return null;
+
+    let ts = '';
+    if(iTs >= 0 && p[iTs]) ts = p[iTs].trim();
+    else if(iDate >= 0 && iTime >= 0) {
+      const d = (p[iDate]||'').trim();
+      const t = (p[iTime]||'').trim();
+      const parts = d.split('-');
+      if(parts.length === 3) {
+        const y = parts[0].length===4 ? parts[0] : parts[2];
+        const m = parts[0].length===4 ? parts[1] : parts[1];
+        const day = parts[0].length===4 ? parts[2] : parts[0];
+        ts = `${y}-${m}-${day}T${t}Z`;
+      }
+    }
+    
+    let rawId = (p[iId] || '').trim();
+    if (rawId.includes('MOUNT') && rawId.includes('@')) {
+      rawId = rawId.split('@')[0];
+    }
+
+    return {
+      timestamp:         ts,
+      looted_by_guild:   byG,
+      looted_by_name:    byN,
+      item_id:           rawId,
+      item_name:         (p[iNm] ||'').trim(),
+      quantity:          parseInt(p[iQty])||1,
+      looted_from_guild: (p[iFrG]||'').trim(),
+      looted_from_name:  (p[iFrN]||'').trim(),
+    };
+  }).filter(Boolean);
+}
+
+function parseChest(raw){
+  const unq=s=>s.replace(/^"|"$/g,'').trim();
+  return raw.trim().split(/\r?\n/).reduce((acc,line)=>{
+    const p=line.split('\t').map(unq);
+    if(!p[0]||p[0].toLowerCase()==='date'||p.length<3||!p[2])return acc;
+    const enc=parseInt(p[3])||0;
+    acc.push({ item_name: p[2], enc, quantity: parseInt(p[5])||1, _key: mkey(p[2],enc) });
+    return acc;
+  },[]);
+}
+
+function detectGuild(rows){
+  const f={};
+  rows.forEach(r=>{ if(r.looted_by_guild)f[r.looted_by_guild]=(f[r.looted_by_guild]||0)+1; });
+  return Object.entries(f).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
+}
+
+function detectSessionTime(rows) {
+  if(!rows || !rows.length) return '';
+  const counts = {};
+  rows.forEach(r => {
+    const d = new Date(r.timestamp);
+    if(isNaN(d)) return;
+    const hhUTC = String(d.getUTCHours()).padStart(2, '0');
+    const ddUTC = String(d.getUTCDate()).padStart(2, '0');
+    const mmUTC = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const yyyyUTC = d.getUTCFullYear();
+    const key = `${ddUTC}/${mmUTC}/${yyyyUTC} - ${hhUTC}:00 UTC`;
+    counts[key] = (counts[key] || 0) + 1;
+  });
+  let best = '', max = 0;
+  for(const [k, v] of Object.entries(counts)){
+    if(v > max){ max = v; best = k; }
+  }
+  return best;
+}
+
+function enrichRows(lootRows, ourGuild, chestRows){
+  const pool = {};
+  chestRows.forEach(c => {
+    const key = c._key;
+    pool[key] = (pool[key] || 0) + c.quantity;
+  });
+  return lootRows.map(r => {
+    if(!ourGuild) return {...r, status:'neutral'};
+    const byUs = r.looted_by_guild === ourGuild;
+    const fromUs = r.looted_from_guild === ourGuild;
+    if(fromUs && !byUs) return {...r, status:'lost'};
+    if(!byUs)           return {...r, status:'neutral'};
+    if(!chestRows.length) return {...r, status:'looted'};
+    const key = mkey(r.item_name, encId(r.item_id));
+    if(pool[key] >= r.quantity){
+      pool[key] -= r.quantity;
+      return {...r, status:'deposited'};
+    }
+    return {...r, status:'pending'};
+  });
+}
+
+async function fetchPrices(rows) {
+  const uniqueIds = [...new Set(rows.map(r => r.item_id))];
+  const chunks = [];
+  for (let i = 0; i < uniqueIds.length; i += 100) {
+    chunks.push(uniqueIds.slice(i, i + 100));
+  }
+
+  for (const chunk of chunks) {
+    try {
+      const res = await fetch(`https://europe.albion-online-data.com/api/v2/stats/prices/${chunk.join(',')}?locations=Caerleon,Bridgewatch,Martlock,Thetford,FortSterling,Lymhurst,Brecilien`);
+      if (!res.ok) continue;
+      const data = await res.json();
+      
+      data.forEach(d => {
+        if (d.sell_price_min > 0) {
+          if (!PRICE_MAP[d.item_id]) PRICE_MAP[d.item_id] = [];
+          PRICE_MAP[d.item_id].push(d.sell_price_min);
+        }
+      });
+    } catch (e) {
+      console.warn('Falha ao puxar preços:', e);
+    }
+  }
+
+  for (const k in PRICE_MAP) {
+    const arr = PRICE_MAP[k];
+    if (arr.length > 0) {
+      PRICE_MAP[k] = Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+    } else {
+      PRICE_MAP[k] = 0;
+    }
+  }
+}
+
+function getPlayerAvatar(name, format='svg') {
+  const formatParams = format === 'png' ? '&size=128&ext=.png' : '';
+  return `https://api.dicebear.com/8.x/adventurer/${format}?seed=${encodeURIComponent(name)}&backgroundColor=1a1a20${formatParams}`;
+}
+
+async function fetchAvatarImage(playerName){
+  try{
+    const url = `https://api.dicebear.com/8.x/adventurer/png?seed=${encodeURIComponent(playerName)}&backgroundColor=1a1a20&size=128`;
+    const resp = await fetch(url);
+    if(!resp.ok) return null;
+    return await resp.blob();
+  } catch(e){
+    console.warn('Falha ao baixar avatar:', e);
+    return null;
+  }
+}
+
+const TIPDATA = {};
+let _chipCounter = 0;
+let allRows=[],filtered=[],ourGuild='';
+
+// FILTRO PENDING ATIVADO POR PADRÃO NO JAVASCRIPT
+let pg=1,perPg=40,sf='pending',sq='',sguild='';
+
+const hideT=new Set(['food','potion','mount','trash','other','untradable']);
+const lootFiles=[], chestFiles=[];
+
+function renderFilePills(listId, files, onRemove){
+  const el=document.getElementById(listId);
+  el.innerHTML=files.map((f,i)=>`
+    <div class="file-pill">
+      <span class="fp-icon">📄</span>
+      <span class="fp-name">${esc(f.name)}</span>
+      <span class="fp-size">${fmtSz(f.size)}</span>
+      <button class="fp-remove" data-i="${i}">✕</button>
+    </div>`).join('');
+  el.querySelectorAll('.fp-remove').forEach(b=>b.addEventListener('click',()=>{
+    files.splice(+b.dataset.i,1);
+    renderFilePills(listId,files,onRemove);
+    checkGoBtn();
   }));
+}
 
-  // Add liquid fields
-  fields.push({ name: '​', value: '​', inline: false }); // spacer
-  for(const f of FIN_LIQUID_FIELDS) {
-    const val = finLiquid[f.key] || 0;
-    if(val > 0) fields.push({
-      name: f.label + (f.key === 'bank' ? ' (debt)' : ''),
-      value: (f.key === 'bank' ? '-' : '') + fmtMil(val),
-      inline: true
-    });
+function checkGoBtn(){ document.getElementById('btn-go').disabled = lootFiles.length===0; }
+
+function addFiles(newFiles, store, listId){
+  for(const f of newFiles){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      store.push({name:f.name,size:f.size,text:e.target.result});
+      renderFilePills(listId,store,()=>{});
+      checkGoBtn();
+    };
+    reader.readAsText(f);
+  }
+}
+
+function setupDZ(dzId, fiId, store, listId){
+  const dz=document.getElementById(dzId), fi=document.getElementById(fiId);
+  dz.addEventListener('click',()=>fi.click());
+  dz.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' ')fi.click(); });
+  ['dragover','dragenter'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('over');}));
+  ['dragleave','dragend'].forEach(ev=>dz.addEventListener(ev,()=>dz.classList.remove('over')));
+  dz.addEventListener('drop',e=>{
+    e.preventDefault();dz.classList.remove('over');
+    if(e.dataTransfer.files.length)addFiles([...e.dataTransfer.files],store,listId);
+  });
+  fi.addEventListener('change',e=>{
+    if(e.target.files.length)addFiles([...e.target.files],store,listId);
+    fi.value='';
+  });
+}
+
+setupDZ('dz-loot','fi-loot',lootFiles,'fl-loot');
+setupDZ('dz-chest','fi-chest',chestFiles,'fl-chest');
+
+document.getElementById('btn-go').addEventListener('click', async () => {
+  const btnGo = document.getElementById('btn-go');
+  btnGo.innerHTML = 'FETCHING PRICES...';
+  btnGo.disabled = true;
+
+  let tempRows = [];
+  lootFiles.forEach(f=>{ tempRows = tempRows.concat(parseLoot(f.text)); });
+  tempRows.sort((a,b) => {
+    const tA = new Date(a.timestamp).getTime() || 0;
+    const tB = new Date(b.timestamp).getTime() || 0;
+    if (tA !== tB) return tA - tB;
+    return (a.item_id || '').localeCompare(b.item_id || ''); 
+  });
+
+  const seen = [];
+  let lootRows = [];
+  const baseId = id => (id || ''); 
+  
+  tempRows.forEach(r => {
+    const rTime = new Date(r.timestamp).getTime() || 0;
+    const bId = baseId(r.item_id);
+    const isDuplicate = seen.some(s => 
+      s.looted_by === r.looted_by_name &&
+      s.item === bId &&
+      s.looted_from === r.looted_from_name &&
+      s.qty === r.quantity &&
+      Math.abs(s.time - rTime) < 60000 
+    );
+    if(!isDuplicate) {
+      seen.push({ looted_by: r.looted_by_name, item: bId, looted_from: r.looted_from_name, qty: r.quantity, time: rTime });
+      lootRows.push(r);
+    }
+  });
+
+  if(!lootRows.length){ 
+    alert('Could not parse any loot rows. Check file formats.'); 
+    btnGo.innerHTML = 'START';
+    btnGo.disabled = false;
+    return; 
   }
 
-  // Weekly change
-  let changeText = '';
-  if(finSnapshotHistory.length >= 2) {
-    const diff = finSnapshotHistory[0].total - finSnapshotHistory[1].total;
-    changeText = (diff >= 0 ? '+' : '') + fmtMil(diff) + ' vs last week';
+  let chestRows=[];
+  chestFiles.forEach(f=>{ chestRows=chestRows.concat(parseChest(f.text)); });
+
+  ourGuild=detectGuild(lootRows);
+  allRows=enrichRows(lootRows,ourGuild,chestRows);
+  populateGuildFilter(allRows);
+  
+  await fetchPrices(allRows);
+
+  currentSessionTime = detectSessionTime(lootRows);
+  const stChip = document.getElementById('session-chip');
+  if (currentSessionTime) {
+    document.getElementById('session-chip-text').textContent = currentSessionTime;
+    stChip.classList.add('show');
+  } else {
+    stChip.classList.remove('show');
   }
 
-  try {
-    const btn = document.querySelector('[onclick="pingFinancialReport()"]');
-    if(btn) { btn.disabled = true; btn.textContent = '⏳ Sending...'; }
+  document.getElementById('page-upload').style.display='none';
+  document.getElementById('main-header').style.display='flex';
+  document.getElementById('page-app').style.display='block';
+  document.getElementById('btn-reload').style.display='';
+  const chip=document.getElementById('guild-chip');
+  document.getElementById('guild-chip-name').textContent=ourGuild||'unknown';
+  if(ourGuild) chip.classList.add('show');
 
-    const changeSign = changeText.startsWith('+') ? '📈' : changeText ? '📉' : '➖';
-    const changeColor = changeText.startsWith('+') ? 0x22c55e : changeText ? 0xef4444 : 0x2d6fff;
-    const date = new Date().toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+  btnGo.innerHTML = 'START';
+  applyFilters();
+  window.scrollTo(0, 0); 
+});
 
-    const islandList = FIN_ISLANDS
-      .map(isl => isl.icon + ' **' + isl.label + '** — ' + fmtMil(getIslandTotal(isl.key)))
-      .join('\n');
+document.getElementById('btn-reload').addEventListener('click',()=>{
+  document.getElementById('page-upload').style.display='flex';
+  document.getElementById('main-header').style.display='none';
+  document.getElementById('page-app').style.display='none';
+  document.getElementById('btn-reload').style.display='none';
+  document.getElementById('guild-chip').classList.remove('show');
+  document.getElementById('session-chip').classList.remove('show');
+  lootFiles.length=0; chestFiles.length=0;
+  ['fl-loot','fl-chest'].forEach(id=>document.getElementById(id).innerHTML='');
+  allRows=[]; document.getElementById('btn-go').disabled=true;
+  window.scrollTo(0, 0); 
+});
 
-    const liquidList = [
-      '👤 **Ins** — ' + fmtMil(finLiquid['ins']||0),
-      '🏦 **Silver Guild Bank** — ' + fmtMil(finLiquid['silver_guild_bank']||0),
-      '🏠 **Renter Guild Bank** — ' + fmtMil(finLiquid['renter_guild_bank']||0),
-      '🔴 **/bank (debt)** — -' + fmtMil(bank),
-    ].join('\n');
+function populateGuildFilter(rows){
+  const guilds=[...new Set(rows.map(r=>r.looted_by_guild).filter(Boolean))].sort();
+  const sel=document.getElementById('f-guild');
+  sel.innerHTML='<option value="">All guilds</option>'+guilds.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');
+  if(guilds.includes(ourGuild)){ sel.value=ourGuild; sguild=ourGuild; }
+  else { sel.value=''; sguild=''; }
+}
 
-    await fetch(webhookUrl, {
+function renderStats(baseRows) {
+  // baseRows: filtrado por guild + hideT + sq, SEM filtro de status.
+  // O valor estimado muda conforme sf: "all" = tudo, "pending" = só pending.
+
+  const c = {looted:0, deposited:0, pending:0, lost:0};
+  let totalSilver = 0;
+
+  baseRows.forEach(r => {
+    if(c[r.status] !== undefined) c[r.status]++;
+    // Se filtro = pending → soma só pending. Se = all → soma tudo.
+    if (sf === 'pending') {
+      if (r.status === 'pending') totalSilver += (PRICE_MAP[r.item_id] || 0) * r.quantity;
+    } else {
+      totalSilver += (PRICE_MAP[r.item_id] || 0) * r.quantity;
+    }
+  });
+
+  const players = new Set(baseRows.map(r=>r.looted_by_name).filter(Boolean)).size;
+  const pct = baseRows.length > 0 ? Math.round(c.deposited / baseRows.length * 100) : 0;
+  
+  document.getElementById('stats').innerHTML=`
+    <div class="stt">
+      <div class="stt-label">⚔️ Total looted</div>
+      <div class="stt-val">${baseRows.length.toLocaleString()}</div>
+      <div class="stt-sub">${ourGuild||'all guilds'}</div>
+    </div>
+    <div class="stt">
+      <div class="stt-label">🔵 Deposited</div>
+      <div class="stt-val cv-blue">${c.deposited.toLocaleString()}</div>
+      <div class="stt-sub">${pct}% of total</div>
+    </div>
+    <div class="stt">
+      <div class="stt-label">🟡 Pending</div>
+      <div class="stt-val cv-amber">${c.pending.toLocaleString()}</div>
+      <div class="stt-sub">not deposited</div>
+    </div>
+    <div class="stt">
+      <div class="stt-label">💰 ${sf==='pending'?'Pend. Value':'Est. Value'}</div>
+      <div class="stt-val cv-amber">${fmtSilver(totalSilver)}</div>
+      <div class="stt-sub">${sf==='pending'?'only pending':'all looted'}</div>
+    </div>
+    <div class="stt">
+      <div class="stt-label">🔴 Lost</div>
+      <div class="stt-val cv-red">${c.lost.toLocaleString()}</div>
+      <div class="stt-sub">taken from us</div>
+    </div>
+    <div class="stt">
+      <div class="stt-label">👥 Players</div>
+      <div class="stt-val cv-slate">${players.toLocaleString()}</div>
+      <div class="stt-sub">in view</div>
+    </div>`;
+}
+
+function applyFilters(){
+  let rows = allRows.slice();
+
+  // 1. Filtros base (guild + tipos ocultados + busca)
+  if(sguild) rows = rows.filter(r => r.looted_by_guild === sguild);
+  if(hideT.size) rows = rows.filter(r => !hideT.has(itemType(r)));
+  if(sq){ 
+    const q = sq.toLowerCase(); 
+    rows = rows.filter(r =>
+      r.item_name.toLowerCase().includes(q) ||
+      r.item_id.toLowerCase().includes(q) ||
+      r.looted_by_name.toLowerCase().includes(q) ||
+      r.looted_from_name.toLowerCase().includes(q)
+    ); 
+  }
+
+  // 2. Renderiza stats com base nos filtros ativos (sem filtro de status)
+  //    → o valor estimado já é calculado APENAS para pending dentro desses filtros
+  renderStats(rows);
+
+  // 3. Aplica filtro de status só para a lista de cards
+  if(sf === 'pending') rows = rows.filter(r => r.status === 'pending');
+
+  rows.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+  filtered = rows;
+  pg = 1;
+  renderCards(); 
+}
+
+function groupByPlayer(rows){
+  const m={};
+  rows.forEach(r=>{
+    const k=r.looted_by_name||'(unknown)';
+    if(!m[k]) m[k]={name:k,guild:r.looted_by_guild,items:[],c:{looted:0,deposited:0,pending:0,lost:0,neutral:0}};
+    m[k].items.push(r);
+    m[k].c[r.status]=(m[k].c[r.status]||0)+1;
+  });
+
+  // silverMap: se sf='pending' soma só pending; se sf='all' soma tudo.
+  // Respeita os filtros base ativos (guild, hideT, busca).
+  const silverMap = {};
+  allRows.forEach(r => {
+    if (sf === 'pending' && r.status !== 'pending') return;
+    if (sguild && r.looted_by_guild !== sguild) return;
+    if (hideT.has(itemType(r))) return;
+    if (sq) {
+      const q = sq.toLowerCase();
+      if (!r.item_name.toLowerCase().includes(q) &&
+          !r.item_id.toLowerCase().includes(q) &&
+          !r.looted_by_name.toLowerCase().includes(q) &&
+          !r.looted_from_name.toLowerCase().includes(q)) return;
+    }
+    const k = r.looted_by_name || '(unknown)';
+    silverMap[k] = (silverMap[k] || 0) + (PRICE_MAP[r.item_id] || 0) * r.quantity;
+  });
+
+  const pri={pending:0,looted:1,deposited:2,lost:3,neutral:4};
+  return Object.values(m).map(g=>{
+    let ov='neutral';
+    if(g.c.pending>0)       ov='pending';
+    else if(g.c.looted>0)   ov='looted';
+    else if(g.c.deposited>0)ov='deposited';
+    else if(g.c.lost>0)     ov='lost';
+    return {...g, overall:ov, pendingSilver: silverMap[g.name] || 0};
+  }).sort((a,b)=>{ const d=pri[a.overall]-pri[b.overall]; return d||b.items.length-a.items.length; });
+}
+
+
+function renderCards(){
+  Object.keys(TIPDATA).forEach(k=>delete TIPDATA[k]); _chipCounter=0;
+  const groups=groupByPlayer(filtered);
+  const col=document.getElementById('cards-col');
+  if(!groups.length){
+    col.innerHTML='<div class="empty-msg">No results for the current filters.</div>';
+    document.getElementById('pgn').innerHTML=''; return;
+  }
+  const start=(pg-1)*perPg, page=groups.slice(start,start+perPg);
+  const bdM={looted:'bd-looted',deposited:'bd-deposited',pending:'bd-pending',lost:'bd-lost',neutral:'bd-neutral'};
+  const bdL={looted:'Looted',deposited:'Deposited',pending:'Pending',lost:'Lost',neutral:'—'};
+  const bdC={looted:'var(--green)',deposited:'var(--blue)',pending:'var(--amber)',lost:'var(--red)',neutral:'var(--t3)'};
+
+  col.innerHTML=page.map(g=>{
+    const dep=g.c.deposited||0,tot=g.items.length;
+    const pct=tot>0?Math.round(dep/tot*100):0;
+    const init=(g.name||'?').charAt(0).toUpperCase();
+
+    const avatarUrl = getPlayerAvatar(g.name);
+    const avatarHtml = `<img class="avatar" src="${avatarUrl}" alt="${init}" onerror="this.outerHTML='<div class=\\'avatar\\'>${init}</div>'"/>`;
+
+    const groupedItems = Object.values(g.items.reduce((acc, r) => {
+      const key = r.item_id + '|' + r.status;
+      if (!acc[key]) acc[key] = { ...r, displayQty: 0 };
+      acc[key].displayQty += r.quantity;
+      return acc;
+    }, {}));
+
+    const chips = groupedItems.map((r) => {
+      const st = r.status, enc = encId(r.item_id), tier = tierId(r.item_id);
+      const isTrash = r.item_id.toUpperCase().includes('TRASH');
+      const cc = st==='deposited'?' dep':st==='pending'?' pend':'';
+      const img = isTrash
+        ? `<div class="noi">🗑</div>`
+        : `<img src="${imgUrl(r.item_id)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noi',textContent:'?'}))"/>`;
+      
+      const qtyHtml = r.displayQty > 1 ? `<div class="chip-qty">${r.displayQty}</div>` : '';
+      const chipId = `c${++_chipCounter}`;
+
+      TIPDATA[chipId] = {
+        name: r.item_name, id: r.item_id, tier, enc,
+        qty: r.displayQty, time: fmtT(r.timestamp),
+        from: (st==='looted'||st==='deposited'||st==='pending') ? ('From: '+(r.looted_from_name||'?')+(r.looted_from_guild?' ('+r.looted_from_guild+')':'')) : st==='lost' ? ('To: '+(r.looted_by_name||'?')) : (r.looted_from_name||'?'),
+        st, sc:{deposited:'ts-d',pending:'ts-p',lost:'ts-l',looted:'ts-loot'}[st]||'',
+        stxt:{looted:'Waiting for deposit',deposited:'Deposited in chest',pending:'Not deposited yet',lost:'Lost to enemy',neutral:'—'}[st]||'—'
+      };
+      
+      return `<div class="chip${cc}" data-cid="${chipId}">${img}${qtyHtml}</div>`;
+    }).join('');
+
+    // Badge de prata: reflete o filtro ativo (all = tudo, pending = só pending)
+    const silverBadge = g.pendingSilver > 0 ? ` · <span class="cr-silver">💰 ${fmtSilver(g.pendingSilver)}</span>` : '';
+
+    return `<div class="pcard s-${g.overall}">
+      <div class="ch">
+        ${avatarHtml}
+        <div class="ci">
+          <div class="ci-name">${esc(g.name)}</div>
+          ${g.guild?`<div class="ci-guild">🏰 ${esc(g.guild)}</div>`:''}
+        </div>
+        <div class="cr">
+          <span class="badge ${bdM[g.overall]}"><span style="color:${bdC[g.overall]};font-size:.6rem">●</span> ${bdL[g.overall]}</span>
+          <span class="cr-count">${tot} item${tot!==1?'s':''}${dep?` · ${dep} dep.`:''}${silverBadge}</span>
+          ${g.overall==='pending'?`<button class="card-send-btn" data-player="${esc(g.name)}" onclick="sendPlayerPing(this,'${esc(g.name)}')">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M11.5 2C10 1 8 .5 7 .5S4 1 2.5 2C1.5 2.8 1 4 1 5.5c0 1 .3 2 .8 2.7.2.3.2.7 0 1L1 11l2-.5c.3-.1.6 0 .8.2C5 11.5 6 12 7 12s2-.5 3.2-1.3c.2-.2.5-.3.8-.2l2 .5-.8-1.8c-.2-.3-.2-.7 0-1C12.7 7.5 13 6.5 13 5.5c0-1.5-.5-2.7-1.5-3.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+            Ping
+          </button>`:''}
+        </div>
+      </div>
+      <div class="citems">${chips}</div>
+      <div class="cf">
+        <span class="cf-txt">Deposited: ${dep}/${tot}</span>
+        <div class="prog"><div class="prog-fill" style="width:${pct}%"></div></div>
+        <span class="cf-pct">${pct}%</span>
+      </div>
+    </div>`;
+  }).join('');
+  renderPgn(groups.length);
+}
+
+function renderPgn(total){
+  const tp=Math.ceil(total/perPg),el=document.getElementById('pgn');
+  if(tp<=1){el.innerHTML=`<span class="pi">${total} player${total!==1?'s':''}</span>`;return;}
+  const pages=[],R=2;
+  for(let i=1;i<=tp;i++)if(i===1||i===tp||Math.abs(i-pg)<=R)pages.push(i);
+  let h=`<button class="pb" data-a="p" ${pg===1?'disabled':''}>‹</button>`;
+  let prev=0;
+  for(const p of pages){if(prev&&p-prev>1)h+=`<span class="pi">…</span>`;h+=`<button class="pb ${p===pg?'active':''}" data-p="${p}">${p}</button>`;prev=p;}
+  h+=`<button class="pb" data-a="n" ${pg===tp?'disabled':''}>›</button>`;
+  h+=`<span class="pi">${total} player${total!==1?'s':''}</span>`;
+  el.innerHTML=h;
+  el.querySelectorAll('[data-p]').forEach(b=>b.addEventListener('click',()=>{pg=+b.dataset.p;renderCards();}));
+  el.querySelector('[data-a="p"]')?.addEventListener('click',()=>{if(pg>1){pg--;renderCards();}});
+  el.querySelector('[data-a="n"]')?.addEventListener('click',()=>{if(pg<tp){pg++;renderCards();}});
+}
+
+document.getElementById('s-input').addEventListener('input',e=>{sq=e.target.value;applyFilters();});
+document.getElementById('f-guild').addEventListener('change',e=>{sguild=e.target.value;applyFilters();});
+document.getElementById('f-per').addEventListener('change',e=>{perPg=+e.target.value;pg=1;renderCards();});
+document.getElementById('status-seg').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-s]');if(!btn)return;
+  sf=btn.dataset.s;
+  document.querySelectorAll('[data-s]').forEach(b=>{
+    b.className='seg-btn';
+    if(b.dataset.s===sf)b.classList.add(sf==='pending'?'on-pending':'on');
+  });
+  applyFilters();
+});
+document.querySelectorAll('.htog').forEach(t=>{
+  t.addEventListener('click',()=>{
+    const type=t.dataset.t;
+    if(hideT.has(type)){hideT.delete(type);t.classList.remove('on');}
+    else{hideT.add(type);t.classList.add('on');}
+    applyFilters();
+  });
+});
+
+let tipActive = false;
+
+document.addEventListener('mouseover', e => {
+  const chip = e.target.closest('[data-cid]');
+  if (!chip) return;
+  const GT = document.getElementById('global-tip');
+  if (!GT) return;
+  if (tipActive && GT.dataset.currentCid === chip.dataset.cid) return;
+  const d = TIPDATA[chip.dataset.cid];
+  if (!d) return;
+  const tc = ['','','','','t4','t5','t6','t7','t8'][d.tier]||'';
+  const encDot = d.enc ? `<span class="enc e${d.enc}"></span>` : '';
+  
+  GT.innerHTML =
+    `<div class="tip-name ${tc}">${esc(d.name)}${encDot}</div>`
+   +`<div class="tip-id">${esc(d.id)}</div>`
+   +`<div class="tip-row"><span style="flex:1">${esc(d.from)}</span></div>`
+   +`<div class="tip-row"><span>Qty</span><strong>×${d.qty}</strong></div>`
+   +`<div class="tip-row"><span>Time</span><strong>${d.time||'—'}</strong></div>`
+   +`<div class="tip-st ${d.sc}">${d.stxt}</div>`;
+   
+  GT.style.display = 'block';
+  GT.dataset.currentCid = chip.dataset.cid;
+  tipActive = true;
+  positionTip(chip, GT);
+});
+
+document.addEventListener('mouseout', e => {
+  const chip = e.target.closest('[data-cid]');
+  if (!chip) return;
+  if (e.relatedTarget && chip.contains(e.relatedTarget)) return;
+  const GT = document.getElementById('global-tip');
+  if (GT) { GT.style.display = 'none'; GT.dataset.currentCid = ''; }
+  tipActive = false;
+});
+
+document.addEventListener('scroll', () => { 
+  if(tipActive){
+    const GT = document.getElementById('global-tip');
+    if(GT) GT.style.display = 'none';
+    tipActive = false;
+  } 
+}, true);
+
+function positionTip(chip, GT) {
+  const cr = chip.getBoundingClientRect();
+  const TW = 230, TH = GT.offsetHeight || 160, M = 12;
+  const W = window.innerWidth, H = window.innerHeight;
+  let left = cr.left + cr.width/2 - TW/2;
+  left = Math.max(8, Math.min(left, W - TW - 8));
+  const above = cr.top >= TH + M + 20;
+  const below = !above && (H - cr.bottom >= TH + M + 20);
+  let top = above ? cr.top - TH - M : below ? cr.bottom + M : Math.max(8, cr.top - TH - M);
+  GT.style.left = left + 'px';
+  GT.style.top  = top  + 'px';
+  GT.classList.toggle('tip-below', below && !above);
+  const arrowL = Math.max(12, Math.min((cr.left + cr.width/2) - left, TW - 12));
+  GT.style.setProperty('--arrow-left', arrowL + 'px');
+}
+
+const WEBHOOK_URL = 'https://discord.com/api/webhooks/1485254555816956125/X_i-Yl422TpZrfUorNwLW7wfdLAtgLVoSd3zXOexno3kEHHIwri1L0WLL7qDjgjXOSei';
+const WORKER_URL = '/api/grid';
+
+const whStatus   = document.getElementById('wh-status');
+const btnSendAll = document.getElementById('btn-send-all');
+const btnConfig  = document.getElementById('btn-discord-config');
+const cfgModal   = document.getElementById('discord-config-modal');
+const cfgClose   = document.getElementById('cfg-close');
+const cfgSave    = document.getElementById('cfg-save');
+const cfgArea    = document.getElementById('cfg-textarea');
+
+let discordIdMap = JSON.parse(localStorage.getItem('ao_discord_ids')||'{}');
+
+function setStatus(msg, ok){
+  whStatus.textContent   = msg;
+  whStatus.className     = 'wh-status '+(ok?'ok':'err');
+  whStatus.style.display = 'inline-block';
+  setTimeout(()=>{ whStatus.style.display='none'; }, 6000);
+}
+
+btnConfig.addEventListener('click',()=>{
+  cfgArea.value = Object.entries(discordIdMap).map(([k,v])=>`${k}=${v}`).join('\n');
+  cfgModal.style.display='flex';
+});
+cfgClose.addEventListener('click',()=>{ cfgModal.style.display='none'; });
+cfgModal.addEventListener('click',e=>{ if(e.target===cfgModal) cfgModal.style.display='none'; });
+cfgSave.addEventListener('click',()=>{
+  discordIdMap={};
+  cfgArea.value.split('\n').forEach(line=>{
+    const [name,...rest]=line.trim().split('=');
+    const id=rest.join('=').trim();
+    if(name&&id) discordIdMap[name.trim()]=id;
+  });
+  localStorage.setItem('ao_discord_ids', JSON.stringify(discordIdMap));
+  cfgModal.style.display='none';
+  setStatus(`Saved ${Object.keys(discordIdMap).length} Discord IDs`, true);
+});
+
+function dedupItems(items){
+  const map = {};
+  items.forEach(r=>{
+    const base = r.item_id; 
+    if(!map[base]) map[base] = {...r, quantity: 0};
+    map[base].quantity += r.quantity;
+  });
+  return Object.values(map);
+}
+
+function albionImgUrl(itemId){
+  return `https://render.albiononline.com/v1/item/${encodeURIComponent(itemId)}.png?size=64&quality=2`;
+}
+
+async function fetchGridImage(items){
+  if(!WORKER_URL) return null;
+  try{
+    const ids = items.map(r=>`${r.item_id}:${r.quantity||1}`).join(',');
+    const resp = await fetch(WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        allowed_mentions: { parse: [] },
-        embeds: [{
-          color: changeColor,
-          title: '💰 Guild Financial Report — ' + date,
-          description: changeText ? changeSign + ' **' + changeText + '** vs last snapshot' : 'Weekly snapshot',
-          fields: [
-            { name: '🏰 Islands & HO', value: islandList, inline: false },
-            { name: '💵 Liquid & Debt', value: liquidList, inline: false },
-            { name: '📦 Total Assets', value: '**' + fmtMil(assetsTotal) + '**', inline: true },
-            { name: '🏦 Bank Debt', value: '**-' + fmtMil(bank) + '**', inline: true },
-            { name: '💎 Net Worth', value: '**' + fmtMil(grandTotal) + '**', inline: true },
-          ],
-          footer: { text: 'Squirtle Squad · Financial System' },
-          timestamp: new Date().toISOString()
-        }]
-      })
+      body: JSON.stringify({ items: ids })
     });
-    toast('📣 Financial report sent!');
-    if(btn) { btn.disabled = false; btn.textContent = '📣 Ping Report'; }
-  } catch(e) {
-    toast('Failed to send ping: ' + e.message, false);
-    const btn = document.querySelector('[onclick="pingFinancialReport()"]');
-    if(btn) { btn.disabled = false; btn.textContent = '📣 Ping Report'; }
+    if(!resp.ok) return null;
+    return await resp.blob();
+  } catch(e){
+    console.warn('Worker fetch failed:', e);
+    return null;
   }
 }
 
-async function saveFinancial() {}
+const tierEmoji = t => ['','⬛','🟫','🟩','🟦','🟥','🟧','🟨','⬜'][t]||'⬜';
 
-// ── ATTENDANCE ────────────────────────────────────
-const GUILD_ID = '_WPaQTN8QBuPhi76PkhE0g';
-const ALBION_API = 'https://gameinfo-ams.albiononline.com/api/gameinfo';
+function buildPayload(playerName, pendingItems, guild, imgBlob, avatarBlob){
+  const id      = discordIdMap[playerName];
+  const mention = id ? `<@${id}>` : `📋 **${playerName}**`;
+  
+  const groupedList = dedupItems(pendingItems);
 
-async function loadAttendance(days=7) {
-  const tbody = document.getElementById('att-table');
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">⏳ Loading attendance data...</td></tr>';
-  try {
-    const minBattles = parseInt(SETTINGS.attendance_min || SETTINGS.attendance_min_per_week || '4');
-    const since = new Date(Date.now() - days * 86400000).toISOString();
+  // ── FIX: calcula silver APENAS dos itens pending passados para a função ──
+  let totalSilver = 0;
+  groupedList.forEach(g => {
+    totalSilver += (PRICE_MAP[g.item_id] || 0) * g.quantity;
+  });
+  const silverStr = totalSilver > 0 ? `~${fmtSilver(totalSilver)} Silver` : 'Unknown';
 
-    // Load from Supabase attendance_logs (populated by daily-sync cron)
-    const logs = await sb('attendance_logs','GET',null,
-      `?select=albion_name,battle_id,kills,deaths,avg_ip,battle_at&battle_at=gte.${since}&limit=10000`
-    );
+  const lines = groupedList.map(g=>{
+    const t = parseInt((g.item_id||'').match(/^T(\d)/)?.[1]||0);
+    return `${tierEmoji(t)} ${g.item_name}${g.quantity>1?` ×${g.quantity}`:''}`;
+  }).join('\n');
 
-    if(!logs.length) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">📭 No data yet — the daily sync runs at midnight UTC and will populate this table.</td></tr>';
-      return;
+  const killboardUrl = `https://killboard-1.com/eu/player/${encodeURIComponent(playerName)}`;
+  
+  const descLines = [];
+  if (currentSessionTime) {
+    descLines.push(`**🗓️ EVENT: ${currentSessionTime}**`);
+    descLines.push(``);
+  }
+  descLines.push(`**${groupedList.length} item${groupedList.length!==1?'s':''} not deposited yet**`);
+  descLines.push(`**💰 Estimated Value:** ${silverStr}`); 
+  descLines.push(``);
+  descLines.push(`You have **24 hours** to deposit or get charged.`);
+  descLines.push(`📌 Open a thread and explain why this loot is missing.`);
+  descLines.push(``);
+  descLines.push(`🔗 [View Killboard](${killboardUrl})`);
+
+  const embed = {
+    color: 0xf59e0b,
+    author: { name:'⚠️ PENDING DEPOSIT — SQUIRTLE SQUAD' },
+    title:  playerName,
+    url:    killboardUrl,
+    description: descLines.join('\n'),
+    fields:[
+      { name:'Guild', value:guild||'—', inline:true },
+      { name:`Missing Items (${groupedList.length})`, value:lines.slice(0,1020)||'—', inline:false },
+    ],
+    footer:    { text:'Log Viewer · Made by Chakz, 2026' },
+    timestamp: new Date().toISOString(),
+  };
+
+  if (avatarBlob) {
+    embed.thumbnail = { url: 'attachment://avatar.png' };
+  } else {
+    embed.thumbnail = { url: albionImgUrl(pendingItems[0].item_id) }; 
+  }
+
+  if (imgBlob) {
+    embed.image = { url: 'attachment://items.png' };
+  }
+
+  if (imgBlob || avatarBlob) {
+    const form  = new FormData();
+    form.append('payload_json', JSON.stringify({ content:mention, username:'Log Viewer', embeds:[embed] }));
+    
+    let fileIndex = 0;
+    if (imgBlob) {
+      form.append(`files[${fileIndex}]`, imgBlob, 'items.png');
+      fileIndex++;
     }
-
-    // Aggregate by player
-    const stats = {};
-    const lastBattle = {};
-    logs.forEach(l => {
-      if(!stats[l.albion_name]) stats[l.albion_name] = {name:l.albion_name,battles:0,kills:0,deaths:0,totalIp:0,ipCount:0};
-      stats[l.albion_name].battles++;
-      stats[l.albion_name].kills += l.kills||0;
-      stats[l.albion_name].deaths += l.deaths||0;
-      if(l.avg_ip) { stats[l.albion_name].totalIp += l.avg_ip; stats[l.albion_name].ipCount++; }
-      const bat = new Date(l.battle_at);
-      if(!lastBattle[l.albion_name] || bat > lastBattle[l.albion_name]) lastBattle[l.albion_name] = bat;
-    });
-
-    // Also load active players to show 0-attendance members
-    const players = await sb('players','GET',null,'?select=ingame_name&is_active=eq.true');
-    players.forEach(p => {
-      if(!stats[p.ingame_name]) stats[p.ingame_name] = {name:p.ingame_name,battles:0,kills:0,deaths:0,totalIp:0,ipCount:0};
-    });
-
-    const sorted = Object.values(stats).sort((a,b)=>b.battles-a.battles);
-    const below = sorted.filter(p=>p.battles<minBattles).length;
-    const perfect = sorted.filter(p=>p.battles>=minBattles*2).length;
-    const avg = sorted.length ? (sorted.reduce((a,p)=>a+p.battles,0)/sorted.length).toFixed(1) : 0;
-
-    document.getElementById('att-avg').textContent = avg;
-    document.getElementById('att-below').textContent = below;
-    document.getElementById('att-perfect').textContent = perfect;
-    document.getElementById('att-alert').innerHTML =
-      `<strong>${below} players</strong> below minimum of <strong>${minBattles} ZvZ battles / ${days} days</strong>.`;
-
-    const nb = document.getElementById('nb-attendance');
-    if(below>0){nb.textContent=below;nb.style.display='';} else nb.style.display='none';
-
-    tbody.innerHTML = sorted.map((p,i) => {
-      const avgIp = p.ipCount > 0 ? Math.round(p.totalIp/p.ipCount) : 0;
-      const pct = Math.min(100, (p.battles/(minBattles*2))*100);
-      const color = p.battles < minBattles ? 'var(--red)' : p.battles < minBattles*1.5 ? 'var(--yellow)' : 'var(--green)';
-      const status = p.battles < minBattles
-        ? '<span class="badge brr">✗ Below</span>'
-        : '<span class="badge bgn">✓ Active</span>';
-      const pingBtn = p.battles < minBattles
-        ? `<button class="btn bp bsm" onclick="pingAttendancePlayer('${p.name}',${p.battles})">📣 Ping</button>`
-        : '';
-      const last = lastBattle[p.name] ? formatRelative(lastBattle[p.name]) : 'Never';
-      return `<tr ${p.battles<minBattles?'style="background:rgba(239,68,68,.03)"':''}>
-        <td class="tm" style="color:var(--text3)">${String(i+1).padStart(2,'0')}</td>
-        <td><div class="pc"><div class="av">${p.name.slice(0,2).toUpperCase()}</div><div><div class="pn">${p.name}</div></div></div></td>
-        <td><div class="ab"><div class="bt"><div class="bf" style="width:${pct}%;background:${color}"></div></div><span class="bn">${p.battles}</span></div></td>
-        <td class="tm">${p.kills}</td>
-        <td class="tm">${p.deaths}</td>
-        <td class="tm" style="color:var(--text3)">${avgIp > 0 ? avgIp : '--'}</td>
-        <td class="tm" style="color:var(--text3)">${last}</td>
-        <td>${status}</td>
-        <td>${pingBtn}</td>
-      </tr>`;
-    }).join('');
-  } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--red);padding:24px">Error: ${e.message}</td></tr>`;
+    if (avatarBlob) {
+      form.append(`files[${fileIndex}]`, avatarBlob, 'avatar.png');
+    }
+    return { useForm:true, form };
+  } else {
+    return { useForm:false, payload:{ content:mention, username:'Log Viewer', embeds:[embed] } };
   }
 }
 
-async function pingAttendancePlayer(player, battles) {
-  const webhook = SETTINGS.webhook_attendance;
-  if(!webhook) { toast('Set attendance webhook in Settings first', false); return; }
-  const template = SETTINGS.template_attendance || 'Hey @{player_name}, you have only {attendance} attendances in the last 7 days.';
-  const msg = template.replace(/\{mention}/g,'@'+player).replace(/\{player_name}/g,player).replace(/\{attendance}/g,battles);
-  try {
-    await fetch(webhook, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:msg,allowed_mentions:{parse:['roles','users','everyone']}})});
-    toast(`Ping sent to ${player}!`);
-  } catch(e) { toast('Failed to send ping', false); }
-}
-
-// ── OVERVIEW ──────────────────────────────────────
-async function loadOverview() {
-  try {
-    const actions = [];
-
-    // ── TERRITORIES ──
-    const terrs = await sb('territories','GET',null,'?select=*');
-    const threshold = parseInt(SETTINGS.food_threshold||'3');
-    let foodCrit = 0;
-    terrs.forEach(t => {
-      const upd = new Date(t.food_updated_at || t.created_at);
-      const days = Math.floor((Date.now()-upd.getTime())/86400000);
-      const left = Math.max(0,(t.food_days||0)-days);
-      if(left<=threshold) { foodCrit++; actions.push({name:'🗺️ '+t.name+' — only '+left+'d of food',val:left+'d',color:'ldo',badge:'boo'}); }
+async function postOne(msgData){
+  let resp;
+  if(msgData.useForm){
+    resp = await fetch(WEBHOOK_URL, { method:'POST', body: msgData.form });
+  } else {
+    resp = await fetch(WEBHOOK_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(msgData.payload)
     });
-    document.getElementById('ov-territories').textContent = terrs.length;
-    document.getElementById('ov-food-crit').textContent = foodCrit;
-
-    // ── SIPHON NEGATIVES (paginated) ──
-    let siphonRows = [], siphonOffset = 0;
-    while(true) {
-      const page = await sb('siphon_logs','GET',null,'?select=ingame_name,amount&limit=1000&offset='+siphonOffset);
-      siphonRows = siphonRows.concat(page);
-      if(page.length < 1000) break;
-      siphonOffset += 1000;
-    }
-    // Filter exempts
-    const exemptRows = await sb('siphon_exempt','GET',null,'?select=ingame_name');
-    const exemptSet = new Set(exemptRows.map(r=>r.ingame_name));
-    const siphonBal = {};
-    siphonRows.forEach(r => { siphonBal[r.ingame_name] = (siphonBal[r.ingame_name]||0)+r.amount; });
-    const neg = Object.entries(siphonBal).filter(([p,b])=>b<0 && !exemptSet.has(p));
-    document.getElementById('ov-siphon-neg').textContent = neg.length;
-    neg.slice(0,3).forEach(([p,b]) => actions.push({name:'💧 '+p+' — Siphon balance: '+b,color:'ldr',badge:'brr',val:b}));
-    if(neg.length > 3) actions.push({name:'💧 ...and '+(neg.length-3)+' more with negative siphon',color:'ldr'});
-
-    // ── GUILD BALANCE (from new chest system) ──
-    const chests = await sb('guild_chests','GET',null,'?select=island,chest,value,recorded_at&order=recorded_at.desc&limit=200');
-    const seen = new Set();
-    let totalAssets = 0;
-    chests.forEach(r => {
-      const k = r.island+'|'+r.chest;
-      if(!seen.has(k)) { seen.add(k); totalAssets += r.value; }
-    });
-    // Add liquid settings
-    const liquidKeys = ['fin_ins','fin_silver_guild_bank','fin_renter_guild_bank'];
-    for(const k of liquidKeys) {
-      const val = SETTINGS[k] ? parseInt(SETTINGS[k]) : 0;
-      totalAssets += val;
-    }
-    const bankDebt = SETTINGS['fin_bank'] ? parseInt(SETTINGS['fin_bank']) : 0;
-    const netWorth = totalAssets - bankDebt;
-    document.getElementById('ov-balance').textContent = netWorth > 0 ? fmtMil(netWorth) : '--';
-
-    // ── RENTERS ──
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    const mondayDiff = now.getDate() - dayOfWeek + (dayOfWeek===0?-6:1);
-    const monday = new Date(now); monday.setDate(mondayDiff); monday.setHours(0,0,0,0);
-    const dayMap = {Sunday:0,Monday:1,Tuesday:2,Wednesday:3,Thursday:4,Friday:5,Saturday:6};
-    const rents = await sb('renters','GET',null,'?select=id,ingame_name,due_day,renter_payments(confirmed_at,week_reference)&is_active=eq.true');
-    let rDue = 0;
-    rents.forEach(r => {
-      const dueDayNum = dayMap[r.due_day]??1;
-      const dueDayOffset = dueDayNum===0?6:dueDayNum-1;
-      const dueDate = new Date(monday); dueDate.setDate(monday.getDate()+dueDayOffset);
-      const weekRef = dueDate.toISOString().split('T')[0];
-      const paid = (r.renter_payments||[]).some(p=>p.week_reference===weekRef);
-      const todayNum = now.getDay();
-      const isOverdue = !paid && (dueDayNum < todayNum || (dueDayNum===0 && todayNum!==0));
-      const isDueToday = !paid && dueDayNum===todayNum;
-      if(isOverdue||isDueToday) {
-        rDue++;
-        actions.push({name:'🏠 '+r.ingame_name+' — '+(isOverdue?'payment overdue':'due today'),color:'ldy',badge:'byy',val:isOverdue?'LATE':'TODAY'});
-      }
-    });
-    document.getElementById('ov-renters-due').textContent = rDue;
-    document.getElementById('ov-players').textContent = rents.length;
-
-    // ── ACTION REQUIRED ──
-    const actEl = document.getElementById('ov-actions');
-    if(!actions.length) {
-      actEl.innerHTML='<li class="li"><span class="ld ldg"></span><div class="lb"><div class="lt">All good! No actions required 🎉</div></div></li>';
-    } else {
-      actEl.innerHTML = actions.slice(0,8).map(a=>`<li class="li"><span class="ld ${a.color}"></span><div class="lb"><div class="lt">${a.name}</div></div>${a.badge?`<span class="badge ${a.badge==='brr'?'brr':a.badge==='boo'?'boo':'byy'}">${a.val||'!'}</span>`:''}</li>`).join('');
-    }
-
-    // ── RECENT ACTIVITY ──
-    const activ = document.getElementById('ov-activity');
-    const terrHist = await sb('territories','GET',null,'?select=name,food_days,food_updated_at&order=food_updated_at.desc&limit=3');
-    const rentPay = await sb('renter_payments','GET',null,'?select=renter_id,amount,confirmed_at,renters(ingame_name)&order=confirmed_at.desc&limit=3');
-    const siphonRecent = await sb('siphon_logs','GET',null,'?select=ingame_name,amount,logged_at&order=logged_at.desc&limit=3');
-    const combined = [
-      ...terrHist.filter(r=>r.food_updated_at).map(r=>({txt:'🗺️ '+r.name+' fed — '+r.food_days+'d food',t:new Date(r.food_updated_at),color:'ldg'})),
-      ...rentPay.map(r=>({txt:'🏠 '+(r.renters?.ingame_name||'Renter')+' paid '+fmtSilver(r.amount||0),t:new Date(r.confirmed_at),color:'ldg'})),
-      ...siphonRecent.map(r=>({txt:'💧 '+r.ingame_name+(r.amount>0?' deposited ':' withdrew ')+Math.abs(r.amount),t:new Date(r.logged_at),color:r.amount>0?'ldg':'ldr'})),
-    ].sort((a,b)=>b.t-a.t).slice(0,5);
-
-    if(!combined.length) {
-      activ.innerHTML='<li class="li"><span class="ld" style="background:var(--text3)"></span><div class="lb"><div class="lt" style="color:var(--text3)">No recent activity</div></div></li>';
-    } else {
-      activ.innerHTML = combined.map(a=>`<li class="li"><span class="ld ${a.color}"></span><div class="lb"><div class="lt">${a.txt}</div><div class="lm">${formatRelative(a.t)}</div></div></li>`).join('');
-    }
-
-  } catch(e) { console.error('Overview error:', e); }
+  }
+  if(!resp.ok){
+    const txt = await resp.text();
+    console.error('Discord error:', txt);
+    throw new Error(`Discord ${resp.status}: ${txt.slice(0,120)}`);
+  }
 }
 
-// ── UTILS ─────────────────────────────────────────
-function fmtSilver(n) {
-  if(n>=1000000) return (n/1000000).toFixed(1)+'M';
-  if(n>=1000) return (n/1000).toFixed(1)+'k';
-  return n.toLocaleString();
+async function sendToDiscord(playerName, pendingItems, guild, btnEl){
+  if(!pendingItems.length){ setStatus('No pending items for '+playerName, false); return; }
+  if(btnEl){ btnEl.classList.add('sending'); btnEl.disabled=true; }
+  try{
+    const dedupedItems = dedupItems(pendingItems);
+    const imgBlob = await fetchGridImage(dedupedItems);
+    const avatarBlob = await fetchAvatarImage(playerName);
+    // buildPayload recebe apenas os itens pending → silver calculado corretamente
+    const msgData = buildPayload(playerName, dedupedItems, guild, imgBlob, avatarBlob);
+    await postOne(msgData);
+    setStatus(`✓ Sent for ${playerName}${imgBlob?' 🖼️':' (text only)'}`, true);
+    if(btnEl){ btnEl.classList.remove('sending'); btnEl.classList.add('sent'); btnEl.innerHTML='✓ Sent'; btnEl.disabled=false; }
+  } catch(e){
+    console.error(e);
+    setStatus('Failed: '+e.message.slice(0,80), false);
+    if(btnEl){ btnEl.classList.remove('sending'); btnEl.classList.add('failed'); btnEl.innerHTML='✗ Error'; btnEl.disabled=false; }
+  }
 }
 
-function formatRelative(date) {
-  const diff = Date.now() - date.getTime();
-  const mins = Math.floor(diff/60000);
-  const hours = Math.floor(mins/60);
-  const days = Math.floor(hours/24);
-  if(mins<2) return 'just now';
-  if(mins<60) return mins+'m ago';
-  if(hours<24) return hours+'h ago';
-  if(days===1) return 'yesterday';
-  if(days<7) return days+'d ago';
-  return date.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-}
+window.sendPlayerPing = async function(btnEl, playerName){
+  const group = groupByPlayer(filtered).find(g=>g.name===playerName);
+  if(!group) return;
+  // Filtra apenas pending antes de mandar → silver correto no Discord
+  await sendToDiscord(playerName, group.items.filter(r=>r.status==='pending'), group.guild, btnEl);
+};
 
-// ── INIT ──────────────────────────────────────────
-async function loadAll() {
-  await loadSettings();
-  await loadOverview();
-}
+btnSendAll.addEventListener('click', async()=>{
+  const groups = groupByPlayer(filtered).filter(g=>g.c.pending>0);
+  if(!groups.length){ setStatus('No pending players.', false); return; }
+  btnSendAll.disabled=true;
+  const origHTML = btnSendAll.innerHTML;
+  btnSendAll.innerHTML='Sending…';
+  let ok=0, fail=0;
+  for(const g of groups){
+    const pending = g.items.filter(r=>r.status==='pending');
+    if(!pending.length) continue;
+    try{
+      const dedupedPending = dedupItems(pending);
+      const imgBlob = await fetchGridImage(dedupedPending);
+      const avatarBlob = await fetchAvatarImage(g.name); 
+      // buildPayload recebe apenas pending → silver correto
+      const msgData = buildPayload(g.name, pending, g.guild, imgBlob, avatarBlob);
+      await postOne(msgData);
+      ok++;
+    } catch(e){ fail++; console.error(e); }
+    await new Promise(r=>setTimeout(r,1400));
+  }
+  btnSendAll.disabled=false;
+  btnSendAll.innerHTML=origHTML;
+  setStatus(`Done: ${ok} sent${fail?`, ${fail} failed`:''}`, fail===0);
+});
 
-loadAll();
 </script>
 </body>
 </html>
