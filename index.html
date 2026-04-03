@@ -752,23 +752,36 @@ document.getElementById('btn-go').addEventListener('click', async () => {
     return; 
   }
 
-  // Normalizar item_name pelo item_id: logs em idiomas diferentes têm o mesmo item_id
-  // mas item_names diferentes. Preferimos o nome em inglês (só ASCII).
+  // Normalizar item_name pelo item_id para suportar logs em qualquer idioma.
+  // Detecta arquivos em inglês pelo padrão "{Tier}'s ItemName" (ex: "Master's Hood").
+  // Constrói mapa item_id→item_name_EN e normaliza todos os rows.
+  const EN_TIERS = ["Journeyman's","Adept's","Expert's","Master's","Grandmaster's","Elder's","Beginner's","Novice's","Apprentice's"];
+  function isEnFile(fileRows) {
+    const sample = fileRows.slice(0, 30);
+    const withApostrophe = sample.filter(r => r.item_name && r.item_name.includes("'"));
+    if(!withApostrophe.length) {
+      // Sem apostrofes: verifica se há gear (deveria ter apostrofe se fosse EN)
+      const hasGear = sample.some(r => r.item_id && /^T\d_(ARMOR|HEAD|SHOES|MAIN|OFF|2H|BAG)/.test(r.item_id));
+      return !hasGear;
+    }
+    const enCount = withApostrophe.filter(r => EN_TIERS.some(t => r.item_name.startsWith(t))).length;
+    return (enCount / withApostrophe.length) >= 0.5;
+  }
+
   const idToNameEN = {};
-  lootRows.forEach(r => {
-    if(!r.item_id) return;
-    const baseId = r.item_id.replace(/@\d+$/, '');
-    // Prefere nome em inglês (só caracteres ASCII)
-    if(!idToNameEN[baseId] || !/^[\x00-\x7F]*$/.test(idToNameEN[baseId])) {
-      if(/^[\x00-\x7F]*$/.test(r.item_name)) {
-        idToNameEN[baseId] = r.item_name;
-      }
+  lootFiles.forEach(f => {
+    const fileRows = parseLoot(f.text);
+    if(isEnFile(fileRows)) {
+      fileRows.forEach(r => {
+        if(!r.item_id) return;
+        const baseId = r.item_id.replace(/@\d+$/, '');
+        if(baseId && r.item_name && !idToNameEN[baseId]) idToNameEN[baseId] = r.item_name;
+      });
     }
   });
   lootRows = lootRows.map(r => {
     const baseId = (r.item_id||'').replace(/@\d+$/, '');
-    const normalizedName = idToNameEN[baseId] || r.item_name;
-    return {...r, item_name: normalizedName};
+    return {...r, item_name: idToNameEN[baseId] || r.item_name};
   });
 
   let chestRows=[];
