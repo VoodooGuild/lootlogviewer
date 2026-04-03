@@ -531,8 +531,6 @@ function parseChest(raw){
     const itemName = p[2];
     const quantity = parseInt(p[5])||1;
     if(!itemName) return acc;
-    // Chave SEM enchantment: o enc do chest e do loot frequentemente divergem,
-    // entao cruzamos apenas pelo nome do item em lowercase.
     const _nameKey = itemName.toLowerCase().trim();
     acc.push({ player, item_name: itemName, quantity, _nameKey });
     return acc;
@@ -566,20 +564,16 @@ function detectSessionTime(rows) {
 }
 
 function enrichRows(lootRows, ourGuild, chestRows){
-  // Detecta se o chest log tem dados de jogador (coluna Player)
   const hasPlayerData = chestRows.length > 0 && chestRows[0].player !== undefined && chestRows[0].player !== '';
 
-  if (hasPlayerData) {
-    // Pool por jogador: playerPool[player][item_name_lower] = qtd depositada
-    // Usa item_name sem enchantment porque o enc do chest e do loot frequentemente divergem
+  if(hasPlayerData){
+    // Pool separado por jogador usando item_name sem enchantment
     const playerPool = {};
     chestRows.forEach(c => {
-      const p = c.player; // ja esta em lowercase
-      if (!playerPool[p]) playerPool[p] = {};
-      const key = c._nameKey;
-      playerPool[p][key] = (playerPool[p][key] || 0) + c.quantity;
+      const p = c.player;
+      if(!playerPool[p]) playerPool[p] = {};
+      playerPool[p][c._nameKey] = (playerPool[p][c._nameKey] || 0) + c.quantity;
     });
-
     return lootRows.map(r => {
       if(!ourGuild) return {...r, status:'neutral'};
       const byUs   = r.looted_by_guild === ourGuild;
@@ -587,24 +581,20 @@ function enrichRows(lootRows, ourGuild, chestRows){
       if(fromUs && !byUs) return {...r, status:'lost'};
       if(!byUs)           return {...r, status:'neutral'};
       if(!chestRows.length) return {...r, status:'looted'};
-
-      const playerKey = (r.looted_by_name || '').toLowerCase().trim();
-      // Chave por nome do item sem enchantment (mais robusto)
-      const itemKey   = (r.item_name || '').toLowerCase().trim();
-      const playerDeposits = playerPool[playerKey];
-
-      if(playerDeposits && playerDeposits[itemKey] >= r.quantity){
-        playerDeposits[itemKey] -= r.quantity;
+      const playerKey = (r.looted_by_name||'').toLowerCase().trim();
+      const itemKey   = (r.item_name||'').toLowerCase().trim();
+      const deps = playerPool[playerKey];
+      if(deps && deps[itemKey] >= r.quantity){
+        deps[itemKey] -= r.quantity;
         return {...r, status:'deposited'};
       }
       return {...r, status:'pending'};
     });
-
   } else {
-    // Fallback: pool global por nome (sem coluna Player no chest log)
+    // Fallback sem coluna Player: pool global por nome
     const pool = {};
     chestRows.forEach(c => {
-      const key = c._nameKey || (c.item_name||'').toLowerCase().trim();
+      const key = (c.item_name||'').toLowerCase().trim();
       pool[key] = (pool[key] || 0) + c.quantity;
     });
     return lootRows.map(r => {
@@ -614,7 +604,7 @@ function enrichRows(lootRows, ourGuild, chestRows){
       if(fromUs && !byUs) return {...r, status:'lost'};
       if(!byUs)           return {...r, status:'neutral'};
       if(!chestRows.length) return {...r, status:'looted'};
-      const key = (r.item_name || '').toLowerCase().trim();
+      const key = (r.item_name||'').toLowerCase().trim();
       if(pool[key] >= r.quantity){
         pool[key] -= r.quantity;
         return {...r, status:'deposited'};
