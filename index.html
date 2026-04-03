@@ -565,7 +565,6 @@ function detectSessionTime(rows) {
 
 function enrichRows(lootRows, ourGuild, chestRows){
   const hasPlayerData = chestRows.length > 0 && !!chestRows[0].player;
-
   if(hasPlayerData){
     const playerPool = {};
     chestRows.forEach(c => {
@@ -735,9 +734,6 @@ document.getElementById('btn-go').addEventListener('click', async () => {
     return (a.item_id || '').localeCompare(b.item_id || ''); 
   });
 
-  // Dedup por chave exata: mesmo player + item_id + vítima + qty = mesmo evento físico.
-  // Logs de fontes diferentes registram o mesmo evento com timestamps levemente diferentes,
-  // mas a combinação (quem lootou, o quê, de quem, quanto) é sempre idêntica.
   const seenKeys = new Set();
   let lootRows = [];
 
