@@ -566,14 +566,26 @@ function detectSessionTime(rows) {
 function enrichRows(lootRows, ourGuild, chestRows){
   const hasPlayerData = chestRows.length > 0 && chestRows[0].player !== undefined && chestRows[0].player !== '';
 
+  // DEBUG — abre o console do browser (F12) para ver
+  console.log('[enrichRows] chestRows.length:', chestRows.length);
+  console.log('[enrichRows] hasPlayerData:', hasPlayerData);
+  if(chestRows.length > 0) console.log('[enrichRows] chestRows[0]:', JSON.stringify(chestRows[0]));
+  console.log('[enrichRows] ourGuild:', ourGuild);
+  console.log('[enrichRows] lootRows.length:', lootRows.length);
+
   if(hasPlayerData){
-    // Pool separado por jogador usando item_name sem enchantment
     const playerPool = {};
     chestRows.forEach(c => {
       const p = c.player;
       if(!playerPool[p]) playerPool[p] = {};
       playerPool[p][c._nameKey] = (playerPool[p][c._nameKey] || 0) + c.quantity;
     });
+
+    // DEBUG
+    const arb = playerPool['arbiiii'];
+    if(arb) console.log('[enrichRows] pool arbiiii:', JSON.stringify(arb));
+    else console.log('[enrichRows] arbiiii NAO encontrado no playerPool. Keys:', Object.keys(playerPool).slice(0,5));
+
     return lootRows.map(r => {
       if(!ourGuild) return {...r, status:'neutral'};
       const byUs   = r.looted_by_guild === ourGuild;
@@ -591,7 +603,6 @@ function enrichRows(lootRows, ourGuild, chestRows){
       return {...r, status:'pending'};
     });
   } else {
-    // Fallback sem coluna Player: pool global por nome
     const pool = {};
     chestRows.forEach(c => {
       const key = (c.item_name||'').toLowerCase().trim();
