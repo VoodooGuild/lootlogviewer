@@ -526,9 +526,20 @@ function parseChest(raw){
   const unq=s=>s.replace(/^"|"$/g,'').trim();
   return raw.trim().split(/\r?\n/).reduce((acc,line)=>{
     const p=line.split('\t').map(unq);
-    if(!p[0]||p[0].toLowerCase()==='date'||p.length<3||!p[2])return acc;
+    if(!p[0]||p[0].toLowerCase()==='date'||p.length<6||!p[2])return acc;
+    const player = (p[1]||'').toLowerCase().trim();
+    const itemName = p[2];
     const enc=parseInt(p[3])||0;
-    acc.push({ item_name: p[2], enc, quantity: parseInt(p[5])||1, _key: mkey(p[2],enc) });
+    const quantity = parseInt(p[5])||1;
+    if(!itemName) return acc;
+    acc.push({
+      player,
+      item_name: itemName,
+      enc,
+      quantity,
+      _key: mkey(itemName, enc),
+      _pkey: player + '@@' + mkey(itemName, enc)
+    });
     return acc;
   },[]);
 }
@@ -560,25 +571,58 @@ function detectSessionTime(rows) {
 }
 
 function enrichRows(lootRows, ourGuild, chestRows){
-  const pool = {};
-  chestRows.forEach(c => {
-    const key = c._key;
-    pool[key] = (pool[key] || 0) + c.quantity;
-  });
-  return lootRows.map(r => {
-    if(!ourGuild) return {...r, status:'neutral'};
-    const byUs = r.looted_by_guild === ourGuild;
-    const fromUs = r.looted_from_guild === ourGuild;
-    if(fromUs && !byUs) return {...r, status:'lost'};
-    if(!byUs)           return {...r, status:'neutral'};
-    if(!chestRows.length) return {...r, status:'looted'};
-    const key = mkey(r.item_name, encId(r.item_id));
-    if(pool[key] >= r.quantity){
-      pool[key] -= r.quantity;
-      return {...r, status:'deposited'};
-    }
-    return {...r, status:'pending'};
-  });
+  const hasPlayerData = chestRows.length > 0 && chestRows[0].player !== undefined && chestRows[0].player !== '';
+
+  if (hasPlayerData) {
+    // Pool separado por jogador: playerPool[player][itemKey] = qtd depositada
+    const playerPool = {};
+    chestRows.forEach(c => {
+      const p = c.player;
+      if (!playerPool[p]) playerPool[p] = {};
+      const key = c._key;
+      playerPool[p][key] = (playerPool[p][key] || 0) + c.quantity;
+    });
+
+    return lootRows.map(r => {
+      if(!ourGuild) return {...r, status:'neutral'};
+      const byUs   = r.looted_by_guild === ourGuild;
+      const fromUs = r.looted_from_guild === ourGuild;
+      if(fromUs && !byUs) return {...r, status:'lost'};
+      if(!byUs)           return {...r, status:'neutral'};
+      if(!chestRows.length) return {...r, status:'looted'};
+
+      const playerKey = (r.looted_by_name || '').toLowerCase().trim();
+      const itemKey   = mkey(r.item_name, encId(r.item_id));
+      const playerDeposits = playerPool[playerKey];
+
+      if(playerDeposits && playerDeposits[itemKey] >= r.quantity){
+        playerDeposits[itemKey] -= r.quantity;
+        return {...r, status:'deposited'};
+      }
+      return {...r, status:'pending'};
+    });
+  } else {
+    // Fallback: pool global (sem coluna Player no chest log)
+    const pool = {};
+    chestRows.forEach(c => {
+      const key = c._key;
+      pool[key] = (pool[key] || 0) + c.quantity;
+    });
+    return lootRows.map(r => {
+      if(!ourGuild) return {...r, status:'neutral'};
+      const byUs   = r.looted_by_guild === ourGuild;
+      const fromUs = r.looted_from_guild === ourGuild;
+      if(fromUs && !byUs) return {...r, status:'lost'};
+      if(!byUs)           return {...r, status:'neutral'};
+      if(!chestRows.length) return {...r, status:'looted'};
+      const key = mkey(r.item_name, encId(r.item_id));
+      if(pool[key] >= r.quantity){
+        pool[key] -= r.quantity;
+        return {...r, status:'deposited'};
+      }
+      return {...r, status:'pending'};
+    });
+  }
 }
 
 async function fetchPrices(rows) {
