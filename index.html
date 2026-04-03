@@ -752,6 +752,25 @@ document.getElementById('btn-go').addEventListener('click', async () => {
     return; 
   }
 
+  // Normalizar item_name pelo item_id: logs em idiomas diferentes têm o mesmo item_id
+  // mas item_names diferentes. Preferimos o nome em inglês (só ASCII).
+  const idToNameEN = {};
+  lootRows.forEach(r => {
+    if(!r.item_id) return;
+    const baseId = r.item_id.replace(/@\d+$/, '');
+    // Prefere nome em inglês (só caracteres ASCII)
+    if(!idToNameEN[baseId] || !/^[\x00-\x7F]*$/.test(idToNameEN[baseId])) {
+      if(/^[\x00-\x7F]*$/.test(r.item_name)) {
+        idToNameEN[baseId] = r.item_name;
+      }
+    }
+  });
+  lootRows = lootRows.map(r => {
+    const baseId = (r.item_id||'').replace(/@\d+$/, '');
+    const normalizedName = idToNameEN[baseId] || r.item_name;
+    return {...r, item_name: normalizedName};
+  });
+
   let chestRows=[];
   chestFiles.forEach(f=>{ chestRows=chestRows.concat(parseChest(f.text)); });
 
