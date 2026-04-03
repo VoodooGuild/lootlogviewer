@@ -735,22 +735,16 @@ document.getElementById('btn-go').addEventListener('click', async () => {
     return (a.item_id || '').localeCompare(b.item_id || ''); 
   });
 
-  const seen = [];
+  // Dedup por chave exata: mesmo player + item_id + vítima + qty = mesmo evento físico.
+  // Logs de fontes diferentes registram o mesmo evento com timestamps levemente diferentes,
+  // mas a combinação (quem lootou, o quê, de quem, quanto) é sempre idêntica.
+  const seenKeys = new Set();
   let lootRows = [];
 
   tempRows.forEach(r => {
-    const rTime = new Date(r.timestamp).getTime() || 0;
-    // Janela de 5s: cobre a diferença real entre logs de fontes diferentes (max ~2.2s)
-    // sem risco de remover eventos legítimos de jogadores distintos
-    const isDuplicate = seen.some(s =>
-      s.looted_by === r.looted_by_name &&
-      s.item_id   === r.item_id &&
-      s.looted_from === r.looted_from_name &&
-      s.qty === r.quantity &&
-      Math.abs(s.time - rTime) < 5000
-    );
-    if(!isDuplicate) {
-      seen.push({ looted_by: r.looted_by_name, item_id: r.item_id, looted_from: r.looted_from_name, qty: r.quantity, time: rTime });
+    const key = (r.looted_by_name||'') + '||' + (r.item_id||'') + '||' + (r.looted_from_name||'') + '||' + (r.quantity||1);
+    if(!seenKeys.has(key)){
+      seenKeys.add(key);
       lootRows.push(r);
     }
   });
