@@ -524,17 +524,17 @@ function parseLoot(raw){
 
 function parseChest(raw){
   const unq=s=>s.replace(/^"|"$/g,'').trim();
-  return raw.trim().split(/\r?\n/).reduce((acc,line)=>{
+  const rows = [];
+  for(const line of raw.trim().split(/\r?\n/)){
     const p=line.split('\t').map(unq);
-    if(!p[0]||p[0].toLowerCase()==='date'||p.length<6||!p[2])return acc;
+    if(!p[0]||p[0].toLowerCase()==='date'||p.length<6||!p[2])continue;
     const player   = (p[1]||'').toLowerCase().trim();
     const itemName = p[2];
     const quantity = parseInt(p[5])||1;
-    if(!itemName) return acc;
-    const _nameKey = itemName.toLowerCase().trim();
-    acc.push({ player, item_name: itemName, quantity, _nameKey });
-    return acc;
-  },[]);
+    if(!itemName) continue;
+    rows.push({ player, item_name: itemName, quantity, _nameKey: itemName.toLowerCase().trim() });
+  }
+  return rows;
 }
 
 function detectGuild(rows){
@@ -564,28 +564,14 @@ function detectSessionTime(rows) {
 }
 
 function enrichRows(lootRows, ourGuild, chestRows){
-  const hasPlayerData = chestRows.length > 0 && chestRows[0].player !== undefined && chestRows[0].player !== '';
-
-  // DEBUG — abre o console do browser (F12) para ver
-  console.log('[enrichRows] chestRows.length:', chestRows.length);
-  console.log('[enrichRows] hasPlayerData:', hasPlayerData);
-  if(chestRows.length > 0) console.log('[enrichRows] chestRows[0]:', JSON.stringify(chestRows[0]));
-  console.log('[enrichRows] ourGuild:', ourGuild);
-  console.log('[enrichRows] lootRows.length:', lootRows.length);
+  const hasPlayerData = chestRows.length > 0 && !!chestRows[0].player;
 
   if(hasPlayerData){
     const playerPool = {};
     chestRows.forEach(c => {
-      const p = c.player;
-      if(!playerPool[p]) playerPool[p] = {};
-      playerPool[p][c._nameKey] = (playerPool[p][c._nameKey] || 0) + c.quantity;
+      if(!playerPool[c.player]) playerPool[c.player] = {};
+      playerPool[c.player][c._nameKey] = (playerPool[c.player][c._nameKey]||0) + c.quantity;
     });
-
-    // DEBUG
-    const arb = playerPool['arbiiii'];
-    if(arb) console.log('[enrichRows] pool arbiiii:', JSON.stringify(arb));
-    else console.log('[enrichRows] arbiiii NAO encontrado no playerPool. Keys:', Object.keys(playerPool).slice(0,5));
-
     return lootRows.map(r => {
       if(!ourGuild) return {...r, status:'neutral'};
       const byUs   = r.looted_by_guild === ourGuild;
@@ -606,7 +592,7 @@ function enrichRows(lootRows, ourGuild, chestRows){
     const pool = {};
     chestRows.forEach(c => {
       const key = (c.item_name||'').toLowerCase().trim();
-      pool[key] = (pool[key] || 0) + c.quantity;
+      pool[key] = (pool[key]||0) + c.quantity;
     });
     return lootRows.map(r => {
       if(!ourGuild) return {...r, status:'neutral'};
@@ -751,20 +737,20 @@ document.getElementById('btn-go').addEventListener('click', async () => {
 
   const seen = [];
   let lootRows = [];
-  const baseId = id => (id || ''); 
-  
+
   tempRows.forEach(r => {
     const rTime = new Date(r.timestamp).getTime() || 0;
-    const bId = baseId(r.item_id);
-    const isDuplicate = seen.some(s => 
+    // Janela de 5s: cobre a diferença real entre logs de fontes diferentes (max ~2.2s)
+    // sem risco de remover eventos legítimos de jogadores distintos
+    const isDuplicate = seen.some(s =>
       s.looted_by === r.looted_by_name &&
-      s.item === bId &&
+      s.item_id   === r.item_id &&
       s.looted_from === r.looted_from_name &&
       s.qty === r.quantity &&
-      Math.abs(s.time - rTime) < 60000 
+      Math.abs(s.time - rTime) < 5000
     );
     if(!isDuplicate) {
-      seen.push({ looted_by: r.looted_by_name, item: bId, looted_from: r.looted_from_name, qty: r.quantity, time: rTime });
+      seen.push({ looted_by: r.looted_by_name, item_id: r.item_id, looted_from: r.looted_from_name, qty: r.quantity, time: rTime });
       lootRows.push(r);
     }
   });
