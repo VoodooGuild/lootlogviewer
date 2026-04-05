@@ -610,6 +610,71 @@ function enrichRows(lootRows, ourGuild, chestRows){
   }
 }
 
+
+// ── SUPABASE SAVE ──────────────────────────────────
+const SUPA_URL = 'https://vztmfpgxhsikiiyseocs.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6dG1mcGd4aHNpa2lpeXNlb2NzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3ODE0NTEsImV4cCI6MjA5MDM1NzQ1MX0.uTmI1t3rovVPlBHlxgDwjdD-qO3W9npuobFsEovOqvs';
+
+async function saveLogsToSupabase(rows, sessionId) {
+  // Only save rows looted by our guild (not lost/neutral)
+  const toSave = rows.filter(r => r.status !== 'lost' && r.status !== 'neutral' && r.looted_by_name);
+
+  if (!toSave.length) {
+    console.log('No rows to save to Supabase');
+    return { saved: 0 };
+  }
+
+  // Check if session already exists to avoid duplicates
+  const checkRes = await fetch(
+    `${SUPA_URL}/rest/v1/loot_logs?session_id=eq.${encodeURIComponent(sessionId)}&limit=1`,
+    { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } }
+  );
+  if (checkRes.ok) {
+    const existing = await checkRes.json();
+    if (existing.length > 0) {
+      console.log('Session already saved:', sessionId);
+      return { saved: 0, skipped: 'already exists' };
+    }
+  }
+
+  // Build records
+  const records = toSave.map(r => {
+    const unitPrice = PRICE_MAP[r.item_id] || 0;
+    const evm = unitPrice * (r.quantity || 1);
+    return {
+      session_id: sessionId,
+      logged_at:  r.timestamp || new Date().toISOString(),
+      looted_by:  r.looted_by_name,
+      item_id:    r.item_id,
+      item_name:  r.item_name || '',
+      quantity:   r.quantity || 1,
+      unit_price: unitPrice,
+      evm:        evm,
+    };
+  });
+
+  // Insert in batches of 200
+  let saved = 0;
+  for (let i = 0; i < records.length; i += 200) {
+    const batch = records.slice(i, i + 200);
+    const res = await fetch(`${SUPA_URL}/rest/v1/loot_logs`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPA_KEY,
+        'Authorization': `Bearer ${SUPA_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(batch)
+    });
+    if (res.ok) saved += batch.length;
+    else console.error('Supabase insert error:', await res.text());
+  }
+
+  console.log(`Saved ${saved} loot records to Supabase`);
+  return { saved };
+}
+
 async function fetchPrices(rows) {
   const uniqueIds = [...new Set(rows.map(r => r.item_id))];
   const chunks = [];
@@ -800,6 +865,16 @@ document.getElementById('btn-go').addEventListener('click', async () => {
     stChip.classList.add('show');
   } else {
     stChip.classList.remove('show');
+  }
+
+  // Auto-save to Supabase (Control Center)
+  const sessionId = currentSessionTime || new Date().toISOString().slice(0, 16);
+  try {
+    const result = await saveLogsToSupabase(allRows, sessionId);
+    if (result.saved > 0) console.log(`✓ Saved ${result.saved} records to Control Center`);
+    else if (result.skipped) console.log('Session already in Control Center — skipped');
+  } catch(e) {
+    console.warn('Could not save to Control Center:', e.message);
   }
 
   document.getElementById('page-upload').style.display='none';
