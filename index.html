@@ -429,9 +429,6 @@ const fmtSilver = v => {
   return v.toLocaleString();
 };
 
-// ─── calcSilver ────────────────────────────────────────────────────────────────
-// Calcula o valor estimado de prata de um array de rows.
-// Só soma itens com status === targetStatus (default: 'pending').
 function calcSilver(rows, targetStatus = 'pending') {
   let total = 0;
   rows.forEach(r => {
@@ -441,7 +438,6 @@ function calcSilver(rows, targetStatus = 'pending') {
   });
   return total;
 }
-// ───────────────────────────────────────────────────────────────────────────────
 
 let currentSessionTime = '';
 const PRICE_MAP = {}; 
@@ -610,67 +606,39 @@ function enrichRows(lootRows, ourGuild, chestRows){
   }
 }
 
-
-// ── SUPABASE SAVE ──────────────────────────────────
+// ── SUPABASE ──────────────────────────────────────────────────────────────────
 const SUPA_URL = 'https://vztmfpgxhsikiiyseocs.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6dG1mcGd4aHNpa2lpeXNlb2NzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3ODE0NTEsImV4cCI6MjA5MDM1NzQ1MX0.uTmI1t3rovVPlBHlxgDwjdD-qO3W9npuobFsEovOqvs';
 
 async function saveLogsToSupabase(rows, sessionId) {
-  // Only save rows looted by our guild (not lost/neutral)
   const toSave = rows.filter(r => r.status !== 'lost' && r.status !== 'neutral' && r.looted_by_name);
+  if (!toSave.length) { console.log('No rows to save to Supabase'); return { saved: 0 }; }
 
-  if (!toSave.length) {
-    console.log('No rows to save to Supabase');
-    return { saved: 0 };
-  }
-
-  // Check if session already exists to avoid duplicates
   const checkRes = await fetch(
     `${SUPA_URL}/rest/v1/loot_logs?session_id=eq.${encodeURIComponent(sessionId)}&limit=1`,
     { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } }
   );
   if (checkRes.ok) {
     const existing = await checkRes.json();
-    if (existing.length > 0) {
-      console.log('Session already saved:', sessionId);
-      return { saved: 0, skipped: 'already exists' };
-    }
+    if (existing.length > 0) { console.log('Session already saved:', sessionId); return { saved: 0, skipped: 'already exists' }; }
   }
 
-  // Build records
   const records = toSave.map(r => {
     const unitPrice = PRICE_MAP[r.item_id] || 0;
-    const evm = unitPrice * (r.quantity || 1);
-    return {
-      session_id: sessionId,
-      logged_at:  r.timestamp || new Date().toISOString(),
-      looted_by:  r.looted_by_name,
-      item_id:    r.item_id,
-      item_name:  r.item_name || '',
-      quantity:   r.quantity || 1,
-      unit_price: unitPrice,
-      evm:        evm,
-    };
+    return { session_id: sessionId, logged_at: r.timestamp || new Date().toISOString(), looted_by: r.looted_by_name, item_id: r.item_id, item_name: r.item_name || '', quantity: r.quantity || 1, unit_price: unitPrice, evm: unitPrice * (r.quantity || 1) };
   });
 
-  // Insert in batches of 200
   let saved = 0;
   for (let i = 0; i < records.length; i += 200) {
     const batch = records.slice(i, i + 200);
     const res = await fetch(`${SUPA_URL}/rest/v1/loot_logs`, {
       method: 'POST',
-      headers: {
-        'apikey': SUPA_KEY,
-        'Authorization': `Bearer ${SUPA_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
+      headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
       body: JSON.stringify(batch)
     });
     if (res.ok) saved += batch.length;
     else console.error('Supabase insert error:', await res.text());
   }
-
   console.log(`Saved ${saved} loot records to Supabase`);
   return { saved };
 }
@@ -678,40 +646,30 @@ async function saveLogsToSupabase(rows, sessionId) {
 async function fetchPrices(rows) {
   const uniqueIds = [...new Set(rows.map(r => r.item_id))];
   const chunks = [];
-  for (let i = 0; i < uniqueIds.length; i += 100) {
-    chunks.push(uniqueIds.slice(i, i + 100));
-  }
+  for (let i = 0; i < uniqueIds.length; i += 100) chunks.push(uniqueIds.slice(i, i + 100));
 
   for (const chunk of chunks) {
     try {
       const res = await fetch(`https://europe.albion-online-data.com/api/v2/stats/prices/${chunk.join(',')}?locations=Caerleon,Bridgewatch,Martlock,Thetford,FortSterling,Lymhurst,Brecilien`);
       if (!res.ok) continue;
       const data = await res.json();
-      
       data.forEach(d => {
         if (d.sell_price_min > 0) {
           if (!PRICE_MAP[d.item_id]) PRICE_MAP[d.item_id] = [];
           PRICE_MAP[d.item_id].push(d.sell_price_min);
         }
       });
-    } catch (e) {
-      console.warn('Falha ao puxar preços:', e);
-    }
+    } catch (e) { console.warn('Falha ao puxar preços:', e); }
   }
 
   for (const k in PRICE_MAP) {
     const arr = PRICE_MAP[k];
-    if (arr.length > 0) {
-      PRICE_MAP[k] = Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
-    } else {
-      PRICE_MAP[k] = 0;
-    }
+    PRICE_MAP[k] = arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0;
   }
 }
 
-function getPlayerAvatar(name, format='svg') {
-  const formatParams = format === 'png' ? '&size=128&ext=.png' : '';
-  return `https://api.dicebear.com/8.x/adventurer/${format}?seed=${encodeURIComponent(name)}&backgroundColor=1a1a20${formatParams}`;
+function getPlayerAvatar(name) {
+  return `https://api.dicebear.com/8.x/adventurer/svg?seed=${encodeURIComponent(name)}&backgroundColor=1a1a20`;
 }
 
 async function fetchAvatarImage(playerName){
@@ -720,19 +678,13 @@ async function fetchAvatarImage(playerName){
     const resp = await fetch(url);
     if(!resp.ok) return null;
     return await resp.blob();
-  } catch(e){
-    console.warn('Falha ao baixar avatar:', e);
-    return null;
-  }
+  } catch(e){ console.warn('Falha ao baixar avatar:', e); return null; }
 }
 
 const TIPDATA = {};
 let _chipCounter = 0;
 let allRows=[],filtered=[],ourGuild='';
-
-// FILTRO PENDING ATIVADO POR PADRÃO NO JAVASCRIPT
 let pg=1,perPg=40,sf='pending',sq='',sguild='';
-
 const hideT=new Set(['food','potion','mount','trash','other','untradable']);
 const lootFiles=[], chestFiles=[];
 
@@ -772,14 +724,8 @@ function setupDZ(dzId, fiId, store, listId){
   dz.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' ')fi.click(); });
   ['dragover','dragenter'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('over');}));
   ['dragleave','dragend'].forEach(ev=>dz.addEventListener(ev,()=>dz.classList.remove('over')));
-  dz.addEventListener('drop',e=>{
-    e.preventDefault();dz.classList.remove('over');
-    if(e.dataTransfer.files.length)addFiles([...e.dataTransfer.files],store,listId);
-  });
-  fi.addEventListener('change',e=>{
-    if(e.target.files.length)addFiles([...e.target.files],store,listId);
-    fi.value='';
-  });
+  dz.addEventListener('drop',e=>{ e.preventDefault();dz.classList.remove('over'); if(e.dataTransfer.files.length)addFiles([...e.dataTransfer.files],store,listId); });
+  fi.addEventListener('change',e=>{ if(e.target.files.length)addFiles([...e.target.files],store,listId); fi.value=''; });
 }
 
 setupDZ('dz-loot','fi-loot',lootFiles,'fl-loot');
@@ -796,36 +742,23 @@ document.getElementById('btn-go').addEventListener('click', async () => {
     const tA = new Date(a.timestamp).getTime() || 0;
     const tB = new Date(b.timestamp).getTime() || 0;
     if (tA !== tB) return tA - tB;
-    return (a.item_id || '').localeCompare(b.item_id || ''); 
+    return (a.item_id || '').localeCompare(b.item_id || '');
   });
 
   const seenKeys = new Set();
   let lootRows = [];
-
   tempRows.forEach(r => {
     const key = (r.looted_by_name||'') + '||' + (r.item_id||'') + '||' + (r.looted_from_name||'') + '||' + (r.quantity||1);
-    if(!seenKeys.has(key)){
-      seenKeys.add(key);
-      lootRows.push(r);
-    }
+    if(!seenKeys.has(key)){ seenKeys.add(key); lootRows.push(r); }
   });
 
-  if(!lootRows.length){ 
-    alert('Could not parse any loot rows. Check file formats.'); 
-    btnGo.innerHTML = 'START';
-    btnGo.disabled = false;
-    return; 
-  }
+  if(!lootRows.length){ alert('Could not parse any loot rows. Check file formats.'); btnGo.innerHTML = 'START'; btnGo.disabled = false; return; }
 
-  // Normalizar item_name pelo item_id para suportar logs em qualquer idioma.
-  // Detecta arquivos em inglês pelo padrão "{Tier}'s ItemName" (ex: "Master's Hood").
-  // Constrói mapa item_id→item_name_EN e normaliza todos os rows.
   const EN_TIERS = ["Journeyman's","Adept's","Expert's","Master's","Grandmaster's","Elder's","Beginner's","Novice's","Apprentice's"];
   function isEnFile(fileRows) {
     const sample = fileRows.slice(0, 30);
     const withApostrophe = sample.filter(r => r.item_name && r.item_name.includes("'"));
     if(!withApostrophe.length) {
-      // Sem apostrofes: verifica se há gear (deveria ter apostrofe se fosse EN)
       const hasGear = sample.some(r => r.item_id && /^T\d_(ARMOR|HEAD|SHOES|MAIN|OFF|2H|BAG)/.test(r.item_id));
       return !hasGear;
     }
@@ -867,15 +800,12 @@ document.getElementById('btn-go').addEventListener('click', async () => {
     stChip.classList.remove('show');
   }
 
-  // Auto-save to Supabase (Control Center)
   const sessionId = currentSessionTime || new Date().toISOString().slice(0, 16);
   try {
     const result = await saveLogsToSupabase(allRows, sessionId);
     if (result.saved > 0) console.log(`✓ Saved ${result.saved} records to Control Center`);
     else if (result.skipped) console.log('Session already in Control Center — skipped');
-  } catch(e) {
-    console.warn('Could not save to Control Center:', e.message);
-  }
+  } catch(e) { console.warn('Could not save to Control Center:', e.message); }
 
   document.getElementById('page-upload').style.display='none';
   document.getElementById('main-header').style.display='flex';
@@ -887,7 +817,7 @@ document.getElementById('btn-go').addEventListener('click', async () => {
 
   btnGo.innerHTML = 'START';
   applyFilters();
-  window.scrollTo(0, 0); 
+  window.scrollTo(0, 0);
 });
 
 document.getElementById('btn-reload').addEventListener('click',()=>{
@@ -900,7 +830,7 @@ document.getElementById('btn-reload').addEventListener('click',()=>{
   lootFiles.length=0; chestFiles.length=0;
   ['fl-loot','fl-chest'].forEach(id=>document.getElementById(id).innerHTML='');
   allRows=[]; document.getElementById('btn-go').disabled=true;
-  window.scrollTo(0, 0); 
+  window.scrollTo(0, 0);
 });
 
 function populateGuildFilter(rows){
@@ -912,85 +842,35 @@ function populateGuildFilter(rows){
 }
 
 function renderStats(baseRows) {
-  // baseRows: filtrado por guild + hideT + sq, SEM filtro de status.
-  // O valor estimado muda conforme sf: "all" = tudo, "pending" = só pending.
-
   const c = {looted:0, deposited:0, pending:0, lost:0};
   let totalSilver = 0;
-
   baseRows.forEach(r => {
     if(c[r.status] !== undefined) c[r.status]++;
-    // Se filtro = pending → soma só pending. Se = all → soma tudo.
-    if (sf === 'pending') {
-      if (r.status === 'pending') totalSilver += (PRICE_MAP[r.item_id] || 0) * r.quantity;
-    } else {
-      totalSilver += (PRICE_MAP[r.item_id] || 0) * r.quantity;
-    }
+    if (sf === 'pending') { if (r.status === 'pending') totalSilver += (PRICE_MAP[r.item_id] || 0) * r.quantity; }
+    else { totalSilver += (PRICE_MAP[r.item_id] || 0) * r.quantity; }
   });
-
   const players = new Set(baseRows.map(r=>r.looted_by_name).filter(Boolean)).size;
   const pct = baseRows.length > 0 ? Math.round(c.deposited / baseRows.length * 100) : 0;
-  
   document.getElementById('stats').innerHTML=`
-    <div class="stt">
-      <div class="stt-label">⚔️ Total looted</div>
-      <div class="stt-val">${baseRows.length.toLocaleString()}</div>
-      <div class="stt-sub">${ourGuild||'all guilds'}</div>
-    </div>
-    <div class="stt">
-      <div class="stt-label">🔵 Deposited</div>
-      <div class="stt-val cv-blue">${c.deposited.toLocaleString()}</div>
-      <div class="stt-sub">${pct}% of total</div>
-    </div>
-    <div class="stt">
-      <div class="stt-label">🟡 Pending</div>
-      <div class="stt-val cv-amber">${c.pending.toLocaleString()}</div>
-      <div class="stt-sub">not deposited</div>
-    </div>
-    <div class="stt">
-      <div class="stt-label">💰 ${sf==='pending'?'Pend. Value':'Est. Value'}</div>
-      <div class="stt-val cv-amber">${fmtSilver(totalSilver)}</div>
-      <div class="stt-sub">${sf==='pending'?'only pending':'all looted'}</div>
-    </div>
-    <div class="stt">
-      <div class="stt-label">🔴 Lost</div>
-      <div class="stt-val cv-red">${c.lost.toLocaleString()}</div>
-      <div class="stt-sub">taken from us</div>
-    </div>
-    <div class="stt">
-      <div class="stt-label">👥 Players</div>
-      <div class="stt-val cv-slate">${players.toLocaleString()}</div>
-      <div class="stt-sub">in view</div>
-    </div>`;
+    <div class="stt"><div class="stt-label">⚔️ Total looted</div><div class="stt-val">${baseRows.length.toLocaleString()}</div><div class="stt-sub">${ourGuild||'all guilds'}</div></div>
+    <div class="stt"><div class="stt-label">🔵 Deposited</div><div class="stt-val cv-blue">${c.deposited.toLocaleString()}</div><div class="stt-sub">${pct}% of total</div></div>
+    <div class="stt"><div class="stt-label">🟡 Pending</div><div class="stt-val cv-amber">${c.pending.toLocaleString()}</div><div class="stt-sub">not deposited</div></div>
+    <div class="stt"><div class="stt-label">💰 ${sf==='pending'?'Pend. Value':'Est. Value'}</div><div class="stt-val cv-amber">${fmtSilver(totalSilver)}</div><div class="stt-sub">${sf==='pending'?'only pending':'all looted'}</div></div>
+    <div class="stt"><div class="stt-label">🔴 Lost</div><div class="stt-val cv-red">${c.lost.toLocaleString()}</div><div class="stt-sub">taken from us</div></div>
+    <div class="stt"><div class="stt-label">👥 Players</div><div class="stt-val cv-slate">${players.toLocaleString()}</div><div class="stt-sub">in view</div></div>`;
 }
 
 function applyFilters(){
   let rows = allRows.slice();
-
-  // 1. Filtros base (guild + tipos ocultados + busca)
   if(sguild) rows = rows.filter(r => r.looted_by_guild === sguild);
   if(hideT.size) rows = rows.filter(r => !hideT.has(itemType(r)));
-  if(sq){ 
-    const q = sq.toLowerCase(); 
-    rows = rows.filter(r =>
-      r.item_name.toLowerCase().includes(q) ||
-      r.item_id.toLowerCase().includes(q) ||
-      r.looted_by_name.toLowerCase().includes(q) ||
-      r.looted_from_name.toLowerCase().includes(q)
-    ); 
-  }
-
-  // 2. Renderiza stats com base nos filtros ativos (sem filtro de status)
-  //    → o valor estimado já é calculado APENAS para pending dentro desses filtros
+  if(sq){ const q = sq.toLowerCase(); rows = rows.filter(r => r.item_name.toLowerCase().includes(q) || r.item_id.toLowerCase().includes(q) || r.looted_by_name.toLowerCase().includes(q) || r.looted_from_name.toLowerCase().includes(q)); }
   renderStats(rows);
-
-  // 3. Aplica filtro de status só para a lista de cards
   if(sf === 'pending') rows = rows.filter(r => r.status === 'pending');
-
   rows.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
   filtered = rows;
   pg = 1;
-  renderCards(); 
+  renderCards();
 }
 
 function groupByPlayer(rows){
@@ -1002,20 +882,12 @@ function groupByPlayer(rows){
     m[k].c[r.status]=(m[k].c[r.status]||0)+1;
   });
 
-  // silverMap: se sf='pending' soma só pending; se sf='all' soma tudo.
-  // Respeita os filtros base ativos (guild, hideT, busca).
   const silverMap = {};
   allRows.forEach(r => {
     if (sf === 'pending' && r.status !== 'pending') return;
     if (sguild && r.looted_by_guild !== sguild) return;
     if (hideT.has(itemType(r))) return;
-    if (sq) {
-      const q = sq.toLowerCase();
-      if (!r.item_name.toLowerCase().includes(q) &&
-          !r.item_id.toLowerCase().includes(q) &&
-          !r.looted_by_name.toLowerCase().includes(q) &&
-          !r.looted_from_name.toLowerCase().includes(q)) return;
-    }
+    if (sq) { const q = sq.toLowerCase(); if (!r.item_name.toLowerCase().includes(q) && !r.item_id.toLowerCase().includes(q) && !r.looted_by_name.toLowerCase().includes(q) && !r.looted_from_name.toLowerCase().includes(q)) return; }
     const k = r.looted_by_name || '(unknown)';
     silverMap[k] = (silverMap[k] || 0) + (PRICE_MAP[r.item_id] || 0) * r.quantity;
   });
@@ -1023,23 +895,19 @@ function groupByPlayer(rows){
   const pri={pending:0,looted:1,deposited:2,lost:3,neutral:4};
   return Object.values(m).map(g=>{
     let ov='neutral';
-    if(g.c.pending>0)       ov='pending';
-    else if(g.c.looted>0)   ov='looted';
-    else if(g.c.deposited>0)ov='deposited';
-    else if(g.c.lost>0)     ov='lost';
+    if(g.c.pending>0) ov='pending';
+    else if(g.c.looted>0) ov='looted';
+    else if(g.c.deposited>0) ov='deposited';
+    else if(g.c.lost>0) ov='lost';
     return {...g, overall:ov, pendingSilver: silverMap[g.name] || 0};
   }).sort((a,b)=>{ const d=pri[a.overall]-pri[b.overall]; return d||b.items.length-a.items.length; });
 }
-
 
 function renderCards(){
   Object.keys(TIPDATA).forEach(k=>delete TIPDATA[k]); _chipCounter=0;
   const groups=groupByPlayer(filtered);
   const col=document.getElementById('cards-col');
-  if(!groups.length){
-    col.innerHTML='<div class="empty-msg">No results for the current filters.</div>';
-    document.getElementById('pgn').innerHTML=''; return;
-  }
+  if(!groups.length){ col.innerHTML='<div class="empty-msg">No results for the current filters.</div>'; document.getElementById('pgn').innerHTML=''; return; }
   const start=(pg-1)*perPg, page=groups.slice(start,start+perPg);
   const bdM={looted:'bd-looted',deposited:'bd-deposited',pending:'bd-pending',lost:'bd-lost',neutral:'bd-neutral'};
   const bdL={looted:'Looted',deposited:'Deposited',pending:'Pending',lost:'Lost',neutral:'—'};
@@ -1049,7 +917,6 @@ function renderCards(){
     const dep=g.c.deposited||0,tot=g.items.length;
     const pct=tot>0?Math.round(dep/tot*100):0;
     const init=(g.name||'?').charAt(0).toUpperCase();
-
     const avatarUrl = getPlayerAvatar(g.name);
     const avatarHtml = `<img class="avatar" src="${avatarUrl}" alt="${init}" onerror="this.outerHTML='<div class=\\'avatar\\'>${init}</div>'"/>`;
 
@@ -1064,25 +931,18 @@ function renderCards(){
       const st = r.status, enc = encId(r.item_id), tier = tierId(r.item_id);
       const isTrash = r.item_id.toUpperCase().includes('TRASH');
       const cc = st==='deposited'?' dep':st==='pending'?' pend':'';
-      const img = isTrash
-        ? `<div class="noi">🗑</div>`
-        : `<img src="${imgUrl(r.item_id)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noi',textContent:'?'}))"/>`;
-      
+      const img = isTrash ? `<div class="noi">🗑</div>` : `<img src="${imgUrl(r.item_id)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noi',textContent:'?'}))"/>`;
       const qtyHtml = r.displayQty > 1 ? `<div class="chip-qty">${r.displayQty}</div>` : '';
       const chipId = `c${++_chipCounter}`;
-
       TIPDATA[chipId] = {
-        name: r.item_name, id: r.item_id, tier, enc,
-        qty: r.displayQty, time: fmtT(r.timestamp),
+        name: r.item_name, id: r.item_id, tier, enc, qty: r.displayQty, time: fmtT(r.timestamp),
         from: (st==='looted'||st==='deposited'||st==='pending') ? ('From: '+(r.looted_from_name||'?')+(r.looted_from_guild?' ('+r.looted_from_guild+')':'')) : st==='lost' ? ('To: '+(r.looted_by_name||'?')) : (r.looted_from_name||'?'),
         st, sc:{deposited:'ts-d',pending:'ts-p',lost:'ts-l',looted:'ts-loot'}[st]||'',
         stxt:{looted:'Waiting for deposit',deposited:'Deposited in chest',pending:'Not deposited yet',lost:'Lost to enemy',neutral:'—'}[st]||'—'
       };
-      
       return `<div class="chip${cc}" data-cid="${chipId}">${img}${qtyHtml}</div>`;
     }).join('');
 
-    // Badge de prata: reflete o filtro ativo (all = tudo, pending = só pending)
     const silverBadge = g.pendingSilver > 0 ? ` · <span class="cr-silver">💰 ${fmtSilver(g.pendingSilver)}</span>` : '';
 
     return `<div class="pcard s-${g.overall}">
@@ -1134,10 +994,7 @@ document.getElementById('f-per').addEventListener('change',e=>{perPg=+e.target.v
 document.getElementById('status-seg').addEventListener('click',e=>{
   const btn=e.target.closest('[data-s]');if(!btn)return;
   sf=btn.dataset.s;
-  document.querySelectorAll('[data-s]').forEach(b=>{
-    b.className='seg-btn';
-    if(b.dataset.s===sf)b.classList.add(sf==='pending'?'on-pending':'on');
-  });
+  document.querySelectorAll('[data-s]').forEach(b=>{ b.className='seg-btn'; if(b.dataset.s===sf)b.classList.add(sf==='pending'?'on-pending':'on'); });
   applyFilters();
 });
 document.querySelectorAll('.htog').forEach(t=>{
@@ -1161,7 +1018,6 @@ document.addEventListener('mouseover', e => {
   if (!d) return;
   const tc = ['','','','','t4','t5','t6','t7','t8'][d.tier]||'';
   const encDot = d.enc ? `<span class="enc e${d.enc}"></span>` : '';
-  
   GT.innerHTML =
     `<div class="tip-name ${tc}">${esc(d.name)}${encDot}</div>`
    +`<div class="tip-id">${esc(d.id)}</div>`
@@ -1169,7 +1025,6 @@ document.addEventListener('mouseover', e => {
    +`<div class="tip-row"><span>Qty</span><strong>×${d.qty}</strong></div>`
    +`<div class="tip-row"><span>Time</span><strong>${d.time||'—'}</strong></div>`
    +`<div class="tip-st ${d.sc}">${d.stxt}</div>`;
-   
   GT.style.display = 'block';
   GT.dataset.currentCid = chip.dataset.cid;
   tipActive = true;
@@ -1185,12 +1040,8 @@ document.addEventListener('mouseout', e => {
   tipActive = false;
 });
 
-document.addEventListener('scroll', () => { 
-  if(tipActive){
-    const GT = document.getElementById('global-tip');
-    if(GT) GT.style.display = 'none';
-    tipActive = false;
-  } 
+document.addEventListener('scroll', () => {
+  if(tipActive){ const GT = document.getElementById('global-tip'); if(GT) GT.style.display = 'none'; tipActive = false; }
 }, true);
 
 function positionTip(chip, GT) {
@@ -1209,8 +1060,9 @@ function positionTip(chip, GT) {
   GT.style.setProperty('--arrow-left', arrowL + 'px');
 }
 
+// ── DISCORD WEBHOOK ───────────────────────────────────────────────────────────
 const WEBHOOK_URL = 'https://discord.com/api/webhooks/1485254555816956125/X_i-Yl422TpZrfUorNwLW7wfdLAtgLVoSd3zXOexno3kEHHIwri1L0WLL7qDjgjXOSei';
-const WORKER_URL = '/api/grid';
+const WORKER_URL  = '/api/grid';
 
 const whStatus   = document.getElementById('wh-status');
 const btnSendAll = document.getElementById('btn-send-all');
@@ -1220,7 +1072,6 @@ const cfgClose   = document.getElementById('cfg-close');
 const cfgSave    = document.getElementById('cfg-save');
 const cfgArea    = document.getElementById('cfg-textarea');
 
-// Discord ID map — loaded from Supabase guild_members automatically
 let discordIdMap = JSON.parse(localStorage.getItem('ao_discord_ids')||'{}');
 
 async function loadDiscordIds() {
@@ -1231,20 +1082,11 @@ async function loadDiscordIds() {
     );
     if (!res.ok) return;
     const members = await res.json();
-    members.forEach(m => {
-      if (m.ingame_name && m.discord_id) {
-        discordIdMap[m.ingame_name] = m.discord_id;
-      }
-    });
-    // Also persist to localStorage as cache
+    members.forEach(m => { if (m.ingame_name && m.discord_id) discordIdMap[m.ingame_name] = m.discord_id; });
     localStorage.setItem('ao_discord_ids', JSON.stringify(discordIdMap));
     console.log(`✓ Loaded ${members.length} Discord IDs from Control Center`);
-  } catch(e) {
-    console.warn('Could not load Discord IDs from Supabase:', e.message);
-  }
+  } catch(e) { console.warn('Could not load Discord IDs from Supabase:', e.message); }
 }
-
-// Load Discord IDs on page load
 loadDiscordIds();
 
 function setStatus(msg, ok){
@@ -1254,19 +1096,12 @@ function setStatus(msg, ok){
   setTimeout(()=>{ whStatus.style.display='none'; }, 6000);
 }
 
-btnConfig.addEventListener('click',()=>{
-  cfgArea.value = Object.entries(discordIdMap).map(([k,v])=>`${k}=${v}`).join('\n');
-  cfgModal.style.display='flex';
-});
+btnConfig.addEventListener('click',()=>{ cfgArea.value = Object.entries(discordIdMap).map(([k,v])=>`${k}=${v}`).join('\n'); cfgModal.style.display='flex'; });
 cfgClose.addEventListener('click',()=>{ cfgModal.style.display='none'; });
 cfgModal.addEventListener('click',e=>{ if(e.target===cfgModal) cfgModal.style.display='none'; });
 cfgSave.addEventListener('click',()=>{
   discordIdMap={};
-  cfgArea.value.split('\n').forEach(line=>{
-    const [name,...rest]=line.trim().split('=');
-    const id=rest.join('=').trim();
-    if(name&&id) discordIdMap[name.trim()]=id;
-  });
+  cfgArea.value.split('\n').forEach(line=>{ const [name,...rest]=line.trim().split('='); const id=rest.join('=').trim(); if(name&&id) discordIdMap[name.trim()]=id; });
   localStorage.setItem('ao_discord_ids', JSON.stringify(discordIdMap));
   cfgModal.style.display='none';
   setStatus(`Saved ${Object.keys(discordIdMap).length} Discord IDs (manual override)`, true);
@@ -1274,33 +1109,20 @@ cfgSave.addEventListener('click',()=>{
 
 function dedupItems(items){
   const map = {};
-  items.forEach(r=>{
-    const base = r.item_id; 
-    if(!map[base]) map[base] = {...r, quantity: 0};
-    map[base].quantity += r.quantity;
-  });
+  items.forEach(r=>{ const base = r.item_id; if(!map[base]) map[base] = {...r, quantity: 0}; map[base].quantity += r.quantity; });
   return Object.values(map);
 }
 
-function albionImgUrl(itemId){
-  return `https://render.albiononline.com/v1/item/${encodeURIComponent(itemId)}.png?size=64&quality=2`;
-}
+function albionImgUrl(itemId){ return `https://render.albiononline.com/v1/item/${encodeURIComponent(itemId)}.png?size=64&quality=2`; }
 
 async function fetchGridImage(items){
   if(!WORKER_URL) return null;
   try{
     const ids = items.map(r=>`${r.item_id}:${r.quantity||1}`).join(',');
-    const resp = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: ids })
-    });
+    const resp = await fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: ids }) });
     if(!resp.ok) return null;
     return await resp.blob();
-  } catch(e){
-    console.warn('Worker fetch failed:', e);
-    return null;
-  }
+  } catch(e){ console.warn('Worker fetch failed:', e); return null; }
 }
 
 const tierEmoji = t => ['','⬛','🟫','🟩','🟦','🟥','🟧','🟨','⬜'][t]||'⬜';
@@ -1308,14 +1130,18 @@ const tierEmoji = t => ['','⬛','🟫','🟩','🟦','🟥','🟧','🟨','⬜'
 function buildPayload(playerName, pendingItems, guild, imgBlob, avatarBlob){
   const id      = discordIdMap[playerName];
   const mention = id ? `<@${id}>` : `📋 **${playerName}**`;
-  
+
+  // ── FIX: allowed_mentions é obrigatório para webhooks pingarem usuários ──
+  // parse:[] evita pings acidentais de @everyone/@here
+  // users:[id] autoriza explicitamente o ping desse usuário específico
+  const allowed_mentions = id
+    ? { parse: [], users: [String(id)] }
+    : { parse: [] };
+
   const groupedList = dedupItems(pendingItems);
 
-  // ── FIX: calcula silver APENAS dos itens pending passados para a função ──
   let totalSilver = 0;
-  groupedList.forEach(g => {
-    totalSilver += (PRICE_MAP[g.item_id] || 0) * g.quantity;
-  });
+  groupedList.forEach(g => { totalSilver += (PRICE_MAP[g.item_id] || 0) * g.quantity; });
   const silverStr = totalSilver > 0 ? `~${fmtSilver(totalSilver)} Silver` : 'Unknown';
 
   const lines = groupedList.map(g=>{
@@ -1324,14 +1150,11 @@ function buildPayload(playerName, pendingItems, guild, imgBlob, avatarBlob){
   }).join('\n');
 
   const killboardUrl = `https://killboard-1.com/eu/player/${encodeURIComponent(playerName)}`;
-  
+
   const descLines = [];
-  if (currentSessionTime) {
-    descLines.push(`**🗓️ EVENT: ${currentSessionTime}**`);
-    descLines.push(``);
-  }
+  if (currentSessionTime) { descLines.push(`**🗓️ EVENT: ${currentSessionTime}**`); descLines.push(``); }
   descLines.push(`**${groupedList.length} item${groupedList.length!==1?'s':''} not deposited yet**`);
-  descLines.push(`**💰 Estimated Value:** ${silverStr}`); 
+  descLines.push(`**💰 Estimated Value:** ${silverStr}`);
   descLines.push(``);
   descLines.push(`You have **24 hours** to deposit or get charged.`);
   descLines.push(`📌 Open a thread and explain why this loot is missing.`);
@@ -1352,31 +1175,20 @@ function buildPayload(playerName, pendingItems, guild, imgBlob, avatarBlob){
     timestamp: new Date().toISOString(),
   };
 
-  if (avatarBlob) {
-    embed.thumbnail = { url: 'attachment://avatar.png' };
-  } else {
-    embed.thumbnail = { url: albionImgUrl(pendingItems[0].item_id) }; 
-  }
-
-  if (imgBlob) {
-    embed.image = { url: 'attachment://items.png' };
-  }
+  if (avatarBlob) embed.thumbnail = { url: 'attachment://avatar.png' };
+  else embed.thumbnail = { url: albionImgUrl(pendingItems[0].item_id) };
+  if (imgBlob) embed.image = { url: 'attachment://items.png' };
 
   if (imgBlob || avatarBlob) {
-    const form  = new FormData();
-    form.append('payload_json', JSON.stringify({ content:mention, username:'Log Viewer', embeds:[embed] }));
-    
+    const form = new FormData();
+    // allowed_mentions incluído no payload_json do FormData
+    form.append('payload_json', JSON.stringify({ content: mention, username: 'Log Viewer', embeds: [embed], allowed_mentions }));
     let fileIndex = 0;
-    if (imgBlob) {
-      form.append(`files[${fileIndex}]`, imgBlob, 'items.png');
-      fileIndex++;
-    }
-    if (avatarBlob) {
-      form.append(`files[${fileIndex}]`, avatarBlob, 'avatar.png');
-    }
-    return { useForm:true, form };
+    if (imgBlob)   { form.append(`files[${fileIndex}]`, imgBlob,   'items.png');  fileIndex++; }
+    if (avatarBlob){ form.append(`files[${fileIndex}]`, avatarBlob, 'avatar.png'); }
+    return { useForm: true, form };
   } else {
-    return { useForm:false, payload:{ content:mention, username:'Log Viewer', embeds:[embed] } };
+    return { useForm: false, payload: { content: mention, username: 'Log Viewer', embeds: [embed], allowed_mentions } };
   }
 }
 
@@ -1385,17 +1197,9 @@ async function postOne(msgData){
   if(msgData.useForm){
     resp = await fetch(WEBHOOK_URL, { method:'POST', body: msgData.form });
   } else {
-    resp = await fetch(WEBHOOK_URL, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(msgData.payload)
-    });
+    resp = await fetch(WEBHOOK_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(msgData.payload) });
   }
-  if(!resp.ok){
-    const txt = await resp.text();
-    console.error('Discord error:', txt);
-    throw new Error(`Discord ${resp.status}: ${txt.slice(0,120)}`);
-  }
+  if(!resp.ok){ const txt = await resp.text(); console.error('Discord error:', txt); throw new Error(`Discord ${resp.status}: ${txt.slice(0,120)}`); }
 }
 
 async function sendToDiscord(playerName, pendingItems, guild, btnEl){
@@ -1403,10 +1207,9 @@ async function sendToDiscord(playerName, pendingItems, guild, btnEl){
   if(btnEl){ btnEl.classList.add('sending'); btnEl.disabled=true; }
   try{
     const dedupedItems = dedupItems(pendingItems);
-    const imgBlob = await fetchGridImage(dedupedItems);
+    const imgBlob    = await fetchGridImage(dedupedItems);
     const avatarBlob = await fetchAvatarImage(playerName);
-    // buildPayload recebe apenas os itens pending → silver calculado corretamente
-    const msgData = buildPayload(playerName, dedupedItems, guild, imgBlob, avatarBlob);
+    const msgData    = buildPayload(playerName, dedupedItems, guild, imgBlob, avatarBlob);
     await postOne(msgData);
     setStatus(`✓ Sent for ${playerName}${imgBlob?' 🖼️':' (text only)'}`, true);
     if(btnEl){ btnEl.classList.remove('sending'); btnEl.classList.add('sent'); btnEl.innerHTML='✓ Sent'; btnEl.disabled=false; }
@@ -1420,7 +1223,6 @@ async function sendToDiscord(playerName, pendingItems, guild, btnEl){
 window.sendPlayerPing = async function(btnEl, playerName){
   const group = groupByPlayer(filtered).find(g=>g.name===playerName);
   if(!group) return;
-  // Filtra apenas pending antes de mandar → silver correto no Discord
   await sendToDiscord(playerName, group.items.filter(r=>r.status==='pending'), group.guild, btnEl);
 };
 
@@ -1436,10 +1238,9 @@ btnSendAll.addEventListener('click', async()=>{
     if(!pending.length) continue;
     try{
       const dedupedPending = dedupItems(pending);
-      const imgBlob = await fetchGridImage(dedupedPending);
-      const avatarBlob = await fetchAvatarImage(g.name); 
-      // buildPayload recebe apenas pending → silver correto
-      const msgData = buildPayload(g.name, pending, g.guild, imgBlob, avatarBlob);
+      const imgBlob    = await fetchGridImage(dedupedPending);
+      const avatarBlob = await fetchAvatarImage(g.name);
+      const msgData    = buildPayload(g.name, pending, g.guild, imgBlob, avatarBlob);
       await postOne(msgData);
       ok++;
     } catch(e){ fail++; console.error(e); }
@@ -1449,7 +1250,6 @@ btnSendAll.addEventListener('click', async()=>{
   btnSendAll.innerHTML=origHTML;
   setStatus(`Done: ${ok} sent${fail?`, ${fail} failed`:''}`, fail===0);
 });
-
 </script>
 </body>
 </html>
