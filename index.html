@@ -533,7 +533,10 @@ function parseChest(raw){
   return rows;
 }
 
+const OUR_GUILD = 'Squirtle Squad';
+
 function detectGuild(rows){
+  if(OUR_GUILD) return OUR_GUILD;
   const f={};
   rows.forEach(r=>{ if(r.looted_by_guild)f[r.looted_by_guild]=(f[r.looted_by_guild]||0)+1; });
   return Object.entries(f).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
