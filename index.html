@@ -1075,7 +1075,16 @@ const cfgClose   = document.getElementById('cfg-close');
 const cfgSave    = document.getElementById('cfg-save');
 const cfgArea    = document.getElementById('cfg-textarea');
 
-let discordIdMap = JSON.parse(localStorage.getItem('ao_discord_ids')||'{}');
+// Armazena os IDs com chave em lowercase para lookup case-insensitive
+let discordIdMap = {};
+(function(){
+  const raw = JSON.parse(localStorage.getItem('ao_discord_ids')||'{}');
+  Object.entries(raw).forEach(([k,v]) => { discordIdMap[k.toLowerCase()] = v; });
+})();
+
+// Promessa que resolve quando os IDs do Supabase estiverem carregados
+let discordIdsReady = false;
+let _discordIdsPromise = null;
 
 async function loadDiscordIds() {
   try {
@@ -1083,14 +1092,32 @@ async function loadDiscordIds() {
       `${SUPA_URL}/rest/v1/guild_members?select=ingame_name,discord_id&is_active=eq.true&limit=1000`,
       { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } }
     );
-    if (!res.ok) return;
+    if (!res.ok) { discordIdsReady = true; return; }
     const members = await res.json();
-    members.forEach(m => { if (m.ingame_name && m.discord_id) discordIdMap[m.ingame_name] = m.discord_id; });
-    localStorage.setItem('ao_discord_ids', JSON.stringify(discordIdMap));
+    // Salva em lowercase para garantir match case-insensitive
+    const toStore = {};
+    members.forEach(m => {
+      if (m.ingame_name && m.discord_id) {
+        discordIdMap[m.ingame_name.toLowerCase()] = m.discord_id;
+        toStore[m.ingame_name] = m.discord_id;
+      }
+    });
+    localStorage.setItem('ao_discord_ids', JSON.stringify(toStore));
     console.log(`✓ Loaded ${members.length} Discord IDs from Control Center`);
   } catch(e) { console.warn('Could not load Discord IDs from Supabase:', e.message); }
+  discordIdsReady = true;
 }
-loadDiscordIds();
+_discordIdsPromise = loadDiscordIds();
+
+// Garante que os IDs estejam prontos antes de qualquer envio
+async function ensureDiscordIds() {
+  if (!discordIdsReady) await _discordIdsPromise;
+}
+
+// Lookup case-insensitive
+function getDiscordId(playerName) {
+  return discordIdMap[(playerName||'').toLowerCase()];
+}
 
 function setStatus(msg, ok){
   whStatus.textContent   = msg;
@@ -1104,8 +1131,9 @@ cfgClose.addEventListener('click',()=>{ cfgModal.style.display='none'; });
 cfgModal.addEventListener('click',e=>{ if(e.target===cfgModal) cfgModal.style.display='none'; });
 cfgSave.addEventListener('click',()=>{
   discordIdMap={};
-  cfgArea.value.split('\n').forEach(line=>{ const [name,...rest]=line.trim().split('='); const id=rest.join('=').trim(); if(name&&id) discordIdMap[name.trim()]=id; });
-  localStorage.setItem('ao_discord_ids', JSON.stringify(discordIdMap));
+  const toStore = {};
+  cfgArea.value.split('\n').forEach(line=>{ const [name,...rest]=line.trim().split('='); const id=rest.join('=').trim(); if(name&&id){ discordIdMap[name.trim().toLowerCase()]=id; toStore[name.trim()]=id; } });
+  localStorage.setItem('ao_discord_ids', JSON.stringify(toStore));
   cfgModal.style.display='none';
   setStatus(`Saved ${Object.keys(discordIdMap).length} Discord IDs (manual override)`, true);
 });
@@ -1131,7 +1159,7 @@ async function fetchGridImage(items){
 const tierEmoji = t => ['','⬛','🟫','🟩','🟦','🟥','🟧','🟨','⬜'][t]||'⬜';
 
 function buildPayload(playerName, pendingItems, guild, imgBlob, avatarBlob){
-  const id      = discordIdMap[playerName];
+  const id      = getDiscordId(playerName);
   const mention = id ? `<@${id}>` : `📋 **${playerName}**`;
 
   // ── FIX: allowed_mentions é obrigatório para webhooks pingarem usuários ──
@@ -1208,6 +1236,7 @@ async function postOne(msgData){
 async function sendToDiscord(playerName, pendingItems, guild, btnEl){
   if(!pendingItems.length){ setStatus('No pending items for '+playerName, false); return; }
   if(btnEl){ btnEl.classList.add('sending'); btnEl.disabled=true; }
+  await ensureDiscordIds();
   try{
     const dedupedItems = dedupItems(pendingItems);
     const imgBlob    = await fetchGridImage(dedupedItems);
@@ -1233,6 +1262,7 @@ btnSendAll.addEventListener('click', async()=>{
   const groups = groupByPlayer(filtered).filter(g=>g.c.pending>0);
   if(!groups.length){ setStatus('No pending players.', false); return; }
   btnSendAll.disabled=true;
+  await ensureDiscordIds();
   const origHTML = btnSendAll.innerHTML;
   btnSendAll.innerHTML='Sending…';
   let ok=0, fail=0;
