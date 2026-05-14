@@ -280,6 +280,30 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
 .wh-status.err{background:rgba(239,68,68,.1); color:var(--red); border:1px solid var(--red-bdr)}
 
 .site-footer { margin-top: auto; text-align: center; padding: 30px 20px; color: var(--t3); font-size: 0.85rem; letter-spacing: 0.02em; }
+
+/* ── Discord IDs loading bar ─────────────────────────────── */
+#discord-load-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 20px; background: rgba(59,130,246,.08);
+  border-bottom: 1px solid var(--blue-bdr);
+  font-size: .82rem; color: var(--blue); font-weight: 600;
+  letter-spacing: .03em;
+}
+#discord-load-bar.hidden { display: none; }
+#discord-load-bar.error  { background: rgba(239,68,68,.08); border-color: var(--red-bdr); color: var(--red); }
+#discord-load-bar.ok     { background: rgba(34,197,94,.07); border-color: var(--green-bdr); color: var(--green); }
+.dlb-track { flex: 1; height: 3px; background: var(--bg5); border-radius: 2px; overflow: hidden; max-width: 200px; }
+.dlb-fill  { height: 3px; border-radius: 2px; background: var(--blue); width: 0%; transition: width .3s ease; }
+#discord-load-bar.ok   .dlb-fill  { background: var(--green); width: 100%; }
+#discord-load-bar.error .dlb-fill { background: var(--red); width: 100%; }
+.dlb-spinner {
+  width: 13px; height: 13px; border: 2px solid rgba(59,130,246,.3);
+  border-top-color: var(--blue); border-radius: 50%;
+  animation: dlb-spin .7s linear infinite; flex-shrink: 0;
+}
+#discord-load-bar.ok   .dlb-spinner { display: none; }
+#discord-load-bar.error .dlb-spinner { border-top-color: var(--red); border-color: rgba(239,68,68,.3); }
+@keyframes dlb-spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -341,6 +365,14 @@ img.avatar { object-fit: cover; border: 1px solid var(--line2); }
 </div>
 
 <div id="page-app">
+
+  <!-- Discord IDs loading bar -->
+  <div id="discord-load-bar" class="hidden">
+    <div class="dlb-spinner"></div>
+    <span id="dlb-text">LOADING DISCORD IDs — PLEASE WAIT BEFORE PINGING</span>
+    <div class="dlb-track"><div class="dlb-fill" id="dlb-fill"></div></div>
+    <span id="dlb-count" style="color:var(--t3);font-weight:400;font-size:.78rem"></span>
+  </div>
   <div class="stats" id="stats"></div>
   <div class="webhook-bar" id="webhook-bar" style="justify-content:flex-end">
     <button class="btn-discord" id="btn-discord-config" style="background:rgba(255,255,255,.05);border-color:var(--line2);color:var(--t2)">
@@ -813,6 +845,7 @@ document.getElementById('btn-go').addEventListener('click', async () => {
   document.getElementById('page-upload').style.display='none';
   document.getElementById('main-header').style.display='flex';
   document.getElementById('page-app').style.display='block';
+  showDiscordLoadBar();
   document.getElementById('btn-reload').style.display='';
   const chip=document.getElementById('guild-chip');
   document.getElementById('guild-chip-name').textContent=ourGuild||'unknown';
@@ -1075,48 +1108,116 @@ const cfgClose   = document.getElementById('cfg-close');
 const cfgSave    = document.getElementById('cfg-save');
 const cfgArea    = document.getElementById('cfg-textarea');
 
-// Armazena os IDs com chave em lowercase para lookup case-insensitive
+// ── DISCORD ID MAP ──────────────────────────────────────────────────────────
+// Chave: ingame_name.toLowerCase()  →  valor: discord_id (string)
 let discordIdMap = {};
+
+// Seed from localStorage immediately so we have something even before Supabase loads
 (function(){
-  const raw = JSON.parse(localStorage.getItem('ao_discord_ids')||'{}');
-  Object.entries(raw).forEach(([k,v]) => { discordIdMap[k.toLowerCase()] = v; });
+  try {
+    const raw = JSON.parse(localStorage.getItem('ao_discord_ids') || '{}');
+    Object.entries(raw).forEach(([k, v]) => {
+      if (k && v) discordIdMap[k.trim().toLowerCase()] = String(v).trim();
+    });
+    console.log(`[Discord] Seeded ${Object.keys(discordIdMap).length} IDs from localStorage`);
+  } catch(e) {}
 })();
 
-// Promessa que resolve quando os IDs do Supabase estiverem carregados
-let discordIdsReady = false;
-let _discordIdsPromise = null;
+let _discordLoadState = 'pending'; // 'pending' | 'loading' | 'done' | 'error'
+let _discordLoadPromise = null;
+
+const _dlbBar   = () => document.getElementById('discord-load-bar');
+const _dlbFill  = () => document.getElementById('dlb-fill');
+const _dlbText  = () => document.getElementById('dlb-text');
+const _dlbCount = () => document.getElementById('dlb-count');
+
+function _setDiscordLoadBar(state, text, pct, count) {
+  const bar = _dlbBar(); if (!bar) return;
+  bar.className = state === 'loading' ? '' : state === 'done' ? 'ok' : state === 'error' ? 'error' : 'hidden';
+  if (text)  { const t = _dlbText();  if(t) t.textContent = text; }
+  if (pct != null) { const f = _dlbFill(); if(f) f.style.width = pct + '%'; }
+  if (count != null) { const c = _dlbCount(); if(c) c.textContent = count; }
+}
 
 async function loadDiscordIds() {
+  if (_discordLoadState === 'loading' || _discordLoadState === 'done') return;
+  _discordLoadState = 'loading';
+  _setDiscordLoadBar('loading', 'LOADING DISCORD IDs — WAIT BEFORE PINGING', 15, '');
+
+  // Disable send buttons while loading
+  const btnAll = document.getElementById('btn-send-all');
+  if (btnAll) { btnAll.disabled = true; btnAll.title = 'Loading Discord IDs…'; }
+
   try {
+    _setDiscordLoadBar('loading', 'LOADING DISCORD IDs — FETCHING FROM DATABASE…', 30, '');
     const res = await fetch(
       `${SUPA_URL}/rest/v1/guild_members?select=ingame_name,discord_id&is_active=eq.true&limit=1000`,
       { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } }
     );
-    if (!res.ok) { discordIdsReady = true; return; }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    _setDiscordLoadBar('loading', 'LOADING DISCORD IDs — PROCESSING…', 70, '');
     const members = await res.json();
-    // Salva em lowercase para garantir match case-insensitive
+
+    let loaded = 0;
     const toStore = {};
     members.forEach(m => {
-      if (m.ingame_name && m.discord_id) {
-        discordIdMap[m.ingame_name.toLowerCase()] = m.discord_id;
-        toStore[m.ingame_name] = m.discord_id;
+      // Accept discord_id as number or string
+      const name = (m.ingame_name || '').trim();
+      const did  = m.discord_id != null ? String(m.discord_id).trim() : '';
+      if (name && did) {
+        discordIdMap[name.toLowerCase()] = did;
+        toStore[name] = did;
+        loaded++;
       }
     });
+
     localStorage.setItem('ao_discord_ids', JSON.stringify(toStore));
-    console.log(`✓ Loaded ${members.length} Discord IDs from Control Center`);
-  } catch(e) { console.warn('Could not load Discord IDs from Supabase:', e.message); }
-  discordIdsReady = true;
-}
-_discordIdsPromise = loadDiscordIds();
+    _discordLoadState = 'done';
+    _setDiscordLoadBar('done', `✓ ${loaded} DISCORD IDs LOADED`, 100, `${loaded} members`);
+    console.log(`[Discord] Loaded ${loaded} IDs from Supabase (${members.length} rows)`);
 
-// Garante que os IDs estejam prontos antes de qualquer envio
+    // Re-enable send button
+    if (btnAll) { btnAll.disabled = false; btnAll.title = ''; }
+
+    // Auto-hide bar after 3s
+    setTimeout(() => { const b = _dlbBar(); if(b) b.className = 'hidden'; }, 3000);
+
+  } catch(e) {
+    _discordLoadState = 'error';
+    const cached = Object.keys(discordIdMap).length;
+    _setDiscordLoadBar('error',
+      `⚠ Could not load Discord IDs from database${cached ? ` — using ${cached} cached` : ''}`,
+      100, cached ? `${cached} cached` : 'none'
+    );
+    console.warn('[Discord] Load failed:', e.message);
+    if (btnAll) { btnAll.disabled = false; btnAll.title = ''; }
+  }
+}
+
+// Kick off immediately — but the bar only shows after page-app is visible
+_discordLoadPromise = loadDiscordIds();
+
+// Called when page-app becomes visible to show the bar
+function showDiscordLoadBar() {
+  if (_discordLoadState === 'pending' || _discordLoadState === 'loading') {
+    _setDiscordLoadBar('loading', 'LOADING DISCORD IDs — PLEASE WAIT BEFORE PINGING', 20, '');
+  }
+}
+
+// Ensure IDs are ready before any send; awaits the in-flight promise if still loading
 async function ensureDiscordIds() {
-  if (!discordIdsReady) await _discordIdsPromise;
+  if (_discordLoadState !== 'done' && _discordLoadState !== 'error') {
+    await _discordLoadPromise;
+  }
 }
 
-// Lookup case-insensitive
+// Case-insensitive lookup — trims whitespace too
 function getDiscordId(playerName) {
-  return discordIdMap[(playerName||'').toLowerCase()];
+  const key = (playerName || '').trim().toLowerCase();
+  const found = discordIdMap[key];
+  if (!found) console.warn(`[Discord] No ID found for player: "${playerName}" (key: "${key}")`);
+  return found;
 }
 
 function setStatus(msg, ok){
