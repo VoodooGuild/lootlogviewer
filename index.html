@@ -1202,7 +1202,7 @@ async function loadDiscordIds() {
   try {
     _setDiscordLoadBar('loading', 'LOADING DISCORD IDs — FETCHING FROM DATABASE…', 30, '');
     const res = await fetch(
-      `${SUPA_URL}/rest/v1/guild_members?select=ingame_name,discord_id&is_active=eq.true&limit=1000`,
+      `${SUPA_URL}/rest/v1/guild_members?select=ingame_name,discord_id&limit=1000`,
       { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } }
     );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1496,7 +1496,7 @@ async function runDiagnostics() {
   add('Fetching from database…', '#94a3b8');
   try {
     const res = await fetch(
-      `${SUPA_URL}/rest/v1/guild_members?select=ingame_name,discord_id&is_active=eq.true&limit=5`,
+      `${SUPA_URL}/rest/v1/guild_members?select=ingame_name,discord_id&limit=5`,
       { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } }
     );
     if (!res.ok) {
